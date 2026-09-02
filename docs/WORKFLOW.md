@@ -6,23 +6,27 @@ runtime signals are the system of record.
 ## Repository Map
 
 - `AGENTS.md`: entry map and authority boundary.
-- `README.md`, `docs/product/`, architecture, and decisions: current intent and
-  constraints.
-- `docs/plans/`: durable work; `docs/templates/`: optional structures.
-- Code, tests, CI, and runtime signals: executable and observable truth.
+- `README.md`: repository overview and developer entry point.
+- `docs/WORKFLOW.md`: agent workflow and validation rules.
+- `docs/architecture/`: architecture documentation entry point and architecture details.
+- `docs/patterns/`: invariant-encoding guidance when present.
+- `docs/plans/`: durable work records when present and needed.
+- `docs/decisions/`: accepted architecture decisions when present.
 
-Use `docs/README.md` for the complete map.
+Use only the repository material that exists and is relevant to the task.
+Do not invent missing documentation, commands, policies, or decisions.
 
 ## Select The Work Shape
 
 ### Does The Work Need Durable Memory?
 
-Use an ephemeral plan for bounded work. Create one plan in
-`docs/plans/active/` when work spans sessions, coordinates contributors, has
-meaningful dependencies, needs recovery, or cannot safely resume from its diff.
+Use an ephemeral plan for bounded work. Create one plan in `docs/plans/active/`
+when work spans sessions, coordinates contributors, has meaningful dependencies,
+needs recovery, or cannot safely resume from its diff.
 
-Use `docs/templates/exec-plan.md`. Keep progress and task-local decisions in the
-same file; avoid parallel task records without an independent audience.
+Use `docs/templates/exec-plan.md` only when that template exists. Keep progress
+and task-local decisions in the same file; avoid parallel task records without
+an independent audience.
 
 ### Does The Work Need Human Judgment?
 
@@ -30,42 +34,37 @@ Before editing, identify authority for new externally observable policy. If
 materially different choices remain, stop and request the smallest decision.
 Configurable defaults are not authority.
 
-For example, `Add rate limiting` without a quota, trusted key, enforcement
-topology, or response contract must stop. `Enforce the documented 20 requests
-per minute per authenticated tenant` may proceed.
-
 Also pause for ambiguous product intent, difficult recovery, weakened
-validation, security, or compatibility, and insufficient authority.
+validation, security, compatibility, or insufficient authority.
 
 ### What Proves The Behavior?
 
-Use focused tests for local rules, integration tests for boundaries, end-to-end
-interaction for user-visible behavior, recovery rehearsal for dangerous
-operations, and measurements for reliability or performance.
+Use focused tests for local rules, integration tests for boundaries,
+end-to-end interaction for user-visible behavior, recovery rehearsal for
+dangerous operations, and measurements for reliability or performance.
 
 Plans, checklists, and completion messages do not prove product behavior by
 themselves.
 
-### Does The Work Encode An Invariant?
+## Does The Work Encode An Invariant?
 
 For architecture, reliability, security, or quality boundaries:
 
 1. Find an accepted repository authority that states the required boundary.
-   Conventions, code patterns, tests, defaults, and undocumented preferences do
-   not establish policy. Stop when authority is absent or materially ambiguous.
+   Conventions, code patterns, tests, defaults, and undocumented preferences
+   do not establish policy. Stop when authority is absent or materially ambiguous.
 2. Reuse the repository's native validation owner and command. Add the smallest
-   mechanical check that covers the accepted scope and emits a diagnostic naming
-   the violation, rule, and next action.
+   mechanical check that covers the accepted scope and emits a diagnostic
+   naming the violation, rule, and next action.
 3. Require positive proof that allowed behavior passes and negative proof that
    the targeted forbidden behavior fails for the intended reason.
 4. Report enforcement precisely: a local command is available or passed; a hook
    is optional developer convenience; CI either invokes the check or does not;
-   branch protection is externally configured or unverified. Source or CI
-   presence alone does not prove merge blocking.
+   branch protection is externally configured or unverified.
 
 Do not install hooks or change CI, merge, or branch-protection settings unless
-separately authorized. Use the [invariant encoding pattern](patterns/encoding-invariants.md)
-for the complete method.
+separately authorized. When present, use
+`docs/patterns/encoding-invariants.md` for the complete method.
 
 ## Task Flows
 
@@ -99,26 +98,31 @@ When a task requires the real application:
 3. Reproduce through the real interface and inspect correlated runtime evidence.
 4. Validate through that interface, then stop only resources this run owns.
 
-If no verified runbook exists, inspect current repository authority and report
-or propose the missing guidance. Do not invent commands, credentials, product
-policy, or cleanup obligations. The application-runbook template supplies
-proposal structure, not proof that the application is operable.
+If no verified runbook exists, inspect current repository authority and report or
+propose the missing guidance. Do not invent commands, credentials, product policy,
+or cleanup obligations.
 
 ### Improve The Harness
 
-During ordinary work, report reusable agent friction without changing the
-Harness for that new purpose. When the user explicitly invokes
-`$improve-harness`, use `docs/templates/harness-improvement.md` to:
-
-1. preserve the observed baseline and human intervention;
-2. locate the earliest missing context, capability, owner, authority, proof, or
-   environment boundary;
-3. make the smallest authorized change at that owner;
-4. run native proof and require a materially equivalent fresh-agent rerun; and
-5. decide to keep, revise, or remove the intervention.
+During ordinary work, report reusable agent friction without changing the Harness
+for that new purpose. When the user explicitly invokes `$improve-harness`, use the
+Harness improvement workflow if it is installed and its referenced template exists.
 
 Do not claim improvement when the rerun did not retrieve or exercise the
-intervention. Keep the record active while fresh-rerun evidence is pending.
+intervention.
+
+### Architecture-related work
+
+For work that changes or evaluates system architecture:
+
+1. Identify the affected architecture area.
+2. Read `docs/architecture/README.md`.
+3. Read only the relevant architecture documents.
+4. Check applicable decision records in `docs/decisions/` when they exist.
+5. Identify repository authority before making externally observable policy changes.
+6. For architecture, reliability, security, or quality invariants, also read
+   `docs/patterns/encoding-invariants.md` when it exists.
+7. Validate the resulting behavior and report observable evidence.
 
 ## Completion Standard
 

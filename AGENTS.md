@@ -29,3 +29,16 @@ validation material.
 Harness has no task database or orchestration lifecycle. Use repository plans
 and behavior-level proof; do not create parallel control-plane state.
 <!-- HARNESS:END -->
+
+### Architecture
+
+For architecture-related work, use `docs/architecture/README.md` as the
+architecture documentation entry point.
+
+Read only the architecture documents relevant to the requested change.
+
+Do not invent or infer undocumented architecture decisions as accepted
+architecture.
+
+For architecture, reliability, security, or quality invariant work, also read
+`docs/patterns/encoding-invariants.md`.
