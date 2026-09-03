@@ -3,14 +3,18 @@ name: Backend CI
 on:
   pull_request:
     paths:
-      - "LogiX-Backend/**"
+      - "apps/**"
+      - "libs/**"
+      - "tests/**"
       - ".github/workflows/ci.yml"
   push:
     branches:
       - main
       - develop
     paths:
-      - "LogiX-Backend/**"
+      - "apps/**"
+      - "libs/**"
+      - "tests/**"
       - ".github/workflows/ci.yml"
   workflow_dispatch:
 
@@ -33,7 +37,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
@@ -41,11 +45,11 @@ jobs:
           version: 11.6.0
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: pnpm
-          cache-dependency-path: LogiX-Backend/pnpm-lock.yaml
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Set up Python
         uses: actions/setup-python@v5
