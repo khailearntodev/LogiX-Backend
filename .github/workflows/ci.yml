@@ -1,0 +1,157 @@
+name: Backend CI
+
+on:
+  pull_request:
+    paths:
+      - "LogiX-Backend/**"
+      - ".github/workflows/ci.yml"
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - "LogiX-Backend/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Validate backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: LogiX-Backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.6.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: LogiX-Backend/pnpm-lock.yaml
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate workspace manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          services=(
+            api-gateway
+            identity-service
+            master-data-service
+            inventory-service
+            order-service
+            fulfillment-service
+            transport-service
+            notification-service
+            audit-service
+          )
+
+          for service in "${services[@]}"; do
+            test -f "apps/$service/package.json" || {
+              echo "Missing package.json: apps/$service"
+              exit 1
+            }
+          done
+
+          test -f package.json
+          test -f pnpm-lock.yaml
+          test -f pnpm-workspace.yaml
+
+      - name: Install Node.js dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint NestJS services
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          services=(
+            api-gateway
+            identity-service
+            master-data-service
+            inventory-service
+            order-service
+            fulfillment-service
+            transport-service
+            notification-service
+            audit-service
+          )
+
+          for service in "${services[@]}"; do
+            echo "Linting $service"
+            pnpm --dir "apps/$service" run lint
+          done
+
+      - name: Build NestJS services
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          services=(
+            api-gateway
+            identity-service
+            master-data-service
+            inventory-service
+            order-service
+            fulfillment-service
+            transport-service
+            notification-service
+            audit-service
+          )
+
+          for service in "${services[@]}"; do
+            echo "Building $service"
+            pnpm --dir "apps/$service" run build
+          done
+
+      - name: Run available NestJS tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          test_files=(apps/*/test/**/*.ts apps/*/test/**/*.tsx)
+          if (( ${#test_files[@]} == 0 )); then
+            echo "No NestJS test files found; skipping test step."
+            exit 0
+          fi
+
+          for package_json in apps/*/package.json; do
+            service_dir="${package_json%/package.json}"
+            if node -e "const p=require('./$package_json'); process.exit(p.scripts?.test ? 0 : 1)"; then
+              echo "Testing $service_dir"
+              pnpm --dir "$service_dir" run test -- --run
+            fi
+          done
+
+      - name: Check Python service syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q \
+            apps/agent-service \
+            apps/forecast-service \
+            apps/route-optimizer-service
