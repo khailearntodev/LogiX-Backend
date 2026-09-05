@@ -1,0 +1,160 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["identity"]
+}
+
+model Tenant {
+  id              String @id @default(uuid()) @db.Uuid
+  code            String @db.VarChar(50)
+  name            String @db.VarChar(200)
+  status          String @db.VarChar(20)
+  defaultCurrency String @map("default_currency") @db.Char(3)
+  timezone        String @db.VarChar(50)
+  settings        Json
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version   BigInt    @default(1)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  users           User[]
+  roles           Role[]
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+  sessions        Session[]
+
+  @@index([status, createdAt(sort: Desc)], map: "ix_tenants_status_created")
+  @@map("tenants")
+  @@schema("identity")
+}
+
+model User {
+  id                     String           @id @default(uuid()) @db.Uuid
+  tenantId               String           @map("tenant_id") @db.Uuid
+  email                  String           @db.VarChar(320)
+  passwordHash           String           @map("password_hash") @db.Text
+  displayName            String           @map("display_name") @db.VarChar(200)
+  status                 String           @db.VarChar(20)
+  tokenVersion           BigInt           @default(1) @map("token_version")
+  lastLoginAt            DateTime?        @map("last_login_at") @db.Timestamptz(6)
+  createdAt              DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version                BigInt           @default(1)
+  deletedAt              DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  tenant                 Tenant           @relation(fields: [tenantId], references: [id])
+  userRoles              UserRole[]
+  sessions               Session[]
+  rolePermissionsGranted RolePermission[] @relation("RolePermissionGrantedBy")
+  userRolesGranted       UserRole[]       @relation("UserRoleGrantedBy")
+
+  @@index([tenantId, status, createdAt(sort: Desc)], map: "ix_users_tenant_status")
+  @@map("users")
+  @@schema("identity")
+}
+
+model Role {
+  id              String           @id @default(uuid()) @db.Uuid
+  tenantId        String           @map("tenant_id") @db.Uuid
+  code            String           @db.VarChar(50)
+  name            String           @db.VarChar(100)
+  description     String?          @db.Text
+  isSystem        Boolean          @default(false) @map("is_system")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version         BigInt           @default(1)
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  tenant          Tenant           @relation(fields: [tenantId], references: [id])
+  rolePermissions RolePermission[]
+  userRoles       UserRole[]
+
+  @@unique([tenantId, code], map: "ux_roles_tenant_code")
+  @@map("roles")
+  @@schema("identity")
+}
+
+model Permission {
+  id              String           @id @default(uuid()) @db.Uuid
+  code            String           @unique(map: "ux_permissions_code") @db.VarChar(100)
+  description     String?          @db.Text
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version         BigInt           @default(1)
+  deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+  @@schema("identity")
+}
+
+model RolePermission {
+  id            String     @id @default(uuid()) @db.Uuid
+  tenantId      String     @map("tenant_id") @db.Uuid
+  roleId        String     @map("role_id") @db.Uuid
+  permissionId  String     @map("permission_id") @db.Uuid
+  grantedAt     DateTime   @default(now()) @map("granted_at") @db.Timestamptz(6)
+  grantedBy     String?    @map("granted_by") @db.Uuid
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version       BigInt     @default(1)
+  deletedAt     DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  tenant        Tenant     @relation(fields: [tenantId], references: [id])
+  role          Role       @relation(fields: [roleId], references: [id])
+  permission    Permission @relation(fields: [permissionId], references: [id])
+  grantedByUser User?      @relation("RolePermissionGrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([roleId, permissionId], map: "ux_role_permissions")
+  @@index([tenantId, permissionId], map: "ix_role_permissions_tenant_permission")
+  @@map("role_permissions")
+  @@schema("identity")
+}
+
+model UserRole {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  userId        String    @map("user_id") @db.Uuid
+  roleId        String    @map("role_id") @db.Uuid
+  grantedAt     DateTime  @default(now()) @map("granted_at") @db.Timestamptz(6)
+  grantedBy     String?   @map("granted_by") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version       BigInt    @default(1)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
+  role          Role      @relation(fields: [roleId], references: [id])
+  grantedByUser User?     @relation("UserRoleGrantedBy", fields: [grantedBy], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, userId, roleId], map: "ux_user_roles")
+  @@index([tenantId, roleId, userId], map: "ix_user_roles_role")
+  @@map("user_roles")
+  @@schema("identity")
+}
+
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  refreshTokenHash String    @unique(map: "ux_sessions_refresh_hash") @map("refresh_token_hash") @db.VarChar(128)
+  deviceId         String?   @map("device_id") @db.VarChar(200)
+  ipHash           String?   @map("ip_hash") @db.VarChar(64)
+  userAgent        String?   @map("user_agent") @db.Text
+  issuedAt         DateTime  @default(now()) @map("issued_at") @db.Timestamptz(6)
+  expiresAt        DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt        DateTime? @map("revoked_at") @db.Timestamptz(6)
+  revokeReason     String?   @map("revoke_reason") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+  tenant           Tenant    @relation(fields: [tenantId], references: [id])
+  user             User      @relation(fields: [userId], references: [id])
+
+  @@map("sessions")
+  @@schema("identity")
+}

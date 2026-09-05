@@ -1,0 +1,164 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["orders"]
+}
+
+model SalesOrder {
+  id                String               @id @default(uuid()) @db.Uuid
+  tenantId          String               @map("tenant_id") @db.Uuid
+  orderNumber       String               @map("order_number") @db.VarChar(50)
+  customerId        String               @map("customer_id") @db.Uuid
+  deliveryAddressId String               @map("delivery_address_id") @db.Uuid
+  warehouseId       String               @map("warehouse_id") @db.Uuid
+  currency          String               @db.Char(3)
+  status            String               @db.VarChar(30)
+  orderSource       String               @map("order_source") @db.VarChar(30)
+  externalChannel   String?              @map("external_channel") @db.VarChar(50)
+  externalOrderId   String?              @map("external_order_id") @db.VarChar(100)
+  idempotencyKey    String?              @map("idempotency_key") @db.VarChar(100)
+  totalQuantity     Decimal              @map("total_quantity") @db.Decimal(18, 3)
+  totalWeight       Decimal              @map("total_weight") @db.Decimal(18, 3)
+  totalVolume       Decimal              @map("total_volume") @db.Decimal(18, 6)
+  confirmedAt       DateTime?            @map("confirmed_at") @db.Timestamptz(6)
+  canceledAt        DateTime?            @map("canceled_at") @db.Timestamptz(6)
+  completedAt       DateTime?            @map("completed_at") @db.Timestamptz(6)
+  cancelReason      String?              @map("cancel_reason") @db.Text
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version           BigInt               @default(1)
+  deletedAt         DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  lines             OrderLine[]
+  statusHistory     OrderStatusHistory[]
+  shortages         OrderShortage[]
+
+  @@unique([tenantId, orderNumber], map: "ux_orders_tenant_number")
+  @@index([tenantId, status, createdAt(sort: Desc)], map: "ix_orders_tenant_status_created")
+  @@index([tenantId, customerId, createdAt(sort: Desc)], map: "ix_orders_customer_created")
+  @@index([tenantId, warehouseId, status, createdAt], map: "ix_orders_warehouse_status")
+  @@map("sales_orders")
+  @@schema("orders")
+}
+
+model OrderLine {
+  id                  String     @id @default(uuid()) @db.Uuid
+  tenantId            String     @map("tenant_id") @db.Uuid
+  orderId             String     @map("order_id") @db.Uuid
+  lineNumber          Int        @map("line_number")
+  productId           String     @map("product_id") @db.Uuid
+  skuSnapshot         String     @map("sku_snapshot") @db.VarChar(100)
+  productNameSnapshot String     @map("product_name_snapshot") @db.VarChar(200)
+  unitSnapshot        String     @map("unit_snapshot") @db.VarChar(30)
+  quantity            Decimal    @db.Decimal(18, 3)
+  unitWeight          Decimal    @map("unit_weight") @db.Decimal(18, 3)
+  unitVolume          Decimal    @map("unit_volume") @db.Decimal(18, 6)
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version             BigInt     @default(1)
+  deletedAt           DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  order               SalesOrder @relation(fields: [orderId], references: [id])
+
+  @@unique([tenantId, orderId, lineNumber], map: "ux_order_lines_number")
+  @@unique([tenantId, orderId, productId], map: "ux_order_lines_product")
+  @@index([tenantId, orderId, lineNumber], map: "ix_order_lines_order")
+  @@map("order_lines")
+  @@schema("orders")
+}
+
+model OrderStatusHistory {
+  id            String     @id @default(uuid()) @db.Uuid
+  tenantId      String     @map("tenant_id") @db.Uuid
+  orderId       String     @map("order_id") @db.Uuid
+  fromStatus    String?    @map("from_status") @db.VarChar(30)
+  toStatus      String     @map("to_status") @db.VarChar(30)
+  reason        String?    @db.Text
+  actorId       String?    @map("actor_id") @db.Uuid
+  correlationId String     @map("correlation_id") @db.Uuid
+  orderVersion  BigInt     @map("order_version")
+  occurredAt    DateTime   @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version       BigInt     @default(1)
+  deletedAt     DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  order         SalesOrder @relation(fields: [orderId], references: [id])
+
+  @@unique([tenantId, orderId, orderVersion], map: "ux_order_history_version")
+  @@index([tenantId, orderId, occurredAt, id], map: "ix_order_history_timeline")
+  @@map("order_status_history")
+  @@schema("orders")
+}
+
+model OrderShortage {
+  id                String     @id @default(uuid()) @db.Uuid
+  tenantId          String     @map("tenant_id") @db.Uuid
+  orderId           String     @map("order_id") @db.Uuid
+  productId         String     @map("product_id") @db.Uuid
+  warehouseId       String     @map("warehouse_id") @db.Uuid
+  requiredQuantity  Decimal    @map("required_quantity") @db.Decimal(18, 3)
+  availableQuantity Decimal    @map("available_quantity") @db.Decimal(18, 3)
+  shortageHash      String     @map("shortage_hash") @db.VarChar(64)
+  detectedAt        DateTime   @default(now()) @map("detected_at") @db.Timestamptz(6)
+  resolvedAt        DateTime?  @map("resolved_at") @db.Timestamptz(6)
+  createdAt         DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version           BigInt     @default(1)
+  deletedAt         DateTime?  @map("deleted_at") @db.Timestamptz(6)
+  order             SalesOrder @relation(fields: [orderId], references: [id])
+
+  @@map("order_shortages")
+  @@schema("orders")
+}
+
+model OutboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventType        String    @map("event_type") @db.VarChar(100)
+  eventVersion     Int       @map("event_version")
+  aggregateType    String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId      String    @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt    @map("aggregate_version")
+  correlationId    String    @map("correlation_id") @db.Uuid
+  causationId      String?   @map("causation_id") @db.Uuid
+  payload          Json      @db.JsonB
+  occurredAt       DateTime  @map("occurred_at") @db.Timestamptz(6)
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz(6)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([tenantId, aggregateType, aggregateId, aggregateVersion], map: "ix_outbox_aggregate")
+  @@map("outbox_events")
+  @@schema("orders")
+}
+
+model InboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventId          String    @map("event_id") @db.Uuid
+  consumerName     String    @map("consumer_name") @db.VarChar(100)
+  eventType        String    @map("event_type") @db.VarChar(100)
+  aggregateId      String?   @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt?   @map("aggregate_version")
+  processedAt      DateTime  @default(now()) @map("processed_at") @db.Timestamptz(6)
+  outcome          String    @db.VarChar(30)
+  errorCode        String?   @map("error_code") @db.VarChar(100)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([consumerName, eventId], map: "ux_inbox_consumer_event")
+  @@index([tenantId, eventId], map: "ix_inbox_tenant_event")
+  @@index([tenantId, aggregateId, aggregateVersion], map: "ix_inbox_aggregate_version")
+  @@map("inbox_events")
+  @@schema("orders")
+}

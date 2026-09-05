@@ -1,3 +1,6 @@
 packages:
   - "apps/*"
   - "libs/*"
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true

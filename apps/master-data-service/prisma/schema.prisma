@@ -1,0 +1,143 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["master_data"]
+}
+
+model Customer {
+  id             String            @id @default(uuid()) @db.Uuid
+  tenantId       String            @map("tenant_id") @db.Uuid
+  code           String            @db.VarChar(50)
+  name           String            @db.VarChar(200)
+  taxCode        String?           @map("tax_code") @db.VarChar(50)
+  phone          String?           @db.VarChar(30)
+  email          String?           @db.VarChar(320)
+  status         String            @db.VarChar(20)
+  disabledAt     DateTime?         @map("disabled_at") @db.Timestamptz(6)
+  disabledReason String?           @map("disabled_reason") @db.Text
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version        BigInt            @default(1)
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  addresses      CustomerAddress[]
+
+  @@unique([tenantId, code], map: "ux_customers_tenant_code")
+  @@index([tenantId, status, name], map: "ix_customers_tenant_status_name")
+  @@map("customers")
+  @@schema("master_data")
+}
+
+model CustomerAddress {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  customerId    String    @map("customer_id") @db.Uuid
+  label         String?   @db.VarChar(100)
+  recipientName String    @map("recipient_name") @db.VarChar(200)
+  phone         String?   @db.VarChar(30)
+  addressLine   String    @map("address_line") @db.Text
+  ward          String?   @db.VarChar(100)
+  district      String?   @db.VarChar(100)
+  province      String    @db.VarChar(100)
+  postalCode    String?   @map("postal_code") @db.VarChar(20)
+  latitude      Decimal?  @db.Decimal(9, 6)
+  longitude     Decimal?  @db.Decimal(9, 6)
+  isDefault     Boolean   @default(false) @map("is_default")
+  status        String    @db.VarChar(20)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version       BigInt    @default(1)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  customer      Customer  @relation(fields: [customerId], references: [id])
+
+  @@index([tenantId, customerId, status], map: "ix_customer_addresses_customer")
+  @@map("customer_addresses")
+  @@schema("master_data")
+}
+
+model Product {
+  id        String    @id @default(uuid()) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  sku       String    @db.VarChar(100)
+  name      String    @db.VarChar(200)
+  baseUnit  String    @map("base_unit") @db.VarChar(30)
+  weight    Decimal   @db.Decimal(18, 3)
+  volume    Decimal   @db.Decimal(18, 6)
+  status    String    @db.VarChar(20)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version   BigInt    @default(1)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, sku], map: "ux_products_tenant_sku")
+  @@index([tenantId, status, name], map: "ix_products_tenant_status_name")
+  @@map("products")
+  @@schema("master_data")
+}
+
+model Warehouse {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  code        String    @db.VarChar(50)
+  name        String    @db.VarChar(200)
+  addressLine String    @map("address_line") @db.Text
+  ward        String?   @db.VarChar(100)
+  district    String?   @db.VarChar(100)
+  province    String    @db.VarChar(100)
+  postalCode  String?   @map("postal_code") @db.VarChar(20)
+  latitude    Decimal?  @db.Decimal(9, 6)
+  longitude   Decimal?  @db.Decimal(9, 6)
+  status      String    @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version     BigInt    @default(1)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, code], map: "ux_warehouses_tenant_code")
+  @@index([tenantId, status, name], map: "ix_warehouses_tenant_status")
+  @@map("warehouses")
+  @@schema("master_data")
+}
+
+model Vehicle {
+  id             String    @id @default(uuid()) @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  code           String    @db.VarChar(50)
+  licensePlate   String    @map("license_plate") @db.VarChar(30)
+  capacityWeight Decimal   @map("capacity_weight") @db.Decimal(18, 3)
+  capacityVolume Decimal   @map("capacity_volume") @db.Decimal(18, 6)
+  status         String    @db.VarChar(20)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version        BigInt    @default(1)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, code], map: "ux_vehicles_tenant_code")
+  @@map("vehicles")
+  @@schema("master_data")
+}
+
+model Driver {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  code          String    @db.VarChar(50)
+  userId        String    @map("user_id") @db.Uuid
+  licenseNumber String    @map("license_number") @db.VarChar(100)
+  licenseExpiry DateTime  @map("license_expiry") @db.Date
+  phone         String?   @db.VarChar(30)
+  status        String    @db.VarChar(20)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version       BigInt    @default(1)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, code], map: "ux_drivers_tenant_code")
+  @@unique([tenantId, userId], map: "ux_drivers_tenant_user")
+  @@unique([tenantId, licenseNumber], map: "ux_drivers_tenant_license")
+  @@map("drivers")
+  @@schema("master_data")
+}

@@ -1,0 +1,24 @@
+name: logix
+
+services:
+  postgres:
+    image: postgres:17-bookworm
+    container_name: logix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_ADMIN_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      SERVICE_DB_PASSWORD: ${SERVICE_DB_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - logix-postgres-data:/var/lib/postgresql/data
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  logix-postgres-data:

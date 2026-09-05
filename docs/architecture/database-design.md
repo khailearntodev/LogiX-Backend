@@ -103,7 +103,7 @@ token, API key hoặc dữ liệu nhạy cảm chưa lọc trong object storage.
 
 ### 3.2 Cột nền
 
-Business table thuộc tenant và có vòng đời cập nhật nên có tối thiểu:
+Mọi business table và bảng hạ tầng service-local hiện có bộ cột nền tối thiểu:
 
 ```sql
 id uuid PRIMARY KEY,
@@ -113,6 +113,10 @@ updated_at timestamptz NOT NULL DEFAULT now(),
 version bigint NOT NULL DEFAULT 1,
 deleted_at timestamptz NULL
 ```
+
+Ba ngoại lệ tenant scope là `tenants` (chính là tenant authority), `permissions`
+(catalogue toàn nền tảng) và `notification_deliveries` (suy ra tenant qua FK tới
+`notification_recipients`). Các bảng này vẫn có `id` và các cột lifecycle còn lại.
 
 `created_by`/`updated_by` chỉ thêm khi service cần nguồn actor trực tiếp. Audit đầy
 đủ thuộc `audit-service`. Không tự động coi `updated_at` là bằng chứng audit.
@@ -131,8 +135,8 @@ deleted_at timestamptz NULL
   hiện tại vẫn giữ mã của bản ghi đã xóa; nếu muốn tái sử dụng mã cần một quyết
   định sản phẩm riêng trước khi đổi unique index thành partial index.
 
-Các bảng append-only không dùng vòng đời soft delete ở business path và không kế
-thừa đầy đủ bộ cột mutable ở trên. Các bảng append-only của thiết kế hiện tại gồm:
+Các bảng có ý nghĩa append-only về nghiệp vụ hiện vẫn kế thừa đầy đủ cột nền và
+`deleted_at` để schema nhất quán. Nhóm này gồm:
 
 - `stock_movements`;
 - `order_status_history`;
@@ -140,11 +144,11 @@ thừa đầy đủ bộ cột mutable ở trên. Các bảng append-only của 
 - `delivery_attempts` sau khi attempt đã được ghi nhận;
 - `audit_logs`.
 
-Business role chỉ được `INSERT`/`SELECT` các bảng append-only, không được
-`UPDATE`, `DELETE` hoặc gán `deleted_at`. Việc loại bỏ dữ liệu, nếu có, chỉ do
-retention/archive job với role vận hành riêng thực hiện. `outbox_events` không
-được xếp là strict append-only vì publisher còn cập nhật trạng thái publish/retry;
-`inbox_events` cũng tuân theo lifecycle xử lý và retention riêng.
+Việc thu hồi `UPDATE`/`DELETE` ở database chưa được áp dụng trong giai đoạn hiện
+tại. Application không cung cấp business flow sửa/xóa các bản ghi này; cơ chế
+append-only bằng role hoặc trigger sẽ được bổ sung sau khi retention policy được
+duyệt. `outbox_events` và `inbox_events` cần cập nhật trạng thái xử lý/retry nên
+không thuộc nhóm strict append-only.
 
 ### 3.3 Quy tắc index multi-tenant
 
@@ -184,6 +188,14 @@ Service phát event quan trọng dùng `outbox_events` trong cùng transaction v
 đổi authoritative state. Consumer dùng `inbox_events` hoặc bảng business
 idempotency trong cùng transaction với business effect.
 
+Phạm vi MVP hiện tại:
+
+- `outbox_events`: Order, Inventory, Fulfillment và Transport;
+- `inbox_events`: Order, Inventory, Fulfillment, Transport, Notification và Audit;
+- Identity và Master Data chưa có event flow bắt buộc nên chưa tạo hai bảng này.
+
+Hai bảng event dùng cùng bộ cột nền và soft delete như các bảng khác.
+
 Mẫu `outbox_events`:
 
 | Cột | Kiểu | Ghi chú |
@@ -209,7 +221,7 @@ Index chuẩn:
 ```sql
 CREATE INDEX ix_outbox_pending
 ON outbox_events (next_attempt_at, occurred_at)
-WHERE published_at IS NULL;
+WHERE published_at IS NULL AND deleted_at IS NULL;
 
 CREATE INDEX ix_outbox_aggregate
 ON outbox_events (tenant_id, aggregate_type, aggregate_id, aggregate_version);
@@ -218,20 +230,26 @@ ON outbox_events (tenant_id, aggregate_type, aggregate_id, aggregate_version);
 Mẫu `inbox_events`:
 
 ```sql
-event_id uuid PRIMARY KEY,
+id uuid PRIMARY KEY,
 tenant_id uuid NOT NULL,
+event_id uuid NOT NULL,
 consumer_name varchar(100) NOT NULL,
 event_type varchar(100) NOT NULL,
 aggregate_id uuid,
 aggregate_version bigint,
 processed_at timestamptz NOT NULL,
 outcome varchar(30) NOT NULL,
-error_code varchar(100)
+error_code varchar(100),
+created_at timestamptz NOT NULL DEFAULT now(),
+updated_at timestamptz NOT NULL DEFAULT now(),
+version bigint NOT NULL DEFAULT 1,
+deleted_at timestamptz NULL,
+UNIQUE (consumer_name, event_id)
 ```
 
-Nếu nhiều logical consumer dùng chung database, khóa unique là
-`UNIQUE (consumer_name, event_id)`. Inbox cần retention job sau thời gian an toàn;
-không xóa trước cửa sổ replay/dedup đã công bố.
+Khóa unique `(consumer_name, event_id)` cho phép nhiều logical consumer dùng chung
+database mà vẫn deduplicate độc lập. Inbox cần retention job sau thời gian an
+toàn; không xóa trước cửa sổ replay/dedup đã công bố.
 
 ## 4. `api-gateway`
 
@@ -973,10 +991,11 @@ WHERE outcome IN ('DENIED', 'FAILED');
 Không tạo GIN trên toàn bộ `before_data`/`after_data` mặc định vì tốn chi phí ghi.
 Chỉ thêm expression index cho key thực sự được truy vấn thường xuyên.
 
-Audit role ứng dụng chỉ có `INSERT` và `SELECT`; không có `UPDATE`/`DELETE`. Nếu
-phải tuân thủ retention, purge chạy bằng role vận hành riêng, có audit và chính
-sách được ADR phê duyệt. Khi dữ liệu lớn, partition theo tháng trên `occurred_at`,
-nhưng mọi query vẫn phải có `tenant_id` và khoảng thời gian.
+Audit append-only ở tầng quyền database chưa được cưỡng chế trong giai đoạn hiện
+tại. Khi chính sách retention được duyệt, runtime role nên chỉ có `INSERT` và
+`SELECT`; purge chạy bằng role vận hành riêng và có audit. Khi dữ liệu lớn,
+partition theo tháng trên `occurred_at`, nhưng mọi query vẫn phải có `tenant_id`
+và khoảng thời gian.
 
 ## 13. `agent-service` - `logix_agent`
 
@@ -1407,7 +1426,8 @@ Không partition theo tenant mặc định vì số tenant thay đổi và gây 
 6. Backup và artifact được mã hóa.
 7. Query luôn parameterized; không nối chuỗi SQL từ input.
 8. Database role ứng dụng không có quyền tạo schema/superuser.
-9. Audit role không có update/delete qua business path.
+9. Business API không cung cấp luồng update/delete audit; giới hạn quyền database
+  được hoãn tới khi retention policy được duyệt.
 10. Negative test bắt buộc chứng minh tenant A không đọc/sửa tenant B dù biết ID.
 
 ## 22. Checklist triển khai database cho từng service
@@ -1417,8 +1437,10 @@ Trước khi service được coi là sẵn sàng:
 - [ ] Database/schema/role riêng đã được tạo.
 - [ ] Migration đầu tiên chạy được trên PostgreSQL sạch.
 - [ ] Tất cả business table có tenant scope đúng boundary.
-- [ ] Bảng mutable có `deleted_at`; repository thường lọc `deleted_at IS NULL`.
-- [ ] Bảng append-only không có API update/delete/soft-delete và chỉ purge qua retention role.
+- [ ] Mọi bảng có bộ cột nền, PK và `deleted_at`; repository thường lọc
+  `deleted_at IS NULL`.
+- [ ] Bảng append-only không có API update/delete; giới hạn database role được
+  áp dụng khi retention policy được duyệt.
 - [ ] Unique constraint nghiệp vụ chứa `tenant_id` khi cần.
 - [ ] Không có FK, view hoặc query xuyên service database.
 - [ ] Repository bắt buộc nhận tenant context.

@@ -1,0 +1,205 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["inventory"]
+}
+
+model InventoryBalance {
+  id                String                 @id @default(uuid()) @db.Uuid
+  tenantId          String                 @map("tenant_id") @db.Uuid
+  warehouseId       String                 @map("warehouse_id") @db.Uuid
+  productId         String                 @map("product_id") @db.Uuid
+  onHandQuantity    Decimal                @map("on_hand_quantity") @db.Decimal(18, 3)
+  reservedQuantity  Decimal                @map("reserved_quantity") @db.Decimal(18, 3)
+  availableQuantity Decimal?               @default(dbgenerated("(on_hand_quantity - reserved_quantity)")) @map("available_quantity") @ignore @db.Decimal(18, 3)
+  lowStockThreshold Decimal                @map("low_stock_threshold") @db.Decimal(18, 3)
+  version           BigInt                 @default(1)
+  createdAt         DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt         DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  reservations      InventoryReservation[]
+  movements         StockMovement[]
+
+  @@unique([tenantId, warehouseId, productId], map: "ux_balances_warehouse_product")
+  @@index([tenantId, productId, warehouseId], map: "ix_balances_product_warehouse")
+  @@map("inventory_balances")
+  @@schema("inventory")
+}
+
+model ReservationGroup {
+  id             String                 @id @default(uuid()) @db.Uuid
+  tenantId       String                 @map("tenant_id") @db.Uuid
+  orderId        String                 @map("order_id") @db.Uuid
+  warehouseId    String                 @map("warehouse_id") @db.Uuid
+  status         String                 @db.VarChar(20)
+  idempotencyKey String                 @map("idempotency_key") @db.VarChar(100)
+  orderVersion   BigInt                 @map("order_version")
+  reservedAt     DateTime               @default(now()) @map("reserved_at") @db.Timestamptz(6)
+  releasedAt     DateTime?              @map("released_at") @db.Timestamptz(6)
+  issuedAt       DateTime?              @map("issued_at") @db.Timestamptz(6)
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version        BigInt                 @default(1)
+  deletedAt      DateTime?              @map("deleted_at") @db.Timestamptz(6)
+  reservations   InventoryReservation[]
+
+  @@unique([tenantId, idempotencyKey], map: "ux_reservation_idempotency")
+  @@index([tenantId, status, reservedAt], map: "ix_reservation_status_age")
+  @@map("reservation_groups")
+  @@schema("inventory")
+}
+
+model InventoryReservation {
+  id                 String           @id @default(uuid()) @db.Uuid
+  tenantId           String           @map("tenant_id") @db.Uuid
+  reservationGroupId String           @map("reservation_group_id") @db.Uuid
+  orderId            String           @map("order_id") @db.Uuid
+  orderLineId        String           @map("order_line_id") @db.Uuid
+  balanceId          String           @map("balance_id") @db.Uuid
+  warehouseId        String           @map("warehouse_id") @db.Uuid
+  productId          String           @map("product_id") @db.Uuid
+  quantity           Decimal          @db.Decimal(18, 3)
+  status             String           @db.VarChar(20)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  releasedAt         DateTime?        @map("released_at") @db.Timestamptz(6)
+  issuedAt           DateTime?        @map("issued_at") @db.Timestamptz(6)
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version            BigInt           @default(1)
+  deletedAt          DateTime?        @map("deleted_at") @db.Timestamptz(6)
+  reservationGroup   ReservationGroup @relation(fields: [reservationGroupId], references: [id])
+  balance            InventoryBalance @relation(fields: [balanceId], references: [id])
+
+  @@unique([tenantId, reservationGroupId, orderLineId], map: "ux_inventory_reservations_line")
+  @@index([tenantId, reservationGroupId], map: "ix_reservations_group")
+  @@index([tenantId, orderId, status], map: "ix_reservations_order")
+  @@map("inventory_reservations")
+  @@schema("inventory")
+}
+
+model StockMovement {
+  id             String            @id @default(uuid()) @db.Uuid
+  tenantId       String            @map("tenant_id") @db.Uuid
+  warehouseId    String            @map("warehouse_id") @db.Uuid
+  productId      String            @map("product_id") @db.Uuid
+  balanceId      String            @map("balance_id") @db.Uuid
+  movementType   String            @map("movement_type") @db.VarChar(30)
+  quantityDelta  Decimal           @map("quantity_delta") @db.Decimal(18, 3)
+  beforeOnHand   Decimal           @map("before_on_hand") @db.Decimal(18, 3)
+  afterOnHand    Decimal           @map("after_on_hand") @db.Decimal(18, 3)
+  referenceType  String            @map("reference_type") @db.VarChar(50)
+  referenceId    String            @map("reference_id") @db.Uuid
+  idempotencyKey String            @map("idempotency_key") @db.VarChar(100)
+  reason         String?           @db.Text
+  actorId        String?           @map("actor_id") @db.Uuid
+  correlationId  String            @map("correlation_id") @db.Uuid
+  occurredAt     DateTime          @map("occurred_at") @db.Timestamptz(6)
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version        BigInt            @default(1)
+  deletedAt      DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  balance        InventoryBalance  @relation(fields: [balanceId], references: [id])
+  receiptLine    StockReceiptLine?
+
+  @@unique([tenantId, idempotencyKey], map: "ux_stock_movement_idempotency")
+  @@index([tenantId, warehouseId, productId, occurredAt(sort: Desc), id], map: "ix_stock_movement_balance_time")
+  @@index([tenantId, referenceType, referenceId], map: "ix_stock_movement_reference")
+  @@index([tenantId, correlationId], map: "ix_stock_movement_correlation")
+  @@map("stock_movements")
+  @@schema("inventory")
+}
+
+model StockReceipt {
+  id             String             @id @default(uuid()) @db.Uuid
+  tenantId       String             @map("tenant_id") @db.Uuid
+  receiptNumber  String             @map("receipt_number") @db.VarChar(50)
+  warehouseId    String             @map("warehouse_id") @db.Uuid
+  idempotencyKey String             @map("idempotency_key") @db.VarChar(100)
+  status         String             @db.VarChar(20)
+  receivedAt     DateTime           @map("received_at") @db.Timestamptz(6)
+  actorId        String?            @map("actor_id") @db.Uuid
+  correlationId  String             @map("correlation_id") @db.Uuid
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version        BigInt             @default(1)
+  deletedAt      DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  lines          StockReceiptLine[]
+
+  @@unique([tenantId, receiptNumber], map: "ux_receipts_tenant_number")
+  @@unique([tenantId, idempotencyKey], map: "ux_receipts_idempotency")
+  @@index([tenantId, warehouseId, receivedAt(sort: Desc)], map: "ix_receipts_warehouse_time")
+  @@map("stock_receipts")
+  @@schema("inventory")
+}
+
+model StockReceiptLine {
+  id         String        @id @default(uuid()) @db.Uuid
+  tenantId   String        @map("tenant_id") @db.Uuid
+  receiptId  String        @map("receipt_id") @db.Uuid
+  productId  String        @map("product_id") @db.Uuid
+  quantity   Decimal       @db.Decimal(18, 3)
+  movementId String        @unique(map: "ux_receipt_lines_movement") @map("movement_id") @db.Uuid
+  createdAt  DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version    BigInt        @default(1)
+  deletedAt  DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  receipt    StockReceipt  @relation(fields: [receiptId], references: [id])
+  movement   StockMovement @relation(fields: [movementId], references: [id])
+
+  @@index([tenantId, receiptId], map: "ix_receipt_lines_receipt")
+  @@map("stock_receipt_lines")
+  @@schema("inventory")
+}
+
+model OutboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventType        String    @map("event_type") @db.VarChar(100)
+  eventVersion     Int       @map("event_version")
+  aggregateType    String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId      String    @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt    @map("aggregate_version")
+  correlationId    String    @map("correlation_id") @db.Uuid
+  causationId      String?   @map("causation_id") @db.Uuid
+  payload          Json      @db.JsonB
+  occurredAt       DateTime  @map("occurred_at") @db.Timestamptz(6)
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz(6)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([tenantId, aggregateType, aggregateId, aggregateVersion], map: "ix_outbox_aggregate")
+  @@map("outbox_events")
+  @@schema("inventory")
+}
+
+model InboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventId          String    @map("event_id") @db.Uuid
+  consumerName     String    @map("consumer_name") @db.VarChar(100)
+  eventType        String    @map("event_type") @db.VarChar(100)
+  aggregateId      String?   @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt?   @map("aggregate_version")
+  processedAt      DateTime  @default(now()) @map("processed_at") @db.Timestamptz(6)
+  outcome          String    @db.VarChar(30)
+  errorCode        String?   @map("error_code") @db.VarChar(100)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([consumerName, eventId], map: "ux_inbox_consumer_event")
+  @@index([tenantId, eventId], map: "ix_inbox_tenant_event")
+  @@index([tenantId, aggregateId, aggregateVersion], map: "ix_inbox_aggregate_version")
+  @@map("inbox_events")
+  @@schema("inventory")
+}

@@ -1,0 +1,249 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["transport"]
+}
+
+model DeliveryTrip {
+  id                  String         @id @default(uuid()) @db.Uuid
+  tenantId            String         @map("tenant_id") @db.Uuid
+  tripNumber          String         @map("trip_number") @db.VarChar(50)
+  warehouseId         String         @map("warehouse_id") @db.Uuid
+  vehicleId           String         @map("vehicle_id") @db.Uuid
+  driverId            String         @map("driver_id") @db.Uuid
+  status              String         @db.VarChar(20)
+  plannedStartAt      DateTime       @map("planned_start_at") @db.Timestamptz(6)
+  actualStartAt       DateTime?      @map("actual_start_at") @db.Timestamptz(6)
+  completedAt         DateTime?      @map("completed_at") @db.Timestamptz(6)
+  totalWeight         Decimal        @map("total_weight") @db.Decimal(18, 3)
+  totalVolume         Decimal        @map("total_volume") @db.Decimal(18, 6)
+  approvedRoutePlanId String?        @map("approved_route_plan_id") @db.Uuid
+  dispatchVersion     BigInt         @map("dispatch_version")
+  dispatchedAt        DateTime?      @map("dispatched_at") @db.Timestamptz(6)
+  canceledAt          DateTime?      @map("canceled_at") @db.Timestamptz(6)
+  cancelReason        String?        @map("cancel_reason") @db.Text
+  createdAt           DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version             BigInt         @default(1)
+  deletedAt           DateTime?      @map("deleted_at") @db.Timestamptz(6)
+  approvedRoutePlan   RoutePlan?     @relation("ApprovedRoutePlan", fields: [approvedRoutePlanId], references: [id])
+  routePlans          RoutePlan[]    @relation("TripRoutePlans")
+  shipments           TripShipment[]
+  stops               TripStop[]
+  dispatches          TripDispatch[]
+
+  @@unique([tenantId, tripNumber], map: "ux_trips_number")
+  @@index([tenantId, status, plannedStartAt], map: "ix_trips_status_schedule")
+  @@index([tenantId, warehouseId, status, plannedStartAt], map: "ix_trips_warehouse_status")
+  @@map("delivery_trips")
+  @@schema("transport")
+}
+
+model TripShipment {
+  id          String       @id @default(uuid()) @db.Uuid
+  tenantId    String       @map("tenant_id") @db.Uuid
+  tripId      String       @map("trip_id") @db.Uuid
+  shipmentId  String       @map("shipment_id") @db.Uuid
+  warehouseId String       @map("warehouse_id") @db.Uuid
+  weight      Decimal      @db.Decimal(18, 3)
+  volume      Decimal      @db.Decimal(18, 6)
+  assignedAt  DateTime     @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  removedAt   DateTime?    @map("removed_at") @db.Timestamptz(6)
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version     BigInt       @default(1)
+  deletedAt   DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  trip        DeliveryTrip @relation(fields: [tripId], references: [id])
+
+  @@map("trip_shipments")
+  @@schema("transport")
+}
+
+model TripStop {
+  id                String            @id @default(uuid()) @db.Uuid
+  tenantId          String            @map("tenant_id") @db.Uuid
+  tripId            String            @map("trip_id") @db.Uuid
+  shipmentId        String            @map("shipment_id") @db.Uuid
+  deliveryAddressId String            @map("delivery_address_id") @db.Uuid
+  addressSnapshot   Json              @map("address_snapshot")
+  latitude          Decimal?          @db.Decimal(9, 6)
+  longitude         Decimal?          @db.Decimal(9, 6)
+  plannedSequence   Int               @map("planned_sequence")
+  approvedSequence  Int?              @map("approved_sequence")
+  status            String            @db.VarChar(20)
+  currentAttempt    Int               @default(0) @map("current_attempt")
+  arrivedAt         DateTime?         @map("arrived_at") @db.Timestamptz(6)
+  completedAt       DateTime?         @map("completed_at") @db.Timestamptz(6)
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version           BigInt            @default(1)
+  deletedAt         DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  trip              DeliveryTrip      @relation(fields: [tripId], references: [id])
+  routePlanStops    RoutePlanStop[]
+  deliveryAttempts  DeliveryAttempt[]
+
+  @@unique([tenantId, tripId, shipmentId], map: "ux_trip_stop_shipment")
+  @@index([tenantId, tripId, approvedSequence], map: "ix_trip_stops_driver_view")
+  @@index([tenantId, tripId, status], map: "ix_trip_stops_status")
+  @@map("trip_stops")
+  @@schema("transport")
+}
+
+model RoutePlan {
+  id               String          @id @default(uuid()) @db.Uuid
+  tenantId         String          @map("tenant_id") @db.Uuid
+  tripId           String          @map("trip_id") @db.Uuid
+  planVersion      BigInt          @map("plan_version")
+  routeRequestId   String          @map("route_request_id") @db.Uuid
+  status           String          @db.VarChar(20)
+  source           String          @db.VarChar(30)
+  inputHash        String          @map("input_hash") @db.VarChar(64)
+  solverName       String          @map("solver_name") @db.VarChar(100)
+  solverVersion    String          @map("solver_version") @db.VarChar(50)
+  objective        String          @db.VarChar(100)
+  totalDistance    Decimal         @map("total_distance") @db.Decimal(18, 3)
+  estimatedCost    Decimal         @map("estimated_cost") @db.Decimal(18, 2)
+  metrics          Json
+  originalPlanId   String?         @map("original_plan_id") @db.Uuid
+  overrideReason   String?         @map("override_reason") @db.Text
+  approvedBy       String?         @map("approved_by") @db.Uuid
+  approvedAt       DateTime?       @map("approved_at") @db.Timestamptz(6)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt          @default(1)
+  deletedAt        DateTime?       @map("deleted_at") @db.Timestamptz(6)
+  trip             DeliveryTrip    @relation("TripRoutePlans", fields: [tripId], references: [id])
+  approvedForTrips DeliveryTrip[]  @relation("ApprovedRoutePlan")
+  originalPlan     RoutePlan?      @relation("RoutePlanOverrides", fields: [originalPlanId], references: [id])
+  overrides        RoutePlan[]     @relation("RoutePlanOverrides")
+  stops            RoutePlanStop[]
+
+  @@unique([tenantId, tripId, planVersion], map: "ux_route_plan_version")
+  @@unique([tenantId, routeRequestId], map: "ux_route_request")
+  @@index([tenantId, tripId, createdAt(sort: Desc)], map: "ix_route_plan_trip_created")
+  @@index([tenantId, inputHash, createdAt(sort: Desc)], map: "ix_route_plan_input_hash")
+  @@map("route_plans")
+  @@schema("transport")
+}
+
+model RoutePlanStop {
+  id                   String    @id @default(uuid()) @db.Uuid
+  routePlanId          String    @map("route_plan_id") @db.Uuid
+  tenantId             String    @map("tenant_id") @db.Uuid
+  tripStopId           String    @map("trip_stop_id") @db.Uuid
+  sequence             Int
+  distanceFromPrevious Decimal   @map("distance_from_previous") @db.Decimal(18, 3)
+  cumulativeDistance   Decimal   @map("cumulative_distance") @db.Decimal(18, 3)
+  estimatedArrivalAt   DateTime  @map("estimated_arrival_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version              BigInt    @default(1)
+  deletedAt            DateTime? @map("deleted_at") @db.Timestamptz(6)
+  routePlan            RoutePlan @relation(fields: [routePlanId], references: [id])
+  tripStop             TripStop  @relation(fields: [tripStopId], references: [id])
+
+  @@unique([tenantId, routePlanId, sequence], map: "ux_route_plan_stop_sequence")
+  @@unique([tenantId, routePlanId, tripStopId], map: "ux_route_plan_stop_trip_stop")
+  @@map("route_plan_stops")
+  @@schema("transport")
+}
+
+model DeliveryAttempt {
+  id            String    @id @default(uuid()) @db.Uuid
+  tenantId      String    @map("tenant_id") @db.Uuid
+  tripStopId    String    @map("trip_stop_id") @db.Uuid
+  shipmentId    String    @map("shipment_id") @db.Uuid
+  attemptNumber Int       @map("attempt_number")
+  status        String    @db.VarChar(20)
+  reason        String?   @db.Text
+  actorDriverId String    @map("actor_driver_id") @db.Uuid
+  occurredAt    DateTime  @map("occurred_at") @db.Timestamptz(6)
+  correlationId String    @map("correlation_id") @db.Uuid
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version       BigInt    @default(1)
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  tripStop      TripStop  @relation(fields: [tripStopId], references: [id])
+
+  @@unique([tenantId, tripStopId, attemptNumber], map: "ux_delivery_attempt_number")
+  @@index([tenantId, shipmentId, attemptNumber(sort: Desc)], map: "ix_delivery_attempt_shipment")
+  @@map("delivery_attempts")
+  @@schema("transport")
+}
+
+model TripDispatch {
+  id              String       @id @default(uuid()) @db.Uuid
+  tenantId        String       @map("tenant_id") @db.Uuid
+  tripId          String       @map("trip_id") @db.Uuid
+  dispatchVersion BigInt       @map("dispatch_version")
+  idempotencyKey  String       @map("idempotency_key") @db.VarChar(100)
+  status          String       @db.VarChar(20)
+  requestedBy     String       @map("requested_by") @db.Uuid
+  requestedAt     DateTime     @map("requested_at") @db.Timestamptz(6)
+  completedAt     DateTime?    @map("completed_at") @db.Timestamptz(6)
+  correlationId   String       @map("correlation_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version         BigInt       @default(1)
+  deletedAt       DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  trip            DeliveryTrip @relation(fields: [tripId], references: [id])
+
+  @@unique([tenantId, tripId, dispatchVersion], map: "ux_trip_dispatch_version")
+  @@unique([tenantId, idempotencyKey], map: "ux_trip_dispatch_key")
+  @@map("trip_dispatches")
+  @@schema("transport")
+}
+
+model OutboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventType        String    @map("event_type") @db.VarChar(100)
+  eventVersion     Int       @map("event_version")
+  aggregateType    String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId      String    @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt    @map("aggregate_version")
+  correlationId    String    @map("correlation_id") @db.Uuid
+  causationId      String?   @map("causation_id") @db.Uuid
+  payload          Json      @db.JsonB
+  occurredAt       DateTime  @map("occurred_at") @db.Timestamptz(6)
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz(6)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([tenantId, aggregateType, aggregateId, aggregateVersion], map: "ix_outbox_aggregate")
+  @@map("outbox_events")
+  @@schema("transport")
+}
+
+model InboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventId          String    @map("event_id") @db.Uuid
+  consumerName     String    @map("consumer_name") @db.VarChar(100)
+  eventType        String    @map("event_type") @db.VarChar(100)
+  aggregateId      String?   @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt?   @map("aggregate_version")
+  processedAt      DateTime  @default(now()) @map("processed_at") @db.Timestamptz(6)
+  outcome          String    @db.VarChar(30)
+  errorCode        String?   @map("error_code") @db.VarChar(100)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([consumerName, eventId], map: "ux_inbox_consumer_event")
+  @@index([tenantId, eventId], map: "ix_inbox_tenant_event")
+  @@index([tenantId, aggregateId, aggregateVersion], map: "ix_inbox_aggregate")
+  @@map("inbox_events")
+  @@schema("transport")
+}
