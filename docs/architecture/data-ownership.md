@@ -118,9 +118,19 @@ A projection must be:
 
 ## 7. Soft delete / disable behavior
 
-Master data that is referenced by business records should be disabled/locked rather than hard-deleted.
+Disable and soft delete have different semantics:
+
+- disable/lock is a reversible business state and records when and why an administrator made the entity unavailable;
+- soft delete sets `deleted_at`, excludes the row from normal business queries, and retains it until an approved retention process may hard-delete it;
+- mutable tenant-owned business tables use nullable `deleted_at` as the common soft-delete marker;
+- normal repositories filter `tenant_id` and `deleted_at IS NULL`; recovery or administrative access to deleted rows requires an explicit authorized path;
+- soft-deleting a row increments its optimistic version, updates `updated_at`, and produces the required audit record.
+
+Master data that is referenced by business records should be disabled/locked rather than hard-deleted. Soft deletion does not permit historical references to be broken or business identifiers to be reused automatically.
 
 This preserves historical references and avoids breaking existing orders, shipments, trips, and audit records.
+
+Append-only ledgers and histories are exceptions to the mutable soft-delete shape. `stock_movements`, order/shipment status histories, completed delivery-attempt records, and `audit_logs` are not updated, deleted, or soft-deleted through business APIs. Any archive or purge is performed only by a separately authorized retention process.
 
 ## 8. AI data boundary
 
