@@ -146,18 +146,42 @@ jobs:
               pnpm --dir "$service_dir" run test -- --run
             fi
           done
-  fastapi:
-    name: Validate FastAPI services
+  python-databases:
+    name: Validate Python database services
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - agent-service
-          - forecast-service
-          - route-optimizer-service
+        include:
+          - service: agent-service
+            package: logix_agent
+            database: logix_agent
+          - service: forecast-service
+            package: logix_forecast
+            database: logix_forecast
+          - service: route-optimizer-service
+            package: logix_route_optimizer
+            database: logix_route_optimizer
+
+    services:
+      postgres:
+        image: postgres:17-bookworm
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ${{ matrix.database }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
+    env:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/${{ matrix.database }}
 
     steps:
       - name: Checkout repository
@@ -167,16 +191,67 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/${{ matrix.service }}/pyproject.toml
 
-      - name: Validate FastAPI service syntax
+      - name: Validate Python database layout
         shell: bash
         run: |
           set -euo pipefail
           service_dir="apps/${{ matrix.service }}"
+          package_dir="$service_dir/src/${{ matrix.package }}"
 
-          test -d "$service_dir/app" || {
-            echo "Missing FastAPI application directory: $service_dir/app"
+          test -f "$service_dir/pyproject.toml" || {
+            echo "Missing Python project manifest: $service_dir/pyproject.toml"
             exit 1
           }
 
-          python -m compileall -q "$service_dir/app"
+          test -d "$package_dir" || {
+            echo "Missing package $package_dir. Python services must use their unique src package (docs/decisions/0002-python-service-source-layout.md)."
+            exit 1
+          }
+
+          legacy_module="$(find "$service_dir/app" -type f -name '*.py' -print -quit 2>/dev/null || true)"
+          test -z "$legacy_module" || {
+            echo "Forbidden legacy Python module: $legacy_module. Move code under $package_dir (docs/decisions/0002-python-service-source-layout.md)."
+            exit 1
+          }
+
+          required_paths=(
+            "$package_dir/db/base.py"
+            "$package_dir/db/session.py"
+            "$package_dir/db/model_registry.py"
+            "$package_dir/modules"
+            "$service_dir/alembic.ini"
+            "$service_dir/migrations"
+          )
+
+          for required_path in "${required_paths[@]}"; do
+            test -e "$required_path" || {
+              echo "Missing database layout path: $required_path (docs/decisions/0001-python-persistence-sqlalchemy-alembic.md and docs/decisions/0002-python-service-source-layout.md)."
+              exit 1
+            }
+          done
+
+      - name: Install Python service
+        working-directory: apps/${{ matrix.service }}
+        run: python -m pip install -e ".[test]"
+
+      - name: Compile Python source
+        working-directory: apps/${{ matrix.service }}
+        run: python -m compileall -q src
+
+      - name: Verify package and model registry imports
+        working-directory: apps/${{ matrix.service }}
+        run: |
+          python -c "import importlib; importlib.import_module('${{ matrix.package }}'); importlib.import_module('${{ matrix.package }}.db.model_registry')"
+
+      - name: Run Python database tests
+        working-directory: apps/${{ matrix.service }}
+        run: python -W error -m pytest -q
+
+      - name: Validate clean migration and schema drift
+        working-directory: apps/${{ matrix.service }}
+        run: |
+          python -m alembic upgrade head
+          python -m alembic check
