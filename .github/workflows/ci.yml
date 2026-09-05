@@ -146,12 +146,37 @@ jobs:
               pnpm --dir "$service_dir" run test -- --run
             fi
           done
+  fastapi:
+    name: Validate FastAPI services
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
 
-      - name: Check Python service syntax
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - agent-service
+          - forecast-service
+          - route-optimizer-service
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate FastAPI service syntax
         shell: bash
         run: |
           set -euo pipefail
-          python -m compileall -q \
-            apps/agent-service \
-            apps/forecast-service \
-            apps/route-optimizer-service
+          service_dir="apps/${{ matrix.service }}"
+
+          test -d "$service_dir/app" || {
+            echo "Missing FastAPI application directory: $service_dir/app"
+            exit 1
+          }
+
+          python -m compileall -q "$service_dir/app"
