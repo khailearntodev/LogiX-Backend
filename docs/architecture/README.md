@@ -34,6 +34,7 @@ If material choices remain open, stop before changing architecture.
 | `system-overview.md` | Overall system context, layers, major components, communication styles, and core principles. | Any architecture change or cross-service task. |
 | `service-boundaries.md` | Service responsibilities, ownership boundaries, allowed dependencies, and MVP scope. | Adding/changing a service, module, endpoint, or cross-service workflow. |
 | `data-ownership.md` | Domain ownership, persistence boundaries, consistency rules, and cross-service data access constraints. | Changing schemas, repositories, transactions, or business invariants. |
+| `database-design.md` | Detailed service-owned schemas, constraints, indexes, event persistence, migrations, security, and BRD traceability. | Designing or changing databases, tables, indexes, ORM models, migrations, or query patterns. |
 | `event-architecture.md` | Event contracts, producers/consumers, envelope, idempotency, ordering, retry, and delivery rules. | Changing Kafka, events, consumers, producers, or asynchronous workflows. |
 | `runtime-architecture.md` | Runtime deployment topology, infrastructure dependencies, observability, resilience, and environment expectations. | Docker/Kubernetes, infrastructure, scaling, availability, or operations work. |
 
