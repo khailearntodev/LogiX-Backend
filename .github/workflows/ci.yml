@@ -83,6 +83,41 @@ jobs:
       - name: Install Node.js dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Validate NestJS Prisma schemas
+        shell: bash
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/logix_ci
+        run: |
+          set -euo pipefail
+
+          services=(
+            identity-service
+            master-data-service
+            inventory-service
+            order-service
+            fulfillment-service
+            transport-service
+            notification-service
+            audit-service
+          )
+
+          for service in "${services[@]}"; do
+            service_dir="apps/$service"
+
+            test -f "$service_dir/prisma.config.ts" || {
+              echo "Missing Prisma config: $service_dir/prisma.config.ts"
+              exit 1
+            }
+
+            test -f "$service_dir/prisma/schema.prisma" || {
+              echo "Missing Prisma schema: $service_dir/prisma/schema.prisma"
+              exit 1
+            }
+
+            echo "Validating Prisma schema for $service"
+            pnpm --dir "$service_dir" exec prisma validate
+          done
+
       - name: Lint NestJS services
         shell: bash
         run: |
