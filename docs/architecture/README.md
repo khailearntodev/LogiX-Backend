@@ -36,6 +36,7 @@ If material choices remain open, stop before changing architecture.
 | `data-ownership.md` | Domain ownership, persistence boundaries, consistency rules, and cross-service data access constraints. | Changing schemas, repositories, transactions, or business invariants. |
 | `event-architecture.md` | Event contracts, producers/consumers, envelope, idempotency, ordering, retry, and delivery rules. | Changing Kafka, events, consumers, producers, or asynchronous workflows. |
 | `runtime-architecture.md` | Runtime deployment topology, infrastructure dependencies, observability, resilience, and environment expectations. | Docker/Kubernetes, infrastructure, scaling, availability, or operations work. |
+| `ai-services-technical-design.md` | Detailed MVP design for the Planner, forecasting, route optimization, AI contracts, security, reliability, evaluation, and the eight-week delivery plan. | Implementing or reviewing any AI service, Agent tool, quantitative engine, or AI integration flow. |
 
 ## Target architecture at a glance
 
