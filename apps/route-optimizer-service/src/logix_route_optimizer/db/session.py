@@ -1,0 +1,28 @@
+from __future__ import annotations
+
+import os
+
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
+
+def get_database_url() -> str:
+    try:
+        return os.environ["DATABASE_URL"]
+    except KeyError as exc:
+        raise RuntimeError("DATABASE_URL is required") from exc
+
+
+def create_engine(database_url: str | None = None) -> AsyncEngine:
+    return create_async_engine(database_url or get_database_url(), pool_pre_ping=True)
+
+
+def create_session_factory(
+    engine: AsyncEngine,
+) -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+

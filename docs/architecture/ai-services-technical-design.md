@@ -246,85 +246,65 @@ trong graph node, agent, domain/application code hoặc business tool definition
 
 ## 7. Cấu trúc source mục tiêu
 
-Đây là cấu trúc đề xuất; cần khóa bằng ADR nếu trở thành chuẩn repository:
+ADR 0002 khóa cấu trúc package riêng và feature-first cho ba Python service.
+Ở giai đoạn hiện tại repository chỉ tạo phần database đã có hành vi thực tế;
+không tạo folder rỗng cho API, graph, agent, tool, engine hoặc adapter tương lai.
 
 ~~~text
 apps/
   agent-service/
-    app/
-      api/
-      application/
-      domain/
-      agents/
-        registry.py
-      graphs/
-        planner/
-        nodes/
-        policies/
-      tools/
-        business/
-        forecast/
-        route/
-      ports/
-        model_gateway.py
-      adapters/
-        llm/
-          litellm_gateway.py
-          fake_model_gateway.py
-      config/
-        model_profiles.py
-      persistence/
-      events/
-      observability/
-      main.py
-    tests/
+    src/logix_agent/
+      db/
+        base.py
+        session.py
+        model_registry.py
+      modules/
+        conversations/models.py
+        executions/models.py
+        tools/models.py
+        confirmations/models.py
+        provider_configs/models.py
+        messaging/models.py
     migrations/
+    tests/
+    alembic.ini
     pyproject.toml
 
   forecast-service/
-    app/
-      api/
-      application/
-      domain/
-      engines/
-      baselines/
-      datasets/
-      persistence/
-      events/
-      observability/
-      main.py
-    tests/
+    src/logix_forecast/
+      db/
+        base.py
+        session.py
+        model_registry.py
+      modules/
+        demand/models.py
+        forecasts/models.py
+        messaging/models.py
     migrations/
+    tests/
+    alembic.ini
     pyproject.toml
 
   route-optimizer-service/
-    app/
-      api/
-      application/
-      domain/
-      engines/
-      baselines/
-      matrices/
-      persistence/
-      events/
-      observability/
-      main.py
-    tests/
+    src/logix_route_optimizer/
+      db/
+        base.py
+        session.py
+        model_registry.py
+      modules/
+        optimization/models.py
+        messaging/models.py
     migrations/
+    tests/
+    alembic.ini
     pyproject.toml
-
-packages/
-  py-contracts/
-    logix_contracts/
-      common/
-      agent/
-      forecast/
-      route/
-      events/
 ~~~
 
-Shared package chỉ chứa schema và cross-cutting primitives. Nó không được chứa
-business rule thuộc nhiều service.
+Khi triển khai các phần runtime, API/application/domain/ports/adapters được thêm
+theo feature và theo dependency rule ở mục 6; chúng không được dồn trở lại thành
+một package kỹ thuật dùng chung. Nếu tạo shared package sau này, package đó chỉ
+chứa schema và cross-cutting primitives, không chứa business rule thuộc nhiều
+service.
 
 ## 8. Agent Service
 

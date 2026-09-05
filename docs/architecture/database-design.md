@@ -45,7 +45,7 @@ service có database và database role riêng:
 | `audit-service` | `logix_audit` | `audit` | Audit log bất biến |
 | `agent-service` | `logix_agent` | `agent` | Conversation, execution, tool call, confirmation |
 | `forecast-service` | `logix_forecast` | `forecast` | Forecast run/result/metric/model metadata |
-| `route-optimizer-service` | `logix_route_optimizer` (tùy chọn) | `route_optimizer` | Optimization run/result metadata |
+| `route-optimizer-service` | `logix_route_optimizer` | `route_optimizer` | Optimization run/result metadata |
 
 Mỗi role chỉ được kết nối database của chính service. Không cấp quyền như:
 
@@ -175,8 +175,9 @@ WHERE tenant_id = :tenant_id
   AND deleted_at IS NULL;
 ```
 
-Điều kiện `deleted_at IS NULL` không áp dụng cho bảng append-only không có cột
-`deleted_at`, hoặc cho API quản trị/phục hồi đã được phân quyền rõ ràng.
+Điều kiện `deleted_at IS NULL` áp dụng cho truy vấn nghiệp vụ thông thường của cả
+bảng mutable và bảng mang ý nghĩa append-only. Chỉ API quản trị/phục hồi đã được
+phân quyền rõ ràng mới được chủ động đọc bản ghi có `deleted_at`.
 
 Khuyến nghị defense-in-depth bằng PostgreSQL Row-Level Security sau khi có ADR và
 integration test chứng minh connection pool luôn thiết lập đúng tenant context.
@@ -1118,8 +1119,8 @@ Các cột: `id`, `tenant_id`, `warehouse_id`, `product_id`, `demand_date`,
 
 ```sql
 CHECK (fulfilled_quantity >= 0)
-CREATE UNIQUE INDEX ux_demand_source_event
-ON demand_observations (source_event_id);
+CREATE UNIQUE INDEX ux_demand_source_event_product
+ON demand_observations (tenant_id, source_event_id, product_id);
 CREATE UNIQUE INDEX ux_demand_order_product
 ON demand_observations
 (tenant_id, source_order_id, product_id, source_version);
@@ -1136,7 +1137,8 @@ khả năng rebuild.
 Các cột: `id`, `tenant_id`, `status`, `horizon_days`, `training_start_date`,
 `training_end_date`, `requested_by`, `trigger_type`, `model_name`, `model_version`,
 `baseline_name`, `parameters jsonb`, `dataset_hash`, `random_seed`, `started_at`,
-`completed_at`, `latency_ms`, `error_code`, `error_message_sanitized`, cột nền.
+`completed_at`, `latency_ms`, `error_code`, `error_message_sanitized`,
+`correlation_id`, `idempotency_key`, cột nền.
 
 ```sql
 CHECK (horizon_days > 0)
@@ -1153,7 +1155,8 @@ ON forecast_runs (tenant_id, dataset_hash, model_name, model_version);
 
 Một run có nhiều chuỗi SKU-kho: `id`, `tenant_id`, `forecast_run_id`,
 `warehouse_id`, `product_id`, `status`, `observation_count`, `confidence_level`,
-`fallback_used`, `fallback_reason`, `model_artifact_uri`, `artifact_checksum`.
+`used_fallback`, `fallback_reason`, `model_artifact_uri`,
+`model_artifact_checksum`, cột nền.
 
 ```sql
 CREATE UNIQUE INDEX ux_forecast_run_series
@@ -1165,8 +1168,13 @@ ON forecast_series (tenant_id, warehouse_id, product_id, forecast_run_id);
 ### 14.4 `forecast_results`
 
 Các cột: `id`, `tenant_id`, `forecast_series_id`, `forecast_date`,
-`predicted_quantity`, `lower_bound`, `upper_bound`, `actual_quantity NULL`,
-`created_at`, `actual_updated_at`.
+`predicted_quantity`, `lower_bound`, `upper_bound`, `baseline_naive`,
+`baseline_moving_average_7`, `actual_quantity NULL`, `confidence_level`,
+`model_metadata jsonb`, `actual_updated_at`, cột nền.
+
+`model_metadata` là metadata có cấu trúc của chính kết quả dự báo (ví dụ warning,
+quality flag hoặc thông tin engine cần tái lập); đây không phải cột nền bắt buộc
+cho mọi bảng.
 
 ```sql
 CHECK (predicted_quantity >= 0)
@@ -1181,13 +1189,15 @@ ON forecast_results (tenant_id, forecast_date, forecast_series_id);
 ### 14.5 `forecast_metrics`
 
 Các cột: `id`, `tenant_id`, `forecast_series_id`, `metric_name` (`MAPE`, `RMSE`),
-`metric_value`, `evaluation_start_date`, `evaluation_end_date`, `zero_actual_policy`,
-`sample_count`, `calculated_at`.
+`metric_value`, `method_type` (`MODEL`, `BASELINE`), `method_name`,
+`evaluation_start_date`, `evaluation_end_date`, `zero_actual_policy`,
+`eligible_point_count`, `total_point_count`, `calculated_at`, cột nền.
 
 ```sql
 CREATE UNIQUE INDEX ux_forecast_metric_window
 ON forecast_metrics
-(tenant_id, forecast_series_id, metric_name, evaluation_start_date, evaluation_end_date);
+(tenant_id, forecast_series_id, metric_name, method_type, method_name,
+ evaluation_start_date, evaluation_end_date);
 CREATE INDEX ix_forecast_metric_compare
 ON forecast_metrics (tenant_id, metric_name, calculated_at DESC);
 ```
@@ -1199,19 +1209,19 @@ tạo stock receipt hoặc thay đổi threshold.
 
 ### 15.1 Lựa chọn persistence cho MVP
 
-Service có thể stateless: nhận request, chạy OR-Tools và trả proposal; Transport
-lưu RoutePlan authoritative. Redis cache distance matrix theo `input_hash` có TTL.
-
-Nếu cần tái lập, benchmark và theo dõi job độc lập như BRD yêu cầu, dùng database
-metadata riêng sau đây. Không lưu authority approve/dispatch tại đây.
+MVP persist job và kết quả trong database riêng để tái lập, benchmark và theo dõi
+job độc lập như BRD yêu cầu. Transport vẫn lưu RoutePlan authoritative; Route
+Optimizer không sở hữu authority approve/dispatch. Redis chỉ cache distance matrix
+theo `input_hash` có TTL.
 
 ### 15.2 `optimization_runs`
 
-Các cột: `id`, `tenant_id`, `route_request_id`, `trip_id`, `status`, `input_hash`,
-`input_snapshot_uri`, `solver_name`, `solver_version`, `objective`, `parameters
-jsonb`, `stop_count`, `vehicle_capacity_weight`, `vehicle_capacity_volume`,
-`started_at`, `completed_at`, `latency_ms`, `error_code`, `fallback_reason`,
-`correlation_id`, `created_at`.
+Các cột: `id`, `tenant_id`, `route_request_id`, `trip_id`, `trip_version`,
+`idempotency_key`, `status`, `input_hash`, `input_snapshot_uri`, `solver_name`,
+`solver_version`, `config_version`, `objective`, `parameters jsonb`, `random_seed`,
+`stop_count`, `vehicle_capacity_weight`, `vehicle_capacity_volume`, `started_at`,
+`completed_at`, `latency_ms`, `error_code`, `error_message_sanitized`,
+`fallback_reason`, `correlation_id`, cột nền.
 
 ```sql
 CREATE UNIQUE INDEX ux_optimization_request
@@ -1229,7 +1239,8 @@ ON optimization_runs (tenant_id, input_hash, solver_name, solver_version);
 
 Snapshot input/output: `id`, `tenant_id`, `optimization_run_id`, `trip_stop_id`,
 `input_sequence`, `optimized_sequence`, `demand_weight`, `demand_volume`,
-`latitude`, `longitude`, `distance_from_previous`.
+`latitude`, `longitude`, `service_duration_seconds`, `time_window_start`,
+`time_window_end`, `arrival_at`, `departure_at`, `distance_from_previous_m`, cột nền.
 
 ```sql
 CREATE UNIQUE INDEX ux_optimization_stop
@@ -1239,16 +1250,32 @@ ON optimization_stops (tenant_id, optimization_run_id, optimized_sequence)
 WHERE optimized_sequence IS NOT NULL;
 ```
 
-### 15.4 `optimization_metrics`
+### 15.4 `optimization_results`
+
+Mỗi run có tối đa một kết quả: `id`, `tenant_id`, `optimization_run_id`,
+`stop_sequence jsonb`, `legs jsonb`, `total_distance_m`, `total_duration_seconds`,
+`total_cost`, `baseline_type`, `baseline_value`, `improvement_ratio`,
+`feasibility_status`, `input_hash`, `model_metadata jsonb`, cột nền.
+
+`model_metadata` chỉ chứa metadata mở rộng có cấu trúc của kết quả solver; thông tin
+bắt buộc để tái lập như input hash, solver/config version và random seed vẫn là cột
+typed ở run/result, không bị giấu trong JSONB.
+
+```sql
+CREATE UNIQUE INDEX ux_optimization_result_run
+ON optimization_results (tenant_id, optimization_run_id);
+```
+
+### 15.5 `optimization_metrics`
 
 Các cột: `id`, `tenant_id`, `optimization_run_id`, `metric_name`, `metric_value`,
-`unit`, `baseline_type` (`INPUT_ORDER`, `NEAREST_NEIGHBOR`, `OPTIMIZED`),
-`created_at`.
+`metric_unit`, `method_type`, `method_name`, cột nền. `method_name` nhận các giá trị
+như `INPUT_ORDER`, `NEAREST_NEIGHBOR` hoặc tên solver đã chạy.
 
 ```sql
 CREATE UNIQUE INDEX ux_optimization_metric
 ON optimization_metrics
-(tenant_id, optimization_run_id, metric_name, baseline_type);
+(tenant_id, optimization_run_id, metric_name, method_type, method_name);
 ```
 
 Kết quả phải chứng minh route bắt đầu/kết thúc depot, mỗi stop đúng một lần và
@@ -1488,7 +1515,10 @@ Trước khi service được coi là sẵn sàng:
 3. UUIDv4 hay UUIDv7 và nơi sinh ID.
 4. Có bật PostgreSQL RLS hay chỉ tenant-filter + test ở MVP.
 5. PostGIS cho tọa độ hay numeric latitude/longitude ở giai đoạn đầu.
-6. Route Optimizer stateless hay lưu optimization metadata riêng.
+
+Quyết định về persistence của ba Python service và việc Route Optimizer lưu
+optimization metadata đã được chốt tại
+`docs/decisions/0001-python-persistence-sqlalchemy-alembic.md`.
 7. Scheduling dùng exclusion constraint hay application transaction lock.
 8. Retention cụ thể cho audit, event, notification và Agent conversation.
 9. Ngưỡng dữ liệu để bật partitioning.
