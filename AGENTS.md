@@ -30,6 +30,73 @@ Harness has no task database or orchestration lifecycle. Use repository plans
 and behavior-level proof; do not create parallel control-plane state.
 <!-- HARNESS:END -->
 
+## Backend Scope And Boundaries
+
+This repository owns the LogiX backend platform: the API boundary, core
+business services, AI/quantitative services, shared contracts, events, and
+runtime infrastructure. The approved business and architecture authorities
+are the BRD at `docs/plan_ghi_ro_so_task_backlog/brd.md` and the documents
+indexed by `docs/architecture/README.md`.
+
+### Service Ownership
+
+- `identity-service`: tenant, user, role, session, and tenant context.
+- `master-data-service`: customer, address, product, warehouse, vehicle, and
+  driver master data.
+- `order-service`: SalesOrder, OrderLine, and order state transitions.
+- `inventory-service`: balances, reservations, stock movements, and stock
+  invariants.
+- `fulfillment-service`: Shipment lifecycle and readiness.
+- `transport-service`: DeliveryTrip, TripStop, assignment, route approval, and
+  dispatch.
+- `notification-service`: notification delivery/read state, not source business
+  truth.
+- `audit-service`: immutable audit records and audit queries.
+- `agent-service`: conversations, tool orchestration, permissions, and
+  confirmation state, never direct business persistence.
+- `forecast-service`: forecast runs/results and baseline metadata.
+- `route-optimizer-service`: optimization proposals and reproducibility
+  metadata; Dispatcher remains the approval authority.
+
+### Boundary Rules
+
+- A service owns its business rules and persistence; other services do not
+  query its database directly.
+- Cross-service reads use APIs/contracts; asynchronous reactions use versioned
+  events with tenant, correlation, causation, and aggregate-version context.
+- Every tenant-owned operation is tenant-scoped and server-side authorized.
+- Core order, inventory, fulfillment, transport, audit, and identity flows must
+  remain usable when AI/model services are unavailable.
+- LLMs interpret and orchestrate only. Forecast and route results come from
+  specialized components; sensitive mutations require preview and explicit
+  confirmation.
+- Preserve MVP guardrails: one warehouse per order, no split orders, one order
+  to at most one shipment, internal fleet, and no deep WMS, 3PL, payment,
+  reverse-logistics, live GPS, or geofencing scope unless an accepted decision
+  changes the BRD boundary.
+
+### Validation
+
+Use the smallest affected service check, then normally run the repository proof:
+
+```text
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+For event, tenant-isolation, idempotency, reliability, or AI-boundary changes,
+require executable contract/integration evidence and report any unverified
+runtime or infrastructure claim.
+
+### Repository Boundary
+
+The sibling `LogiX-Frontend` repository owns presentation and client interaction
+only. Coordinate cross-repository changes through accepted API/event contracts;
+do not move business rules, persistence ownership, or authorization authority
+into the frontend.
+
 ### Architecture
 
 For architecture-related work, use `docs/architecture/README.md` as the
