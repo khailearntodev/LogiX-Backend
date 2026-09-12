@@ -52,6 +52,11 @@ export type Tenant = Prisma.TenantModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model UserTenant
+ * 
+ */
+export type UserTenant = Prisma.UserTenantModel
+/**
  * Model Role
  * 
  */
@@ -76,3 +81,8 @@ export type UserRole = Prisma.UserRoleModel
  * 
  */
 export type Session = Prisma.SessionModel
+/**
+ * Model PasswordResetToken
+ * 
+ */
+export type PasswordResetToken = Prisma.PasswordResetTokenModel

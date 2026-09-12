@@ -53,11 +53,13 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Tenant: 'Tenant',
   User: 'User',
+  UserTenant: 'UserTenant',
   Role: 'Role',
   Permission: 'Permission',
   RolePermission: 'RolePermission',
   UserRole: 'UserRole',
-  Session: 'Session'
+  Session: 'Session',
+  PasswordResetToken: 'PasswordResetToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -80,9 +82,8 @@ export const TenantScalarFieldEnum = {
   id: 'id',
   code: 'code',
   name: 'name',
+  logoUrl: 'logoUrl',
   status: 'status',
-  defaultCurrency: 'defaultCurrency',
-  timezone: 'timezone',
   settings: 'settings',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -95,10 +96,11 @@ export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof 
 
 export const UserScalarFieldEnum = {
   id: 'id',
-  tenantId: 'tenantId',
   email: 'email',
   passwordHash: 'passwordHash',
   displayName: 'displayName',
+  phoneNumber: 'phoneNumber',
+  avatarUrl: 'avatarUrl',
   status: 'status',
   tokenVersion: 'tokenVersion',
   lastLoginAt: 'lastLoginAt',
@@ -109,6 +111,21 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const UserTenantScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tenantId: 'tenantId',
+  role: 'role',
+  isDefault: 'isDefault',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type UserTenantScalarFieldEnum = (typeof UserTenantScalarFieldEnum)[keyof typeof UserTenantScalarFieldEnum]
 
 
 export const RoleScalarFieldEnum = {
@@ -191,6 +208,21 @@ export const SessionScalarFieldEnum = {
 } as const
 
 export type SessionScalarFieldEnum = (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum]
+
+
+export const PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  isUsed: 'isUsed',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
 
 
 export const SortOrder = {

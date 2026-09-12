@@ -38,10 +38,11 @@ export type UserSumAggregateOutputType = {
 
 export type UserMinAggregateOutputType = {
   id: string | null
-  tenantId: string | null
   email: string | null
   passwordHash: string | null
   displayName: string | null
+  phoneNumber: string | null
+  avatarUrl: string | null
   status: string | null
   tokenVersion: bigint | null
   lastLoginAt: Date | null
@@ -53,10 +54,11 @@ export type UserMinAggregateOutputType = {
 
 export type UserMaxAggregateOutputType = {
   id: string | null
-  tenantId: string | null
   email: string | null
   passwordHash: string | null
   displayName: string | null
+  phoneNumber: string | null
+  avatarUrl: string | null
   status: string | null
   tokenVersion: bigint | null
   lastLoginAt: Date | null
@@ -68,10 +70,11 @@ export type UserMaxAggregateOutputType = {
 
 export type UserCountAggregateOutputType = {
   id: number
-  tenantId: number
   email: number
   passwordHash: number
   displayName: number
+  phoneNumber: number
+  avatarUrl: number
   status: number
   tokenVersion: number
   lastLoginAt: number
@@ -95,10 +98,11 @@ export type UserSumAggregateInputType = {
 
 export type UserMinAggregateInputType = {
   id?: true
-  tenantId?: true
   email?: true
   passwordHash?: true
   displayName?: true
+  phoneNumber?: true
+  avatarUrl?: true
   status?: true
   tokenVersion?: true
   lastLoginAt?: true
@@ -110,10 +114,11 @@ export type UserMinAggregateInputType = {
 
 export type UserMaxAggregateInputType = {
   id?: true
-  tenantId?: true
   email?: true
   passwordHash?: true
   displayName?: true
+  phoneNumber?: true
+  avatarUrl?: true
   status?: true
   tokenVersion?: true
   lastLoginAt?: true
@@ -125,10 +130,11 @@ export type UserMaxAggregateInputType = {
 
 export type UserCountAggregateInputType = {
   id?: true
-  tenantId?: true
   email?: true
   passwordHash?: true
   displayName?: true
+  phoneNumber?: true
+  avatarUrl?: true
   status?: true
   tokenVersion?: true
   lastLoginAt?: true
@@ -227,10 +233,11 @@ export type UserGroupByArgs<ExtArgs extends runtime.Types.Extensions.InternalArg
 
 export type UserGroupByOutputType = {
   id: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber: string | null
+  avatarUrl: string | null
   status: string
   tokenVersion: bigint
   lastLoginAt: Date | null
@@ -265,10 +272,11 @@ export type UserWhereInput = {
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   id?: Prisma.UuidFilter<"User"> | string
-  tenantId?: Prisma.UuidFilter<"User"> | string
   email?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   displayName?: Prisma.StringFilter<"User"> | string
+  phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
   tokenVersion?: Prisma.BigIntFilter<"User"> | bigint | number
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -276,19 +284,21 @@ export type UserWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   version?: Prisma.BigIntFilter<"User"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
+  userTenants?: Prisma.UserTenantListRelationFilter
   userRoles?: Prisma.UserRoleListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
+  passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
   rolePermissionsGranted?: Prisma.RolePermissionListRelationFilter
   userRolesGranted?: Prisma.UserRoleListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  tenantId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
+  phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -296,22 +306,24 @@ export type UserOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
-  tenant?: Prisma.TenantOrderByWithRelationInput
+  userTenants?: Prisma.UserTenantOrderByRelationAggregateInput
   userRoles?: Prisma.UserRoleOrderByRelationAggregateInput
   sessions?: Prisma.SessionOrderByRelationAggregateInput
+  passwordResetTokens?: Prisma.PasswordResetTokenOrderByRelationAggregateInput
   rolePermissionsGranted?: Prisma.RolePermissionOrderByRelationAggregateInput
   userRolesGranted?: Prisma.UserRoleOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
   id?: string
+  email?: string
   AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   OR?: Prisma.UserWhereInput[]
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
-  tenantId?: Prisma.UuidFilter<"User"> | string
-  email?: Prisma.StringFilter<"User"> | string
   passwordHash?: Prisma.StringFilter<"User"> | string
   displayName?: Prisma.StringFilter<"User"> | string
+  phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
+  avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
   tokenVersion?: Prisma.BigIntFilter<"User"> | bigint | number
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
@@ -319,19 +331,21 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   version?: Prisma.BigIntFilter<"User"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  tenant?: Prisma.XOR<Prisma.TenantScalarRelationFilter, Prisma.TenantWhereInput>
+  userTenants?: Prisma.UserTenantListRelationFilter
   userRoles?: Prisma.UserRoleListRelationFilter
   sessions?: Prisma.SessionListRelationFilter
+  passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
   rolePermissionsGranted?: Prisma.RolePermissionListRelationFilter
   userRolesGranted?: Prisma.UserRoleListRelationFilter
-}, "id">
+}, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  tenantId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
+  phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -351,10 +365,11 @@ export type UserScalarWhereWithAggregatesInput = {
   OR?: Prisma.UserScalarWhereWithAggregatesInput[]
   NOT?: Prisma.UserScalarWhereWithAggregatesInput | Prisma.UserScalarWhereWithAggregatesInput[]
   id?: Prisma.UuidWithAggregatesFilter<"User"> | string
-  tenantId?: Prisma.UuidWithAggregatesFilter<"User"> | string
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   passwordHash?: Prisma.StringWithAggregatesFilter<"User"> | string
   displayName?: Prisma.StringWithAggregatesFilter<"User"> | string
+  phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
+  avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"User"> | string
   tokenVersion?: Prisma.BigIntWithAggregatesFilter<"User"> | bigint | number
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -369,6 +384,8 @@ export type UserCreateInput = {
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -376,19 +393,21 @@ export type UserCreateInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
-  tenant: Prisma.TenantCreateNestedOneWithoutUsersInput
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
 }
 
 export type UserUncheckedCreateInput = {
   id?: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -396,8 +415,10 @@ export type UserUncheckedCreateInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
 }
@@ -407,6 +428,8 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -414,19 +437,21 @@ export type UserUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -434,18 +459,21 @@ export type UserUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserCreateManyInput = {
   id?: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -460,6 +488,8 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -471,10 +501,11 @@ export type UserUpdateManyMutationInput = {
 
 export type UserUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -484,22 +515,13 @@ export type UserUncheckedUpdateManyInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
-export type UserListRelationFilter = {
-  every?: Prisma.UserWhereInput
-  some?: Prisma.UserWhereInput
-  none?: Prisma.UserWhereInput
-}
-
-export type UserOrderByRelationAggregateInput = {
-  _count?: Prisma.SortOrder
-}
-
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  tenantId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
+  phoneNumber?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
@@ -516,10 +538,11 @@ export type UserAvgOrderByAggregateInput = {
 
 export type UserMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  tenantId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
+  phoneNumber?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
@@ -531,10 +554,11 @@ export type UserMaxOrderByAggregateInput = {
 
 export type UserMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
-  tenantId?: Prisma.SortOrder
   email?: Prisma.SortOrder
   passwordHash?: Prisma.SortOrder
   displayName?: Prisma.SortOrder
+  phoneNumber?: Prisma.SortOrder
+  avatarUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
@@ -549,56 +573,28 @@ export type UserSumOrderByAggregateInput = {
   version?: Prisma.SortOrder
 }
 
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
-}
-
 export type UserScalarRelationFilter = {
   is?: Prisma.UserWhereInput
   isNot?: Prisma.UserWhereInput
 }
 
-export type UserCreateNestedManyWithoutTenantInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantInput, Prisma.UserUncheckedCreateWithoutTenantInput> | Prisma.UserCreateWithoutTenantInput[] | Prisma.UserUncheckedCreateWithoutTenantInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantInput | Prisma.UserCreateOrConnectWithoutTenantInput[]
-  createMany?: Prisma.UserCreateManyTenantInputEnvelope
-  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
-export type UserUncheckedCreateNestedManyWithoutTenantInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantInput, Prisma.UserUncheckedCreateWithoutTenantInput> | Prisma.UserCreateWithoutTenantInput[] | Prisma.UserUncheckedCreateWithoutTenantInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantInput | Prisma.UserCreateOrConnectWithoutTenantInput[]
-  createMany?: Prisma.UserCreateManyTenantInputEnvelope
-  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
+export type UserCreateNestedOneWithoutUserTenantsInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserTenantsInput, Prisma.UserUncheckedCreateWithoutUserTenantsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserTenantsInput
+  connect?: Prisma.UserWhereUniqueInput
 }
 
-export type UserUpdateManyWithoutTenantNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantInput, Prisma.UserUncheckedCreateWithoutTenantInput> | Prisma.UserCreateWithoutTenantInput[] | Prisma.UserUncheckedCreateWithoutTenantInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantInput | Prisma.UserCreateOrConnectWithoutTenantInput[]
-  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutTenantInput | Prisma.UserUpsertWithWhereUniqueWithoutTenantInput[]
-  createMany?: Prisma.UserCreateManyTenantInputEnvelope
-  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  update?: Prisma.UserUpdateWithWhereUniqueWithoutTenantInput | Prisma.UserUpdateWithWhereUniqueWithoutTenantInput[]
-  updateMany?: Prisma.UserUpdateManyWithWhereWithoutTenantInput | Prisma.UserUpdateManyWithWhereWithoutTenantInput[]
-  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
-}
-
-export type UserUncheckedUpdateManyWithoutTenantNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantInput, Prisma.UserUncheckedCreateWithoutTenantInput> | Prisma.UserCreateWithoutTenantInput[] | Prisma.UserUncheckedCreateWithoutTenantInput[]
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantInput | Prisma.UserCreateOrConnectWithoutTenantInput[]
-  upsert?: Prisma.UserUpsertWithWhereUniqueWithoutTenantInput | Prisma.UserUpsertWithWhereUniqueWithoutTenantInput[]
-  createMany?: Prisma.UserCreateManyTenantInputEnvelope
-  set?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  disconnect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  delete?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  connect?: Prisma.UserWhereUniqueInput | Prisma.UserWhereUniqueInput[]
-  update?: Prisma.UserUpdateWithWhereUniqueWithoutTenantInput | Prisma.UserUpdateWithWhereUniqueWithoutTenantInput[]
-  updateMany?: Prisma.UserUpdateManyWithWhereWithoutTenantInput | Prisma.UserUpdateManyWithWhereWithoutTenantInput[]
-  deleteMany?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
+export type UserUpdateOneRequiredWithoutUserTenantsNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutUserTenantsInput, Prisma.UserUncheckedCreateWithoutUserTenantsInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutUserTenantsInput
+  upsert?: Prisma.UserUpsertWithoutUserTenantsInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutUserTenantsInput, Prisma.UserUpdateWithoutUserTenantsInput>, Prisma.UserUncheckedUpdateWithoutUserTenantsInput>
 }
 
 export type UserCreateNestedOneWithoutRolePermissionsGrantedInput = {
@@ -661,11 +657,27 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutSessionsInput, Prisma.UserUpdateWithoutSessionsInput>, Prisma.UserUncheckedUpdateWithoutSessionsInput>
 }
 
-export type UserCreateWithoutTenantInput = {
+export type UserCreateNestedOneWithoutPasswordResetTokensInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetTokensInput, Prisma.UserUncheckedCreateWithoutPasswordResetTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPasswordResetTokensInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutPasswordResetTokensNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetTokensInput, Prisma.UserUncheckedCreateWithoutPasswordResetTokensInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutPasswordResetTokensInput
+  upsert?: Prisma.UserUpsertWithoutPasswordResetTokensInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPasswordResetTokensInput, Prisma.UserUpdateWithoutPasswordResetTokensInput>, Prisma.UserUncheckedUpdateWithoutPasswordResetTokensInput>
+}
+
+export type UserCreateWithoutUserTenantsInput = {
   id?: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -675,15 +687,18 @@ export type UserCreateWithoutTenantInput = {
   deletedAt?: Date | string | null
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
 }
 
-export type UserUncheckedCreateWithoutTenantInput = {
+export type UserUncheckedCreateWithoutUserTenantsInput = {
   id?: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -693,52 +708,67 @@ export type UserUncheckedCreateWithoutTenantInput = {
   deletedAt?: Date | string | null
   userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
 }
 
-export type UserCreateOrConnectWithoutTenantInput = {
+export type UserCreateOrConnectWithoutUserTenantsInput = {
   where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutTenantInput, Prisma.UserUncheckedCreateWithoutTenantInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserTenantsInput, Prisma.UserUncheckedCreateWithoutUserTenantsInput>
 }
 
-export type UserCreateManyTenantInputEnvelope = {
-  data: Prisma.UserCreateManyTenantInput | Prisma.UserCreateManyTenantInput[]
-  skipDuplicates?: boolean
+export type UserUpsertWithoutUserTenantsInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutUserTenantsInput, Prisma.UserUncheckedUpdateWithoutUserTenantsInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutUserTenantsInput, Prisma.UserUncheckedCreateWithoutUserTenantsInput>
+  where?: Prisma.UserWhereInput
 }
 
-export type UserUpsertWithWhereUniqueWithoutTenantInput = {
-  where: Prisma.UserWhereUniqueInput
-  update: Prisma.XOR<Prisma.UserUpdateWithoutTenantInput, Prisma.UserUncheckedUpdateWithoutTenantInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutTenantInput, Prisma.UserUncheckedCreateWithoutTenantInput>
+export type UserUpdateToOneWithWhereWithoutUserTenantsInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutUserTenantsInput, Prisma.UserUncheckedUpdateWithoutUserTenantsInput>
 }
 
-export type UserUpdateWithWhereUniqueWithoutTenantInput = {
-  where: Prisma.UserWhereUniqueInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutTenantInput, Prisma.UserUncheckedUpdateWithoutTenantInput>
+export type UserUpdateWithoutUserTenantsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
+  userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
 }
 
-export type UserUpdateManyWithWhereWithoutTenantInput = {
-  where: Prisma.UserScalarWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateManyMutationInput, Prisma.UserUncheckedUpdateManyWithoutTenantInput>
-}
-
-export type UserScalarWhereInput = {
-  AND?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
-  OR?: Prisma.UserScalarWhereInput[]
-  NOT?: Prisma.UserScalarWhereInput | Prisma.UserScalarWhereInput[]
-  id?: Prisma.UuidFilter<"User"> | string
-  tenantId?: Prisma.UuidFilter<"User"> | string
-  email?: Prisma.StringFilter<"User"> | string
-  passwordHash?: Prisma.StringFilter<"User"> | string
-  displayName?: Prisma.StringFilter<"User"> | string
-  status?: Prisma.StringFilter<"User"> | string
-  tokenVersion?: Prisma.BigIntFilter<"User"> | bigint | number
-  lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
-  createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
-  version?: Prisma.BigIntFilter<"User"> | bigint | number
-  deletedAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+export type UserUncheckedUpdateWithoutUserTenantsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserCreateWithoutRolePermissionsGrantedInput = {
@@ -746,6 +776,8 @@ export type UserCreateWithoutRolePermissionsGrantedInput = {
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -753,18 +785,20 @@ export type UserCreateWithoutRolePermissionsGrantedInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
-  tenant: Prisma.TenantCreateNestedOneWithoutUsersInput
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
 }
 
 export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
   id?: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -772,8 +806,10 @@ export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
 }
 
@@ -798,6 +834,8 @@ export type UserUpdateWithoutRolePermissionsGrantedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -805,18 +843,20 @@ export type UserUpdateWithoutRolePermissionsGrantedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -824,8 +864,10 @@ export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
 
@@ -834,6 +876,8 @@ export type UserCreateWithoutUserRolesInput = {
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -841,18 +885,20 @@ export type UserCreateWithoutUserRolesInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
-  tenant: Prisma.TenantCreateNestedOneWithoutUsersInput
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
 }
 
 export type UserUncheckedCreateWithoutUserRolesInput = {
   id?: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -860,7 +906,9 @@ export type UserUncheckedCreateWithoutUserRolesInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
 }
@@ -875,6 +923,8 @@ export type UserCreateWithoutUserRolesGrantedInput = {
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -882,18 +932,20 @@ export type UserCreateWithoutUserRolesGrantedInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
-  tenant: Prisma.TenantCreateNestedOneWithoutUsersInput
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
 }
 
 export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
   id?: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -901,8 +953,10 @@ export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
 }
 
@@ -927,6 +981,8 @@ export type UserUpdateWithoutUserRolesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -934,18 +990,20 @@ export type UserUpdateWithoutUserRolesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserRolesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -953,7 +1011,9 @@ export type UserUncheckedUpdateWithoutUserRolesInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
@@ -974,6 +1034,8 @@ export type UserUpdateWithoutUserRolesGrantedInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -981,18 +1043,20 @@ export type UserUpdateWithoutUserRolesGrantedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1000,8 +1064,10 @@ export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
 
@@ -1010,6 +1076,8 @@ export type UserCreateWithoutSessionsInput = {
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -1017,18 +1085,20 @@ export type UserCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
-  tenant: Prisma.TenantCreateNestedOneWithoutUsersInput
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
   id?: string
-  tenantId: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -1036,7 +1106,9 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
   userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
 }
@@ -1062,6 +1134,8 @@ export type UserUpdateWithoutSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1069,18 +1143,20 @@ export type UserUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  tenant?: Prisma.TenantUpdateOneRequiredWithoutUsersNestedInput
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1088,16 +1164,20 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
 
-export type UserCreateManyTenantInput = {
+export type UserCreateWithoutPasswordResetTokensInput = {
   id?: string
   email: string
   passwordHash: string
   displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
   status: string
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
@@ -1105,13 +1185,57 @@ export type UserCreateManyTenantInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
+  userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
+  userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
 }
 
-export type UserUpdateWithoutTenantInput = {
+export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
+  status: string
+  tokenVersion?: bigint | number
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
+  userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
+  userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+}
+
+export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetTokensInput, Prisma.UserUncheckedCreateWithoutPasswordResetTokensInput>
+}
+
+export type UserUpsertWithoutPasswordResetTokensInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutPasswordResetTokensInput, Prisma.UserUncheckedUpdateWithoutPasswordResetTokensInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutPasswordResetTokensInput, Prisma.UserUncheckedCreateWithoutPasswordResetTokensInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutPasswordResetTokensInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutPasswordResetTokensInput, Prisma.UserUncheckedUpdateWithoutPasswordResetTokensInput>
+}
+
+export type UserUpdateWithoutPasswordResetTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1119,17 +1243,20 @@ export type UserUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
 }
 
-export type UserUncheckedUpdateWithoutTenantInput = {
+export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
   displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1137,24 +1264,11 @@ export type UserUncheckedUpdateWithoutTenantInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
-}
-
-export type UserUncheckedUpdateManyWithoutTenantInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  displayName?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
-  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
-  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
-  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1163,15 +1277,19 @@ export type UserUncheckedUpdateManyWithoutTenantInput = {
  */
 
 export type UserCountOutputType = {
+  userTenants: number
   userRoles: number
   sessions: number
+  passwordResetTokens: number
   rolePermissionsGranted: number
   userRolesGranted: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  userTenants?: boolean | UserCountOutputTypeCountUserTenantsArgs
   userRoles?: boolean | UserCountOutputTypeCountUserRolesArgs
   sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+  passwordResetTokens?: boolean | UserCountOutputTypeCountPasswordResetTokensArgs
   rolePermissionsGranted?: boolean | UserCountOutputTypeCountRolePermissionsGrantedArgs
   userRolesGranted?: boolean | UserCountOutputTypeCountUserRolesGrantedArgs
 }
@@ -1184,6 +1302,13 @@ export type UserCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Extensi
    * Select specific fields to fetch from the UserCountOutputType
    */
   select?: Prisma.UserCountOutputTypeSelect<ExtArgs> | null
+}
+
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountUserTenantsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.UserTenantWhereInput
 }
 
 /**
@@ -1203,6 +1328,13 @@ export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends runtime.Types.E
 /**
  * UserCountOutputType without action
  */
+export type UserCountOutputTypeCountPasswordResetTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PasswordResetTokenWhereInput
+}
+
+/**
+ * UserCountOutputType without action
+ */
 export type UserCountOutputTypeCountRolePermissionsGrantedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.RolePermissionWhereInput
 }
@@ -1217,10 +1349,11 @@ export type UserCountOutputTypeCountUserRolesGrantedArgs<ExtArgs extends runtime
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  tenantId?: boolean
   email?: boolean
   passwordHash?: boolean
   displayName?: boolean
+  phoneNumber?: boolean
+  avatarUrl?: boolean
   status?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
@@ -1228,9 +1361,10 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
-  tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
+  userTenants?: boolean | Prisma.User$userTenantsArgs<ExtArgs>
   userRoles?: boolean | Prisma.User$userRolesArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
+  passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
   rolePermissionsGranted?: boolean | Prisma.User$rolePermissionsGrantedArgs<ExtArgs>
   userRolesGranted?: boolean | Prisma.User$userRolesGrantedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
@@ -1238,10 +1372,11 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
 
 export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  tenantId?: boolean
   email?: boolean
   passwordHash?: boolean
   displayName?: boolean
+  phoneNumber?: boolean
+  avatarUrl?: boolean
   status?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
@@ -1249,15 +1384,15 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
-  tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
-  tenantId?: boolean
   email?: boolean
   passwordHash?: boolean
   displayName?: boolean
+  phoneNumber?: boolean
+  avatarUrl?: boolean
   status?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
@@ -1265,15 +1400,15 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
-  tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
 export type UserSelectScalar = {
   id?: boolean
-  tenantId?: boolean
   email?: boolean
   passwordHash?: boolean
   displayName?: boolean
+  phoneNumber?: boolean
+  avatarUrl?: boolean
   status?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
@@ -1283,37 +1418,36 @@ export type UserSelectScalar = {
   deletedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "email" | "passwordHash" | "displayName" | "status" | "tokenVersion" | "lastLoginAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "displayName" | "phoneNumber" | "avatarUrl" | "status" | "tokenVersion" | "lastLoginAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
+  userTenants?: boolean | Prisma.User$userTenantsArgs<ExtArgs>
   userRoles?: boolean | Prisma.User$userRolesArgs<ExtArgs>
   sessions?: boolean | Prisma.User$sessionsArgs<ExtArgs>
+  passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
   rolePermissionsGranted?: boolean | Prisma.User$rolePermissionsGrantedArgs<ExtArgs>
   userRolesGranted?: boolean | Prisma.User$userRolesGrantedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-}
-export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  tenant?: boolean | Prisma.TenantDefaultArgs<ExtArgs>
-}
+export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type UserIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
 
 export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "User"
   objects: {
-    tenant: Prisma.$TenantPayload<ExtArgs>
+    userTenants: Prisma.$UserTenantPayload<ExtArgs>[]
     userRoles: Prisma.$UserRolePayload<ExtArgs>[]
     sessions: Prisma.$SessionPayload<ExtArgs>[]
+    passwordResetTokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
     rolePermissionsGranted: Prisma.$RolePermissionPayload<ExtArgs>[]
     userRolesGranted: Prisma.$UserRolePayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    tenantId: string
     email: string
     passwordHash: string
     displayName: string
+    phoneNumber: string | null
+    avatarUrl: string | null
     status: string
     tokenVersion: bigint
     lastLoginAt: Date | null
@@ -1715,9 +1849,10 @@ readonly fields: UserFieldRefs;
  */
 export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  tenant<T extends Prisma.TenantDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TenantDefaultArgs<ExtArgs>>): Prisma.Prisma__TenantClient<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  userTenants<T extends Prisma.User$userTenantsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userTenantsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserTenantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userRoles<T extends Prisma.User$userRolesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userRolesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   sessions<T extends Prisma.User$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  passwordResetTokens<T extends Prisma.User$passwordResetTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rolePermissionsGranted<T extends Prisma.User$rolePermissionsGrantedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rolePermissionsGrantedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userRolesGranted<T extends Prisma.User$userRolesGrantedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userRolesGrantedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -1750,10 +1885,11 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
  */
 export interface UserFieldRefs {
   readonly id: Prisma.FieldRef<"User", 'String'>
-  readonly tenantId: Prisma.FieldRef<"User", 'String'>
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly passwordHash: Prisma.FieldRef<"User", 'String'>
   readonly displayName: Prisma.FieldRef<"User", 'String'>
+  readonly phoneNumber: Prisma.FieldRef<"User", 'String'>
+  readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly status: Prisma.FieldRef<"User", 'String'>
   readonly tokenVersion: Prisma.FieldRef<"User", 'BigInt'>
   readonly lastLoginAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -2015,10 +2151,6 @@ export type UserCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    */
   data: Prisma.UserCreateManyInput | Prisma.UserCreateManyInput[]
   skipDuplicates?: boolean
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2089,10 +2221,6 @@ export type UserUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many Users to update.
    */
   limit?: number
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.UserIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2162,6 +2290,30 @@ export type UserDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.Internal
 }
 
 /**
+ * User.userTenants
+ */
+export type User$userTenantsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the UserTenant
+   */
+  select?: Prisma.UserTenantSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the UserTenant
+   */
+  omit?: Prisma.UserTenantOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserTenantInclude<ExtArgs> | null
+  where?: Prisma.UserTenantWhereInput
+  orderBy?: Prisma.UserTenantOrderByWithRelationInput | Prisma.UserTenantOrderByWithRelationInput[]
+  cursor?: Prisma.UserTenantWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.UserTenantScalarFieldEnum | Prisma.UserTenantScalarFieldEnum[]
+}
+
+/**
  * User.userRoles
  */
 export type User$userRolesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -2207,6 +2359,30 @@ export type User$sessionsArgs<ExtArgs extends runtime.Types.Extensions.InternalA
   take?: number
   skip?: number
   distinct?: Prisma.SessionScalarFieldEnum | Prisma.SessionScalarFieldEnum[]
+}
+
+/**
+ * User.passwordResetTokens
+ */
+export type User$passwordResetTokensArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PasswordResetToken
+   */
+  select?: Prisma.PasswordResetTokenSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PasswordResetToken
+   */
+  omit?: Prisma.PasswordResetTokenOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PasswordResetTokenInclude<ExtArgs> | null
+  where?: Prisma.PasswordResetTokenWhereInput
+  orderBy?: Prisma.PasswordResetTokenOrderByWithRelationInput | Prisma.PasswordResetTokenOrderByWithRelationInput[]
+  cursor?: Prisma.PasswordResetTokenWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PasswordResetTokenScalarFieldEnum | Prisma.PasswordResetTokenScalarFieldEnum[]
 }
 
 /**
