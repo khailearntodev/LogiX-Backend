@@ -1,11 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
-import { AppModule, ObserveInstrument } from './app.module.js';
+import { Logger } from '@logix/logger';
+import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    instrument: ObserveInstrument,
-  });
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // Use Pino as the application-wide logger
+  app.useLogger(app.get(Logger));
 
   app.use(cookieParser());
 
@@ -16,6 +18,9 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   });
+
+  // Enable graceful shutdown hooks (important for K8s SIGTERM)
+  app.enableShutdownHooks();
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);

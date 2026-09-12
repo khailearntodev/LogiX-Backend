@@ -1,21 +1,25 @@
 import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
+import { APP_FILTER } from '@nestjs/core';
+import { LogixConfigModule } from '@logix/config';
+import { LogixLoggerModule } from '@logix/logger';
+import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
-
 @Module({
   imports: [
-    // Distributed tracing, auto-correlated logs, request/job metrics, error
-    // telemetry, alarms, and more — out of the box. Sign up at https://observe.nestjs.com
-    ObserveModule.forRoot({
-      appKey: 'YOUR_APP_KEY',
-      appSecret: 'YOUR_APP_SECRET',
-      serviceId: 'apps',
+    LogixConfigModule.forRoot(),
+    LogixLoggerModule.forRoot({
+      serviceName: 'apps',
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

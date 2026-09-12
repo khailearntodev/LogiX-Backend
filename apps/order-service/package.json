@@ -29,11 +29,15 @@
   "dependencies": {
     "@nestjs/common": "^12.0.1",
     "@nestjs/core": "^12.0.1",
-    "@nestjs/observe": "^0.1.8",
+    "@logix/common": "workspace:*",
+    "@logix/config": "workspace:*",
+    "@logix/database": "workspace:*",
+    "@logix/errors": "workspace:*",
+    "@logix/logger": "workspace:*",
     "@nestjs/platform-express": "^12.0.1",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
-    "dotenv": "^17.4.2",
+    "@nestjs/config": "^4.0.2",
     "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"

@@ -1,33 +1,36 @@
 import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
-import { APP_GUARD } from '@nestjs/core';
-import { createObserveModule } from '@nestjs/observe';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
+import { LogixConfigModule } from '@logix/config';
+import { LogixLoggerModule } from '@logix/logger';
+import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
 
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
-
 @Module({
   imports: [
-    // Rate Limiting: Tối đa 60 requests / 1 phút cho toàn Gateway,
-    // riêng endpoint nhạy cảm như Auth bảo vệ chống Brute Force
+    LogixConfigModule.forRoot(),
+
+    LogixLoggerModule.forRoot({
+      serviceName: 'api-gateway',
+    }),
+
     ThrottlerModule.forRoot([
       {
         name: 'short',
-        ttl: 60000, // 1 phút
-        limit: 30,  // Tối đa 30 requests / phút
+        ttl: 60000,
+        limit: 30,
       },
     ]),
-    ObserveModule.forRoot({
-      appKey: 'YOUR_APP_KEY',
-      appSecret: 'YOUR_APP_SECRET',
-      serviceId: 'api-gateway',
-    }),
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_FILTER,
+      useClass: GlobalExceptionFilter,
+    },
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
