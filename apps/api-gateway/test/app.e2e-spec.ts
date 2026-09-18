@@ -23,6 +23,18 @@ describe('AppController (e2e)', () => {
       .expect('Hello World!');
   });
 
+  it('/api/v1/auth/register (POST with body) - proxies request without hanging', () => {
+    return request(app.getHttpServer())
+      .post('/api/v1/auth/register')
+      .send({ email: 'test@example.com', password: 'password123' })
+      .expect((res) => {
+        // Should be proxied or reach error filter without hanging on JSON body
+        if (res.status !== 201 && res.status !== 400 && res.status !== 409 && res.status !== 500 && res.status !== 502) {
+          throw new Error(`Expected valid HTTP status, got ${res.status}`);
+        }
+      });
+  });
+
   afterEach(async () => {
     await app.close();
   });

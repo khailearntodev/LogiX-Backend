@@ -141,26 +141,7 @@ jobs:
           done
 
       - name: Build NestJS services
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          services=(
-            api-gateway
-            identity-service
-            master-data-service
-            inventory-service
-            order-service
-            fulfillment-service
-            transport-service
-            notification-service
-            audit-service
-          )
-
-          for service in "${services[@]}"; do
-            echo "Building $service"
-            pnpm --dir "apps/$service" run build
-          done
+        run: pnpm build
 
       - name: Run available NestJS tests
         shell: bash

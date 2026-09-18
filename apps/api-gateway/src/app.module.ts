@@ -1,4 +1,4 @@
-import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { LogixConfigModule } from '@logix/config';
@@ -40,6 +40,11 @@ import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     // Chuyển hướng các request /api/v1/auth sang identity-service
-    consumer.apply(AuthProxyMiddleware).forRoutes('/api/v1/auth*');
+    consumer
+      .apply(AuthProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/auth', method: RequestMethod.ALL },
+        { path: 'api/v1/auth/*', method: RequestMethod.ALL },
+      );
   }
 }
