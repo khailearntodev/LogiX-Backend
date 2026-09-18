@@ -1,6 +1,6 @@
 import { Injectable, NestMiddleware } from '@nestjs/common';
 import type { Request, Response, NextFunction } from 'express';
-import { createProxyMiddleware, Options } from 'http-proxy-middleware';
+import { createProxyMiddleware, fixRequestBody, Options } from 'http-proxy-middleware';
 
 @Injectable()
 export class AuthProxyMiddleware implements NestMiddleware {
@@ -14,13 +14,15 @@ export class AuthProxyMiddleware implements NestMiddleware {
       changeOrigin: true,
       secure: false,
       ws: true,
-      pathFilter: '/api/v1/auth',
+      pathFilter: (path: string) => path.startsWith('/api/v1/auth'),
       on: {
         proxyReq: (proxyReq, req: any) => {
           // Preserve client IP and headers
           if (req.ip) {
             proxyReq.setHeader('x-forwarded-for', req.ip);
           }
+          // Re-stream request body parsed by Express body-parser
+          fixRequestBody(proxyReq, req);
         },
         error: (err, _req, res: any) => {
           console.error('[API Gateway Auth Proxy Error]:', err.message);
