@@ -14,7 +14,6 @@ import { RegisterDto } from '../dto/register.dto.js';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto.js';
 import { ResetPasswordDto } from '../dto/reset-password.dto.js';
 import { SwitchTenantDto } from '../dto/switch-tenant.dto.js';
-import { CreateOrganizationDto } from '../dto/create-organization.dto.js';
 import { UpdateProfileDto } from '../dto/update-profile.dto.js';
 
 @Injectable()
@@ -229,55 +228,6 @@ export class AuthService {
         name: tenant.name,
       },
       message: 'Đăng ký tài khoản thành công',
-    };
-  }
-
-  async createOrganization(userId: string, dto: CreateOrganizationDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user || user.status !== 'ACTIVE') {
-      throw new UnauthorizedException('Người dùng không hợp lệ hoặc đã bị khóa');
-    }
-
-    const tenantCode = dto.code?.trim() || `tenant-${crypto.randomBytes(6).toString('hex')}`;
-    const tenantName = dto.name.trim();
-
-    // Nếu chọn làm mặc định, hủy default của các tenant khác
-    if (dto.setAsDefault) {
-      await this.prisma.userTenant.updateMany({
-        where: { userId },
-        data: { isDefault: false },
-      });
-    }
-
-    const newTenant = await this.prisma.tenant.create({
-      data: {
-        code: tenantCode,
-        name: tenantName,
-        status: 'ACTIVE',
-        settings: {},
-      },
-    });
-
-    const userTenant = await this.prisma.userTenant.create({
-      data: {
-        userId,
-        tenantId: newTenant.id,
-        role: 'OWNER',
-        isDefault: Boolean(dto.setAsDefault),
-        status: 'ACTIVE',
-      },
-    });
-
-    return {
-      id: newTenant.id,
-      code: newTenant.code,
-      name: newTenant.name,
-      role: userTenant.role,
-      isDefault: userTenant.isDefault,
-      message: 'Khởi tạo tổ chức mới thành công',
     };
   }
 

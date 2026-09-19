@@ -22,6 +22,7 @@ describe('AuthService', () => {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
         create: vi.fn(),
+        update: vi.fn(),
       },
       userTenant: {
         findFirst: vi.fn(),
@@ -174,20 +175,6 @@ describe('AuthService', () => {
       expect(result.email).toBe('new@logix.vn');
       expect(prismaService.user.create).toHaveBeenCalled();
       expect(prismaService.userTenant.create).toHaveBeenCalled();
-    });
-  });
-
-  describe('createOrganization', () => {
-    it('should create organization for logged in user', async () => {
-      prismaService.user.findUnique.mockResolvedValue({ id: 'u1', status: 'ACTIVE' });
-      prismaService.tenant.create.mockResolvedValue({ id: 'new_t', code: 'tenant-99', name: 'New Logistics Co' });
-      prismaService.userTenant.create.mockResolvedValue({ id: 'ut99', role: 'OWNER', isDefault: true });
-
-      const result = await authService.createOrganization('u1', { name: 'New Logistics Co', setAsDefault: true });
-
-      expect(result.id).toBe('new_t');
-      expect(result.role).toBe('OWNER');
-      expect(result.isDefault).toBe(true);
     });
   });
 

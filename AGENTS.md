@@ -74,6 +74,11 @@ indexed by `docs/architecture/README.md`.
   to at most one shipment, internal fleet, and no deep WMS, 3PL, payment,
   reverse-logistics, live GPS, or geofencing scope unless an accepted decision
   changes the BRD boundary.
+- Maintain strict modularity and domain separation (Single Responsibility
+  Principle). Avoid "god modules" or bloated controllers/services: separate
+  distinct business sub-domains into dedicated modules/controllers/services
+  (e.g., pure Authentication & Session Lifecycle in `auth`, Organization/Tenant
+  management in `organizations`).
 
 ### Validation
 

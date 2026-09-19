@@ -19,7 +19,6 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { SwitchTenantDto } from './dto/switch-tenant.dto.js';
-import { CreateOrganizationDto } from './dto/create-organization.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
@@ -156,16 +155,6 @@ export class AuthController {
       accessToken: result.accessToken,
       activeTenant: result.activeTenant,
     };
-  }
-
-  @Post('organizations')
-  @HttpCode(HttpStatus.CREATED)
-  @UseGuards(JwtAuthGuard)
-  async createOrganization(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateOrganizationDto,
-  ) {
-    return this.authService.createOrganization(user.id, dto);
   }
 
   @Get('me')
