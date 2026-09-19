@@ -28,7 +28,14 @@ export class AuthService {
       where: { email: dto.email, deletedAt: null },
       include: {
         userTenants: {
-          where: { status: 'ACTIVE', deletedAt: null },
+          where: {
+            status: 'ACTIVE',
+            deletedAt: null,
+            tenant: {
+              status: 'ACTIVE',
+              deletedAt: null,
+            },
+          },
           include: { tenant: true },
           orderBy: { updatedAt: 'desc' },
         },
@@ -238,6 +245,14 @@ export class AuthService {
         tenantId: dto.tenantId,
         status: 'ACTIVE',
         deletedAt: null,
+        user: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+        tenant: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
       },
       include: {
         user: true,
@@ -245,8 +260,16 @@ export class AuthService {
       },
     });
 
-    if (!userTenant || !userTenant.user || userTenant.user.status !== 'ACTIVE' || !userTenant.tenant) {
-      throw new UnauthorizedException('Bạn không có quyền chuyển sang tổ chức này');
+    if (
+      !userTenant ||
+      !userTenant.user ||
+      userTenant.user.status !== 'ACTIVE' ||
+      Boolean(userTenant.user.deletedAt) ||
+      !userTenant.tenant ||
+      userTenant.tenant.status === 'INACTIVE' ||
+      Boolean(userTenant.tenant.deletedAt)
+    ) {
+      throw new UnauthorizedException('Bạn không có quyền chuyển sang tổ chức này hoặc tổ chức đã bị ngưng hoạt động');
     }
 
     // Cập nhật thời điểm vừa tương tác/làm việc tại Tenant này
@@ -391,14 +414,21 @@ export class AuthService {
       where: { id: userId },
       include: {
         userTenants: {
-          where: { status: 'ACTIVE', deletedAt: null },
+          where: {
+            status: 'ACTIVE',
+            deletedAt: null,
+            tenant: {
+              status: 'ACTIVE',
+              deletedAt: null,
+            },
+          },
           include: { tenant: true },
         },
       },
     });
 
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy thông tin người dùng');
+    if (!user || user.status !== 'ACTIVE' || Boolean(user.deletedAt)) {
+      throw new NotFoundException('Không tìm thấy thông tin người dùng hoặc tài khoản đã bị khóa');
     }
 
     const activeUserTenant = currentTenantId
@@ -432,6 +462,50 @@ export class AuthService {
           }
         : null,
       tenants: tenantsList,
+    };
+  }
+
+  async deleteAccount(userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, status: 'ACTIVE', deletedAt: null },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy tài khoản người dùng hoặc tài khoản đã bị khóa/xóa');
+    }
+
+    const timestamp = Date.now();
+    const anonymizedEmail = `deleted_${timestamp}_${user.email}`;
+    const anonymizePhoneNumber = `deleted_${timestamp}_${user.phoneNumber}`;
+    
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          email: anonymizedEmail,
+          status: 'INACTIVE',
+          deletedAt: new Date(),
+          phoneNumber: user.phoneNumber ? anonymizePhoneNumber : null,
+        },
+      }),
+      this.prisma.userTenant.updateMany({
+        where: { userId, status: 'ACTIVE', deletedAt: null },
+        data: {
+          status: 'INACTIVE',
+          deletedAt: new Date(),
+        },
+      }),
+      this.prisma.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: {
+          revokedAt: new Date(),
+          revokeReason: 'ACCOUNT_DELETED',
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Tài khoản đã được xóa và ẩn danh hóa thành công',
     };
   }
 }

@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { UnauthorizedException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { OrganizationService } from './organization.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 
@@ -25,6 +25,9 @@ describe('OrganizationService', () => {
         update: vi.fn().mockResolvedValue({}),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         count: vi.fn().mockResolvedValue(0),
+      },
+      session: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       $transaction: vi.fn((promises) => Promise.all(promises)),
     };
@@ -268,6 +271,89 @@ describe('OrganizationService', () => {
         where: { id: 'ut_target' },
         data: { isDefault: true },
       });
+    });
+  });
+
+  describe('deleteOrganization', () => {
+    it('should throw NotFoundException if user is not in tenant or tenant not found', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue(null);
+
+      await expect(
+        organizationService.deleteOrganization('u1', 't1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if caller is not an OWNER', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        id: 'ut1',
+        userId: 'u1',
+        tenantId: 't1',
+        role: 'ADMIN',
+        tenant: { id: 't1', code: 'logix', status: 'ACTIVE' },
+      });
+
+      await expect(
+        organizationService.deleteOrganization('u1', 't1'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException if there are still other members in the organization', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        id: 'ut1',
+        userId: 'u1',
+        tenantId: 't1',
+        role: 'OWNER',
+        tenant: { id: 't1', code: 'logix', status: 'ACTIVE' },
+      });
+      // 1 other member exists
+      prismaService.userTenant.count.mockResolvedValue(1);
+
+      await expect(
+        organizationService.deleteOrganization('u1', 't1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should delete organization, anonymize code and disconnect sole owner', async () => {
+      prismaService.userTenant.findFirst
+        .mockResolvedValueOnce({
+          id: 'ut1',
+          userId: 'u1',
+          tenantId: 't1',
+          role: 'OWNER',
+          isDefault: true,
+          tenant: { id: 't1', code: 'logix', status: 'ACTIVE' },
+        })
+        .mockResolvedValueOnce({
+          id: 'ut2',
+          userId: 'u1',
+          tenantId: 't2',
+          tenant: { id: 't2', status: 'ACTIVE' },
+        });
+
+      // No other members
+      prismaService.userTenant.count.mockResolvedValue(0);
+
+      const result = await organizationService.deleteOrganization('u1', 't1');
+
+      expect(result.message).toContain('Xóa tổ chức thành công');
+      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(prismaService.tenant.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 't1' },
+          data: expect.objectContaining({
+            status: 'INACTIVE',
+          }),
+        }),
+      );
+      expect(prismaService.userTenant.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'ut1' },
+          data: expect.objectContaining({
+            status: 'INACTIVE',
+            isDefault: false,
+          }),
+        }),
+      );
     });
   });
 });
