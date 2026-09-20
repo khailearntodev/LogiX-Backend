@@ -10,12 +10,21 @@ dependencies = [
   "alembic>=1.13",
   "asyncpg>=0.29",
   "SQLAlchemy>=2.0",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "pydantic-settings>=2.4.0",
+  "httpx>=0.27.0",
 ]
 
 [project.optional-dependencies]
 test = [
   "pytest>=8",
   "pytest-asyncio>=0.24",
+  "httpx>=0.27.0",
+]
+ai = [
+  "langgraph>=0.2.0",
+  "litellm>=1.40.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -29,3 +38,4 @@ package-dir = {"" = "src"}
 testpaths = ["tests"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
+addopts = "--import-mode=importlib"
