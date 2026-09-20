@@ -14,7 +14,6 @@ import { RegisterDto } from '../dto/register.dto.js';
 import { ForgotPasswordDto } from '../dto/forgot-password.dto.js';
 import { ResetPasswordDto } from '../dto/reset-password.dto.js';
 import { SwitchTenantDto } from '../dto/switch-tenant.dto.js';
-import { CreateOrganizationDto } from '../dto/create-organization.dto.js';
 import { UpdateProfileDto } from '../dto/update-profile.dto.js';
 
 @Injectable()
@@ -29,7 +28,14 @@ export class AuthService {
       where: { email: dto.email, deletedAt: null },
       include: {
         userTenants: {
-          where: { status: 'ACTIVE', deletedAt: null },
+          where: {
+            status: 'ACTIVE',
+            deletedAt: null,
+            tenant: {
+              status: 'ACTIVE',
+              deletedAt: null,
+            },
+          },
           include: { tenant: true },
           orderBy: { updatedAt: 'desc' },
         },
@@ -232,55 +238,6 @@ export class AuthService {
     };
   }
 
-  async createOrganization(userId: string, dto: CreateOrganizationDto) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user || user.status !== 'ACTIVE') {
-      throw new UnauthorizedException('Người dùng không hợp lệ hoặc đã bị khóa');
-    }
-
-    const tenantCode = dto.code?.trim() || `tenant-${crypto.randomBytes(6).toString('hex')}`;
-    const tenantName = dto.name.trim();
-
-    // Nếu chọn làm mặc định, hủy default của các tenant khác
-    if (dto.setAsDefault) {
-      await this.prisma.userTenant.updateMany({
-        where: { userId },
-        data: { isDefault: false },
-      });
-    }
-
-    const newTenant = await this.prisma.tenant.create({
-      data: {
-        code: tenantCode,
-        name: tenantName,
-        status: 'ACTIVE',
-        settings: {},
-      },
-    });
-
-    const userTenant = await this.prisma.userTenant.create({
-      data: {
-        userId,
-        tenantId: newTenant.id,
-        role: 'OWNER',
-        isDefault: Boolean(dto.setAsDefault),
-        status: 'ACTIVE',
-      },
-    });
-
-    return {
-      id: newTenant.id,
-      code: newTenant.code,
-      name: newTenant.name,
-      role: userTenant.role,
-      isDefault: userTenant.isDefault,
-      message: 'Khởi tạo tổ chức mới thành công',
-    };
-  }
-
   async switchTenant(userId: string, dto: SwitchTenantDto, meta?: { userAgent?: string; ipAddress?: string }) {
     const userTenant = await this.prisma.userTenant.findFirst({
       where: {
@@ -288,6 +245,14 @@ export class AuthService {
         tenantId: dto.tenantId,
         status: 'ACTIVE',
         deletedAt: null,
+        user: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+        tenant: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
       },
       include: {
         user: true,
@@ -295,8 +260,16 @@ export class AuthService {
       },
     });
 
-    if (!userTenant || !userTenant.user || userTenant.user.status !== 'ACTIVE' || !userTenant.tenant) {
-      throw new UnauthorizedException('Bạn không có quyền chuyển sang tổ chức này');
+    if (
+      !userTenant ||
+      !userTenant.user ||
+      userTenant.user.status !== 'ACTIVE' ||
+      Boolean(userTenant.user.deletedAt) ||
+      !userTenant.tenant ||
+      userTenant.tenant.status === 'INACTIVE' ||
+      Boolean(userTenant.tenant.deletedAt)
+    ) {
+      throw new UnauthorizedException('Bạn không có quyền chuyển sang tổ chức này hoặc tổ chức đã bị ngưng hoạt động');
     }
 
     // Cập nhật thời điểm vừa tương tác/làm việc tại Tenant này
@@ -441,14 +414,21 @@ export class AuthService {
       where: { id: userId },
       include: {
         userTenants: {
-          where: { status: 'ACTIVE', deletedAt: null },
+          where: {
+            status: 'ACTIVE',
+            deletedAt: null,
+            tenant: {
+              status: 'ACTIVE',
+              deletedAt: null,
+            },
+          },
           include: { tenant: true },
         },
       },
     });
 
-    if (!user) {
-      throw new NotFoundException('Không tìm thấy thông tin người dùng');
+    if (!user || user.status !== 'ACTIVE' || Boolean(user.deletedAt)) {
+      throw new NotFoundException('Không tìm thấy thông tin người dùng hoặc tài khoản đã bị khóa');
     }
 
     const activeUserTenant = currentTenantId
@@ -482,6 +462,50 @@ export class AuthService {
           }
         : null,
       tenants: tenantsList,
+    };
+  }
+
+  async deleteAccount(userId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, status: 'ACTIVE', deletedAt: null },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy tài khoản người dùng hoặc tài khoản đã bị khóa/xóa');
+    }
+
+    const timestamp = Date.now();
+    const anonymizedEmail = `deleted_${timestamp}_${user.email}`;
+    const anonymizePhoneNumber = `deleted_${timestamp}_${user.phoneNumber}`;
+    
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          email: anonymizedEmail,
+          status: 'INACTIVE',
+          deletedAt: new Date(),
+          phoneNumber: user.phoneNumber ? anonymizePhoneNumber : null,
+        },
+      }),
+      this.prisma.userTenant.updateMany({
+        where: { userId, status: 'ACTIVE', deletedAt: null },
+        data: {
+          status: 'INACTIVE',
+          deletedAt: new Date(),
+        },
+      }),
+      this.prisma.session.updateMany({
+        where: { userId, revokedAt: null },
+        data: {
+          revokedAt: new Date(),
+          revokeReason: 'ACCOUNT_DELETED',
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Tài khoản đã được xóa và ẩn danh hóa thành công',
     };
   }
 }

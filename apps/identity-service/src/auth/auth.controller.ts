@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Delete,
   Body,
   HttpCode,
   HttpStatus,
@@ -19,7 +20,6 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { SwitchTenantDto } from './dto/switch-tenant.dto.js';
-import { CreateOrganizationDto } from './dto/create-organization.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
@@ -104,9 +104,19 @@ export class AuthController {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const profile = await this.authService.getProfile(result.user.id, result.user.tenantId);
+
     return {
       accessToken: result.accessToken,
-      user: result.user,
+      user: {
+        id: result.user.id,
+        email: result.user.email,
+        displayName: result.user.displayName,
+        phoneNumber: result.user.phoneNumber,
+        avatarUrl: result.user.avatarUrl,
+      },
+      activeTenant: profile.activeTenant,
+      tenants: profile.tenants,
     };
   }
 
@@ -158,16 +168,6 @@ export class AuthController {
     };
   }
 
-  @Post('organizations')
-  @HttpCode(HttpStatus.CREATED)
-  @UseGuards(JwtAuthGuard)
-  async createOrganization(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateOrganizationDto,
-  ) {
-    return this.authService.createOrganization(user.id, dto);
-  }
-
   @Get('me')
   @UseGuards(JwtAuthGuard)
   async getProfile(@CurrentUser() user: AuthenticatedUser) {
@@ -182,5 +182,17 @@ export class AuthController {
     @Body() dto: UpdateProfileDto,
   ) {
     return this.authService.updateProfile(user.id, dto);
+  }
+
+  @Delete('me')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  async deleteAccount(
+    @CurrentUser() user: AuthenticatedUser,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.deleteAccount(user.id);
+    res.clearCookie('refreshToken', { path: '/api/v1/auth' });
+    return result;
   }
 }
