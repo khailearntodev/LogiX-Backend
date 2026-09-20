@@ -77,7 +77,15 @@ export class TokenService {
       where: { id: payload.sub, status: 'ACTIVE', deletedAt: null },
       include: {
         userTenants: {
-          where: { tenantId: session.tenantId, status: 'ACTIVE', deletedAt: null },
+          where: {
+            tenantId: session.tenantId,
+            status: 'ACTIVE',
+            deletedAt: null,
+            tenant: {
+              status: 'ACTIVE',
+              deletedAt: null,
+            },
+          },
           include: { tenant: true },
         },
       },
