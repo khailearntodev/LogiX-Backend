@@ -257,4 +257,65 @@ describe('AuthService', () => {
       expect(profile.activeTenant?.name).toBe('LogiX Corp');
     });
   });
+
+  describe('changePassword', () => {
+    it('should throw BadRequestException if current password does not match', async () => {
+      const hashedOldPassword = await bcrypt.hash('old_pass_123', 10);
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        passwordHash: hashedOldPassword,
+        status: 'ACTIVE',
+      });
+
+      await expect(
+        authService.changePassword('u1', {
+          currentPassword: 'wrong_old_pass',
+          newPassword: 'new_pass_456',
+        }),
+      ).rejects.toThrow('Mật khẩu hiện tại không chính xác');
+    });
+
+    it('should throw BadRequestException if new password is same as current password', async () => {
+      const hashedOldPassword = await bcrypt.hash('same_pass_123', 10);
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        passwordHash: hashedOldPassword,
+        status: 'ACTIVE',
+      });
+
+      await expect(
+        authService.changePassword('u1', {
+          currentPassword: 'same_pass_123',
+          newPassword: 'same_pass_123',
+        }),
+      ).rejects.toThrow('Mật khẩu mới không được trùng với mật khẩu hiện tại');
+    });
+
+    it('should successfully update password and revoke other sessions if requested', async () => {
+      const hashedOldPassword = await bcrypt.hash('old_pass_123', 10);
+      prismaService.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        passwordHash: hashedOldPassword,
+        status: 'ACTIVE',
+      });
+      prismaService.user.update.mockResolvedValue({});
+      tokenService.revokeOtherSessions = vi.fn().mockResolvedValue({ count: 2 });
+
+      const result = await authService.changePassword(
+        'u1',
+        {
+          currentPassword: 'old_pass_123',
+          newPassword: 'brand_new_pass_789',
+          revokeOtherSessions: true,
+        },
+        'mock_current_refresh_token',
+      );
+
+      expect(result.message).toBe('Đổi mật khẩu thành công');
+      expect(result.revokedOthersCount).toBe(2);
+      expect(prismaService.user.update).toHaveBeenCalled();
+      expect(tokenService.revokeOtherSessions).toHaveBeenCalledWith('u1', 'mock_current_refresh_token');
+    });
+  });
 });
+
