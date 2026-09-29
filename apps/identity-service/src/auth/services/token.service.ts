@@ -1,6 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service.js';
 import { JwtPayload } from '../interfaces/jwt-payload.interface.js';
@@ -138,6 +137,134 @@ export class TokenService {
         tenantLogoUrl: userTenant.tenant.logoUrl,
         role: userTenant.role,
       },
+    };
+  }
+
+  parseUserAgent(uaString?: string | null): {
+    browser: string;
+    os: string;
+    deviceType: 'DESKTOP' | 'MOBILE' | 'TABLET' | 'UNKNOWN';
+  } {
+    if (!uaString) {
+      return { browser: 'Unknown Browser', os: 'Unknown OS', deviceType: 'UNKNOWN' };
+    }
+
+    const ua = uaString.toLowerCase();
+
+    // Determine device type
+    let deviceType: 'DESKTOP' | 'MOBILE' | 'TABLET' | 'UNKNOWN' = 'DESKTOP';
+    if (ua.includes('tablet') || ua.includes('ipad')) {
+      deviceType = 'TABLET';
+    } else if (ua.includes('mobile') || ua.includes('iphone') || ua.includes('android')) {
+      deviceType = 'MOBILE';
+    }
+
+    // Determine OS
+    let os = 'Unknown OS';
+    if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) {
+      os = 'iOS';
+    } else if (ua.includes('android')) {
+      os = 'Android';
+    } else if (ua.includes('windows nt 10.0') || ua.includes('windows nt 11.0') || ua.includes('windows')) {
+      os = 'Windows';
+    } else if (ua.includes('macintosh') || ua.includes('mac os x')) {
+      os = 'macOS';
+    } else if (ua.includes('linux')) {
+      os = 'Linux';
+    }
+
+    // Determine Browser
+    let browser = 'Unknown Browser';
+    if (ua.includes('edg/')) {
+      browser = 'Microsoft Edge';
+    } else if (ua.includes('chrome/') && !ua.includes('chromium')) {
+      browser = 'Google Chrome';
+    } else if (ua.includes('safari/') && !ua.includes('chrome')) {
+      browser = 'Safari';
+    } else if (ua.includes('firefox/')) {
+      browser = 'Mozilla Firefox';
+    } else if (ua.includes('opr/') || ua.includes('opera/')) {
+      browser = 'Opera';
+    }
+
+    return { browser, os, deviceType };
+  }
+
+  async getActiveSessions(userId: string, currentRefreshToken?: string) {
+    const currentTokenHash = currentRefreshToken ? this.hashToken(currentRefreshToken) : null;
+
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        userId,
+        revokedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return sessions.map((session) => {
+      const parsedUA = this.parseUserAgent(session.userAgent);
+      return {
+        id: session.id,
+        device: `${parsedUA.os} • ${parsedUA.browser}`,
+        browser: parsedUA.browser,
+        os: parsedUA.os,
+        deviceType: parsedUA.deviceType,
+        ipAddress: session.ipHash ? 'Đã được mã hóa an toàn' : 'Không xác định',
+        isCurrent: currentTokenHash ? session.refreshTokenHash === currentTokenHash : false,
+        issuedAt: session.issuedAt,
+        lastActiveAt: session.updatedAt,
+        expiresAt: session.expiresAt,
+      };
+    });
+  }
+
+  async revokeSession(userId: string, sessionId: string) {
+    const session = await this.prisma.session.findFirst({
+      where: {
+        id: sessionId,
+        userId,
+        revokedAt: null,
+      },
+    });
+
+    if (!session) {
+      throw new UnauthorizedException('Phiên đăng nhập không tồn tại hoặc đã bị thu hồi');
+    }
+
+    await this.prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        revokedAt: new Date(),
+        revokeReason: 'USER_REMOTE_REVOKE',
+      },
+    });
+
+    return { message: 'Đăng xuất phiên làm việc từ xa thành công' };
+  }
+
+  async revokeOtherSessions(userId: string, currentRefreshToken?: string) {
+    if (!currentRefreshToken) {
+      throw new UnauthorizedException('Không thể xác định phiên làm việc hiện tại');
+    }
+
+    const currentTokenHash = this.hashToken(currentRefreshToken);
+
+    const result = await this.prisma.session.updateMany({
+      where: {
+        userId,
+        refreshTokenHash: { not: currentTokenHash },
+        revokedAt: null,
+      },
+      data: {
+        revokedAt: new Date(),
+        revokeReason: 'REVOKE_OTHERS',
+      },
+    });
+
+    return {
+      message: `Đã đăng xuất thành công khỏi ${result.count} thiết bị khác`,
+      count: result.count,
     };
   }
 

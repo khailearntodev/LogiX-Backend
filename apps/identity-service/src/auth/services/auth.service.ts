@@ -15,13 +15,14 @@ import { ForgotPasswordDto } from '../dto/forgot-password.dto.js';
 import { ResetPasswordDto } from '../dto/reset-password.dto.js';
 import { SwitchTenantDto } from '../dto/switch-tenant.dto.js';
 import { UpdateProfileDto } from '../dto/update-profile.dto.js';
+import { ChangePasswordDto } from '../dto/change-password.dto.js';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
-  ) {}
+  ) { }
 
   async login(dto: LoginDto, meta?: { userAgent?: string; ipAddress?: string }) {
     const user = await this.prisma.user.findFirst({
@@ -381,6 +382,51 @@ export class AuthService {
     };
   }
 
+  async changePassword(userId: string, dto: ChangePasswordDto, currentRefreshToken?: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || user.status !== 'ACTIVE' || Boolean(user.deletedAt)) {
+      throw new UnauthorizedException('Người dùng không hợp lệ hoặc đã bị khóa');
+    }
+
+    const isMatch = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!isMatch) {
+      throw new BadRequestException('Mật khẩu hiện tại không chính xác');
+    }
+
+    const isSameAsOld = await bcrypt.compare(dto.newPassword, user.passwordHash);
+    if (isSameAsOld) {
+      throw new BadRequestException('Mật khẩu mới không được trùng với mật khẩu hiện tại');
+    }
+
+    const passwordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        passwordHash,
+        tokenVersion: { increment: 1 },
+      },
+    });
+
+    let revokedOthersCount = 0;
+    if (dto.revokeOtherSessions !== false && currentRefreshToken) {
+      try {
+        const revokeResult = await this.tokenService.revokeOtherSessions(userId, currentRefreshToken);
+        revokedOthersCount = revokeResult.count;
+      } catch {
+        // Continue if no active session or currentRefreshToken issue
+      }
+    }
+
+    return {
+      message: 'Đổi mật khẩu thành công',
+      revokedOthersCount,
+    };
+  }
+
   async updateProfile(userId: string, dto: UpdateProfileDto) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -454,12 +500,12 @@ export class AuthService {
       lastLoginAt: user.lastLoginAt,
       activeTenant: activeUserTenant
         ? {
-            id: activeUserTenant.tenant.id,
-            code: activeUserTenant.tenant.code,
-            name: activeUserTenant.tenant.name,
-            logoUrl: activeUserTenant.tenant.logoUrl,
-            role: activeUserTenant.role,
-          }
+          id: activeUserTenant.tenant.id,
+          code: activeUserTenant.tenant.code,
+          name: activeUserTenant.tenant.name,
+          logoUrl: activeUserTenant.tenant.logoUrl,
+          role: activeUserTenant.role,
+        }
         : null,
       tenants: tenantsList,
     };
@@ -477,7 +523,7 @@ export class AuthService {
     const timestamp = Date.now();
     const anonymizedEmail = `deleted_${timestamp}_${user.email}`;
     const anonymizePhoneNumber = `deleted_${timestamp}_${user.phoneNumber}`;
-    
+
     await this.prisma.$transaction([
       this.prisma.user.update({
         where: { id: userId },
