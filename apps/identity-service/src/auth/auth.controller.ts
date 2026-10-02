@@ -4,6 +4,7 @@ import {
   Get,
   Delete,
   Body,
+  Param,
   HttpCode,
   HttpStatus,
   Req,
@@ -21,6 +22,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
 import { SwitchTenantDto } from './dto/switch-tenant.dto.js';
 import { UpdateProfileDto } from './dto/update-profile.dto.js';
+import { ChangePasswordDto } from './dto/change-password.dto.js';
 import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
 import { CurrentUser } from './decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from './interfaces/jwt-payload.interface.js';
@@ -194,5 +196,49 @@ export class AuthController {
     const result = await this.authService.deleteAccount(user.id);
     res.clearCookie('refreshToken', { path: '/api/v1/auth' });
     return result;
+  }
+
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  async changePassword(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ChangePasswordDto,
+    @Req() req: Request,
+  ) {
+    const currentRefreshToken = req.cookies?.refreshToken;
+    return this.authService.changePassword(user.id, dto, currentRefreshToken);
+  }
+
+  @Get('sessions')
+  @UseGuards(JwtAuthGuard)
+  async getActiveSessions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+  ) {
+    const currentRefreshToken = req.cookies?.refreshToken;
+    return this.tokenService.getActiveSessions(user.id, currentRefreshToken);
+  }
+
+  @Delete('sessions/:sessionId')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  async revokeSession(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('sessionId') sessionId: string,
+  ) {
+    return this.tokenService.revokeSession(user.id, sessionId);
+  }
+
+  @Post('sessions/revoke-others')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  async revokeOtherSessions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Req() req: Request,
+    @Body() dto: RefreshTokenDto,
+  ) {
+    const currentRefreshToken = req.cookies?.refreshToken || dto.refreshToken;
+    return this.tokenService.revokeOtherSessions(user.id, currentRefreshToken);
   }
 }
