@@ -6,6 +6,8 @@ import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { InventoryModule } from './inventory/inventory.module.js';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { DatabaseModule } from './database/database.module.js';
 
     // Service-owned database
     DatabaseModule,
+    AuthModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [
