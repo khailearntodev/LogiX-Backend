@@ -7,6 +7,7 @@ from logix_agent.config import AgentSettings, settings as app_settings
 from logix_agent.main import app, get_model_gateway
 from logix_agent.modules.ai.adapters.fake_gateway import FakeModelGateway
 from logix_agent.modules.ai.adapters.gemini_gateway import GeminiModelGateway
+from logix_agent.modules.ai.adapters.litellm_gateway import LiteLLMModelGateway
 from logix_agent.modules.ai.factory import create_model_gateway
 from logix_agent.modules.ai.policies import (
     CapabilityCheckingModelGateway,
@@ -40,11 +41,23 @@ def test_factory_creates_gemini_gateway():
     assert isinstance(_adapter(gw), GeminiModelGateway)
 
 
+def test_factory_creates_litellm_gateway():
+    settings = AgentSettings(
+        llm_gateway_backend="litellm_sdk",
+        planner_default_model="openai/gpt-4o-mini",
+        openai_api_key="sk-test-key",
+    )
+    gw = create_model_gateway(settings)
+    assert isinstance(gw, ModelGateway)
+    assert isinstance(_adapter(gw), LiteLLMModelGateway)
+
+
 def test_factory_unsupported_backend_raises():
     settings = AgentSettings(llm_gateway_backend="unknown_provider")
     with pytest.raises(ValueError) as exc_info:
         create_model_gateway(settings)
     assert "Unsupported llm_gateway_backend" in str(exc_info.value)
+    assert "litellm_sdk" in str(exc_info.value)
 
 
 @pytest.mark.asyncio
