@@ -3,8 +3,6 @@ import { APP_FILTER } from '@nestjs/core';
 import { LogixConfigModule, databaseConfigSchema } from '@logix/config';
 import { LogixLoggerModule } from '@logix/logger';
 import { GlobalExceptionFilter } from '@logix/errors';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { InventoryModule } from './inventory/inventory.module.js';
@@ -26,9 +24,7 @@ import { InventoryModule } from './inventory/inventory.module.js';
     AuthModule,
     InventoryModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     // Global exception filter for standardized error responses
     {
       provide: APP_FILTER,
