@@ -8,6 +8,7 @@ import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { OrganizationsModule } from './organizations/organizations.module.js';
+import { IamModule } from './iam/iam.module.js';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { OrganizationsModule } from './organizations/organizations.module.js';
     DatabaseModule,
     AuthModule,
     OrganizationsModule,
+    IamModule,
   ],
   controllers: [AppController],
   providers: [

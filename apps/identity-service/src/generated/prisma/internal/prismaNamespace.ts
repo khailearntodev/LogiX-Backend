@@ -405,7 +405,8 @@ export const ModelName = {
   RolePermission: 'RolePermission',
   UserRole: 'UserRole',
   Session: 'Session',
-  PasswordResetToken: 'PasswordResetToken'
+  PasswordResetToken: 'PasswordResetToken',
+  TenantInvitation: 'TenantInvitation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -421,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "userTenant" | "role" | "permission" | "rolePermission" | "userRole" | "session" | "passwordResetToken"
+    modelProps: "tenant" | "user" | "userTenant" | "role" | "permission" | "rolePermission" | "userRole" | "session" | "passwordResetToken" | "tenantInvitation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1091,6 +1092,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TenantInvitation: {
+      payload: Prisma.$TenantInvitationPayload<ExtArgs>
+      fields: Prisma.TenantInvitationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TenantInvitationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TenantInvitationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>
+        }
+        findFirst: {
+          args: Prisma.TenantInvitationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TenantInvitationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>
+        }
+        findMany: {
+          args: Prisma.TenantInvitationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>[]
+        }
+        create: {
+          args: Prisma.TenantInvitationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>
+        }
+        createMany: {
+          args: Prisma.TenantInvitationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TenantInvitationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>[]
+        }
+        delete: {
+          args: Prisma.TenantInvitationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>
+        }
+        update: {
+          args: Prisma.TenantInvitationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>
+        }
+        deleteMany: {
+          args: Prisma.TenantInvitationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TenantInvitationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TenantInvitationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>[]
+        }
+        upsert: {
+          args: Prisma.TenantInvitationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TenantInvitationPayload>
+        }
+        aggregate: {
+          args: Prisma.TenantInvitationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTenantInvitation>
+        }
+        groupBy: {
+          args: Prisma.TenantInvitationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenantInvitationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TenantInvitationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TenantInvitationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1154,6 +1229,7 @@ export const UserScalarFieldEnum = {
   phoneNumber: 'phoneNumber',
   avatarUrl: 'avatarUrl',
   status: 'status',
+  isSuperAdmin: 'isSuperAdmin',
   tokenVersion: 'tokenVersion',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
@@ -1198,7 +1274,11 @@ export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof Role
 
 export const PermissionScalarFieldEnum = {
   id: 'id',
+  module: 'module',
+  resource: 'resource',
+  action: 'action',
   code: 'code',
+  name: 'name',
   description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -1275,6 +1355,24 @@ export const PasswordResetTokenScalarFieldEnum = {
 } as const
 
 export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
+
+
+export const TenantInvitationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  email: 'email',
+  roleIds: 'roleIds',
+  inviterId: 'inviterId',
+  token: 'token',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type TenantInvitationScalarFieldEnum = (typeof TenantInvitationScalarFieldEnum)[keyof typeof TenantInvitationScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1573,6 +1671,7 @@ export type GlobalOmitConfig = {
   userRole?: Prisma.UserRoleOmit
   session?: Prisma.SessionOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
+  tenantInvitation?: Prisma.TenantInvitationOmit
 }
 
 /* Types for Logging */

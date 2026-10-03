@@ -10,10 +10,14 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { CreateOrganizationDto } from '../dto/create-organization.dto.js';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto.js';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 @Injectable()
 export class OrganizationService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rolesService: RolesService,
+  ) { }
 
   async getTenants(userId: string) {
     const user = await this.prisma.user.findFirst({
@@ -86,6 +90,9 @@ export class OrganizationService {
         status: 'ACTIVE',
       },
     });
+
+    // Tự động khởi tạo 3 vai trò hệ thống (OWNER, ADMIN, MEMBER) và gán role OWNER
+    await this.rolesService.initializeTenantRoles(newTenant.id, userId);
 
     return {
       id: newTenant.id,

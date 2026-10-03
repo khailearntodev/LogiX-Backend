@@ -110,6 +110,7 @@ export class TokenService {
       sub: user.id,
       email: user.email,
       tenantId: userTenant.tenantId,
+      isSuperAdmin: Boolean(user.isSuperAdmin),
     };
 
     const newAccessToken = this.generateAccessToken(newPayload);
@@ -136,6 +137,7 @@ export class TokenService {
         tenantName: userTenant.tenant.name,
         tenantLogoUrl: userTenant.tenant.logoUrl,
         role: userTenant.role,
+        isSuperAdmin: Boolean(user.isSuperAdmin),
       },
     };
   }

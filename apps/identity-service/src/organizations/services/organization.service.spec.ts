@@ -2,12 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { OrganizationService } from './organization.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 describe('OrganizationService', () => {
   let organizationService: OrganizationService;
   let prismaService: any;
+  let rolesService: any;
 
   beforeEach(async () => {
+    rolesService = {
+      initializeTenantRoles: vi.fn().mockResolvedValue({}),
+    };
+
     prismaService = {
       user: {
         findFirst: vi.fn(),
@@ -36,6 +42,7 @@ describe('OrganizationService', () => {
       providers: [
         OrganizationService,
         { provide: PrismaService, useValue: prismaService },
+        { provide: RolesService, useValue: rolesService },
       ],
     }).compile();
 

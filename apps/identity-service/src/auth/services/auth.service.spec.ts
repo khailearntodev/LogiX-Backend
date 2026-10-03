@@ -4,13 +4,19 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service.js';
 import { TokenService } from './token.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let prismaService: any;
   let tokenService: any;
+  let rolesService: any;
 
   beforeEach(async () => {
+    rolesService = {
+      initializeTenantRoles: vi.fn().mockResolvedValue({}),
+    };
+
     prismaService = {
       user: {
         findFirst: vi.fn(),
@@ -23,6 +29,12 @@ describe('AuthService', () => {
         findFirst: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+      },
+      role: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'member_role_1', code: 'MEMBER' }),
+      },
+      userRole: {
+        create: vi.fn().mockResolvedValue({}),
       },
       userTenant: {
         findFirst: vi.fn(),
@@ -51,6 +63,7 @@ describe('AuthService', () => {
         AuthService,
         { provide: PrismaService, useValue: prismaService },
         { provide: TokenService, useValue: tokenService },
+        { provide: RolesService, useValue: rolesService },
       ],
     }).compile();
 
