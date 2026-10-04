@@ -8,7 +8,8 @@
         "build": "turbo build",
         "test": "turbo test",
         "lint": "turbo lint",
-        "typecheck": "turbo typecheck"
+        "typecheck": "turbo typecheck",
+        "seed:master-data": "node scripts/seed-master-data.mjs"
     },
     "devDependencies": {
         "@nestjs/cli": "^12.0.0",
