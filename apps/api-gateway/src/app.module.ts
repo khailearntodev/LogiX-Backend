@@ -7,6 +7,8 @@ import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
+import { InventoryProxyMiddleware } from './proxy/inventory-proxy.middleware.js';
+import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.js';
 
 @Module({
   imports: [
@@ -45,6 +47,26 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: 'api/v1/auth', method: RequestMethod.ALL },
         { path: 'api/v1/auth/*', method: RequestMethod.ALL },
+      );
+
+    // Chuyển hướng các request /api/v1/inventory sang inventory-service
+    consumer
+      .apply(InventoryProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/inventory', method: RequestMethod.ALL },
+        { path: 'api/v1/inventory/*', method: RequestMethod.ALL },
+      );
+    consumer
+      .apply(MasterDataProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/customers', method: RequestMethod.ALL },
+        { path: 'api/v1/customers/*', method: RequestMethod.ALL },
+        { path: 'api/v1/products', method: RequestMethod.ALL },
+        { path: 'api/v1/products/*', method: RequestMethod.ALL },
+        { path: 'api/v1/warehouses', method: RequestMethod.ALL },
+        { path: 'api/v1/warehouses/*', method: RequestMethod.ALL },
+        { path: 'api/v1/vehicles', method: RequestMethod.ALL },
+        { path: 'api/v1/vehicles/*', method: RequestMethod.ALL },
       );
   }
 }
