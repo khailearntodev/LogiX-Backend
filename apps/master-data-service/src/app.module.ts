@@ -3,9 +3,9 @@ import { APP_FILTER } from '@nestjs/core';
 import { LogixConfigModule, databaseConfigSchema } from '@logix/config';
 import { LogixLoggerModule } from '@logix/logger';
 import { GlobalExceptionFilter } from '@logix/errors';
-import { AppController } from './app.controller.js';
-import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
+import { AuthModule } from './auth/auth.module.js';
+import { MasterDataModule } from './master-data/master-data.module.js';
 
 @Module({
   imports: [
@@ -21,10 +21,10 @@ import { DatabaseModule } from './database/database.module.js';
 
     // Service-owned database
     DatabaseModule,
+    AuthModule,
+    MasterDataModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
     // Global exception filter for standardized error responses
     {
       provide: APP_FILTER,
