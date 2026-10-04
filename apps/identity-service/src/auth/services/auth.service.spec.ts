@@ -4,13 +4,20 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service.js';
 import { TokenService } from './token.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RolesService } from '../../iam/services/roles.service.js';
+import { MailService } from '../../mail/services/mail.service.js';
 
 describe('AuthService', () => {
   let authService: AuthService;
   let prismaService: any;
   let tokenService: any;
+  let rolesService: any;
 
   beforeEach(async () => {
+    rolesService = {
+      initializeTenantRoles: vi.fn().mockResolvedValue({}),
+    };
+
     prismaService = {
       user: {
         findFirst: vi.fn(),
@@ -23,6 +30,13 @@ describe('AuthService', () => {
         findFirst: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+      },
+      role: {
+        findFirst: vi.fn().mockResolvedValue({ id: 'member_role_1', code: 'MEMBER' }),
+      },
+      userRole: {
+        create: vi.fn().mockResolvedValue({}),
+        findMany: vi.fn().mockResolvedValue([]),
       },
       userTenant: {
         findFirst: vi.fn(),
@@ -46,11 +60,18 @@ describe('AuthService', () => {
       hashToken: vi.fn((t) => `hashed_${t}`),
     };
 
+    const mailService = {
+      sendInvitationEmail: vi.fn().mockResolvedValue(true),
+      sendResetPasswordEmail: vi.fn().mockResolvedValue(true),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: PrismaService, useValue: prismaService },
         { provide: TokenService, useValue: tokenService },
+        { provide: RolesService, useValue: rolesService },
+        { provide: MailService, useValue: mailService },
       ],
     }).compile();
 

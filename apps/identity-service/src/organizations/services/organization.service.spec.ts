@@ -2,12 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UnauthorizedException, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { OrganizationService } from './organization.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 describe('OrganizationService', () => {
   let organizationService: OrganizationService;
   let prismaService: any;
+  let rolesService: any;
 
   beforeEach(async () => {
+    rolesService = {
+      initializeTenantRoles: vi.fn().mockResolvedValue({}),
+    };
+
     prismaService = {
       user: {
         findFirst: vi.fn(),
@@ -21,10 +27,14 @@ describe('OrganizationService', () => {
       },
       userTenant: {
         findFirst: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
         create: vi.fn(),
         update: vi.fn().mockResolvedValue({}),
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         count: vi.fn().mockResolvedValue(0),
+      },
+      tenantInvitation: {
+        updateMany: vi.fn().mockResolvedValue({ count: 0 }),
       },
       session: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
@@ -36,6 +46,7 @@ describe('OrganizationService', () => {
       providers: [
         OrganizationService,
         { provide: PrismaService, useValue: prismaService },
+        { provide: RolesService, useValue: rolesService },
       ],
     }).compile();
 
@@ -242,6 +253,57 @@ describe('OrganizationService', () => {
     });
   });
 
+  describe('updateMemberRole', () => {
+    it('should throw BadRequestException when caller attempts to update their own role', async () => {
+      prismaService.userTenant.findFirst
+        .mockResolvedValueOnce({
+          id: 'caller_ut',
+          userId: 'u1',
+          tenantId: 't1',
+          role: 'OWNER',
+        })
+        .mockResolvedValueOnce({
+          id: 'target_ut',
+          userId: 'u1',
+          tenantId: 't1',
+          role: 'OWNER',
+          user: { id: 'u1', displayName: 'Myself' },
+        });
+
+      await expect(
+        organizationService.updateMemberRole('u1', 't1', 'target_ut', { role: 'ADMIN' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should allow OWNER to update another member role to ADMIN', async () => {
+      prismaService.userTenant.findFirst
+        .mockResolvedValueOnce({
+          id: 'caller_ut',
+          userId: 'u1',
+          tenantId: 't1',
+          role: 'OWNER',
+        })
+        .mockResolvedValueOnce({
+          id: 'target_ut',
+          userId: 'u2',
+          tenantId: 't1',
+          role: 'MEMBER',
+          user: { id: 'u2', displayName: 'Other User' },
+        });
+
+      prismaService.userTenant.update.mockResolvedValue({
+        id: 'target_ut',
+        userId: 'u2',
+        role: 'ADMIN',
+        user: { id: 'u2', email: 'other@test.com', displayName: 'Other User', avatarUrl: null },
+      });
+
+      const res = await organizationService.updateMemberRole('u1', 't1', 'target_ut', { role: 'ADMIN' });
+      expect(res.role).toBe('ADMIN');
+      expect(res.displayName).toBe('Other User');
+    });
+  });
+
   describe('setDefaultTenant', () => {
     it('should throw NotFoundException if user does not belong to target tenant', async () => {
       prismaService.userTenant.findFirst.mockResolvedValue(null);
@@ -275,21 +337,31 @@ describe('OrganizationService', () => {
   });
 
   describe('deleteOrganization', () => {
-    it('should throw NotFoundException if user is not in tenant or tenant not found', async () => {
-      prismaService.userTenant.findFirst.mockResolvedValue(null);
+    it('should throw NotFoundException if user is not found', async () => {
+      prismaService.user.findUnique.mockResolvedValue(null);
 
       await expect(
         organizationService.deleteOrganization('u1', 't1'),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw ForbiddenException if caller is not an OWNER', async () => {
+    it('should throw NotFoundException if tenant is not found', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 'u1', isSuperAdmin: false });
+      prismaService.tenant.findFirst.mockResolvedValue(null);
+
+      await expect(
+        organizationService.deleteOrganization('u1', 't1'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if caller is neither SUPER_ADMIN nor OWNER', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 'u1', isSuperAdmin: false });
+      prismaService.tenant.findFirst.mockResolvedValue({ id: 't1', code: 'logix', status: 'ACTIVE' });
       prismaService.userTenant.findFirst.mockResolvedValue({
         id: 'ut1',
         userId: 'u1',
         tenantId: 't1',
         role: 'ADMIN',
-        tenant: { id: 't1', code: 'logix', status: 'ACTIVE' },
       });
 
       await expect(
@@ -297,13 +369,14 @@ describe('OrganizationService', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('should throw BadRequestException if there are still other members in the organization', async () => {
+    it('should throw BadRequestException if caller is OWNER but there are still other members in the organization', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 'u1', isSuperAdmin: false });
+      prismaService.tenant.findFirst.mockResolvedValue({ id: 't1', code: 'logix', status: 'ACTIVE' });
       prismaService.userTenant.findFirst.mockResolvedValue({
         id: 'ut1',
         userId: 'u1',
         tenantId: 't1',
         role: 'OWNER',
-        tenant: { id: 't1', code: 'logix', status: 'ACTIVE' },
       });
       // 1 other member exists
       prismaService.userTenant.count.mockResolvedValue(1);
@@ -313,15 +386,15 @@ describe('OrganizationService', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('should delete organization, anonymize code and disconnect sole owner', async () => {
+    it('should allow OWNER to delete organization when no other members exist', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 'u1', isSuperAdmin: false });
+      prismaService.tenant.findFirst.mockResolvedValue({ id: 't1', code: 'logix', status: 'ACTIVE' });
       prismaService.userTenant.findFirst
         .mockResolvedValueOnce({
           id: 'ut1',
           userId: 'u1',
           tenantId: 't1',
           role: 'OWNER',
-          isDefault: true,
-          tenant: { id: 't1', code: 'logix', status: 'ACTIVE' },
         })
         .mockResolvedValueOnce({
           id: 'ut2',
@@ -332,6 +405,7 @@ describe('OrganizationService', () => {
 
       // No other members
       prismaService.userTenant.count.mockResolvedValue(0);
+      prismaService.userTenant.findMany.mockResolvedValue([{ userId: 'u1' }]);
 
       const result = await organizationService.deleteOrganization('u1', 't1');
 
@@ -345,12 +419,32 @@ describe('OrganizationService', () => {
           }),
         }),
       );
-      expect(prismaService.userTenant.update).toHaveBeenCalledWith(
+      expect(prismaService.userTenant.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'ut1' },
+          where: { tenantId: 't1', deletedAt: null },
           data: expect.objectContaining({
             status: 'INACTIVE',
             isDefault: false,
+          }),
+        }),
+      );
+    });
+
+    it('should allow SUPER_ADMIN to delete organization directly', async () => {
+      prismaService.user.findUnique.mockResolvedValue({ id: 'sa1', isSuperAdmin: true });
+      prismaService.tenant.findFirst.mockResolvedValue({ id: 't1', code: 'logix', status: 'ACTIVE' });
+      prismaService.userTenant.findFirst.mockResolvedValue(null); // Not a member
+      prismaService.userTenant.findMany.mockResolvedValue([]);
+
+      const result = await organizationService.deleteOrganization('sa1', 't1');
+
+      expect(result.message).toContain('Xóa tổ chức thành công');
+      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(prismaService.tenant.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 't1' },
+          data: expect.objectContaining({
+            status: 'INACTIVE',
           }),
         }),
       );

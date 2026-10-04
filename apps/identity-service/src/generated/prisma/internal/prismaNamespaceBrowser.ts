@@ -59,7 +59,8 @@ export const ModelName = {
   RolePermission: 'RolePermission',
   UserRole: 'UserRole',
   Session: 'Session',
-  PasswordResetToken: 'PasswordResetToken'
+  PasswordResetToken: 'PasswordResetToken',
+  TenantInvitation: 'TenantInvitation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -102,6 +103,7 @@ export const UserScalarFieldEnum = {
   phoneNumber: 'phoneNumber',
   avatarUrl: 'avatarUrl',
   status: 'status',
+  isSuperAdmin: 'isSuperAdmin',
   tokenVersion: 'tokenVersion',
   lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
@@ -146,7 +148,11 @@ export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof Role
 
 export const PermissionScalarFieldEnum = {
   id: 'id',
+  module: 'module',
+  resource: 'resource',
+  action: 'action',
   code: 'code',
+  name: 'name',
   description: 'description',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -223,6 +229,24 @@ export const PasswordResetTokenScalarFieldEnum = {
 } as const
 
 export type PasswordResetTokenScalarFieldEnum = (typeof PasswordResetTokenScalarFieldEnum)[keyof typeof PasswordResetTokenScalarFieldEnum]
+
+
+export const TenantInvitationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  email: 'email',
+  roleIds: 'roleIds',
+  inviterId: 'inviterId',
+  token: 'token',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  acceptedAt: 'acceptedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  deletedAt: 'deletedAt'
+} as const
+
+export type TenantInvitationScalarFieldEnum = (typeof TenantInvitationScalarFieldEnum)[keyof typeof TenantInvitationScalarFieldEnum]
 
 
 export const SortOrder = {

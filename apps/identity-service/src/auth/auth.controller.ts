@@ -10,13 +10,17 @@ import {
   Req,
   Res,
   UseGuards,
+  Headers,
   UnauthorizedException,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { AuthService } from './services/auth.service.js';
 import { TokenService } from './services/token.service.js';
+import { RolesService } from '../iam/services/roles.service.js';
+import { InvitationsService } from '../iam/services/invitations.service.js';
 import { LoginDto } from './dto/login.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
+import { AcceptInvitationDto } from './dto/accept-invitation.dto.js';
 import { ForgotPasswordDto } from './dto/forgot-password.dto.js';
 import { ResetPasswordDto } from './dto/reset-password.dto.js';
 import { RefreshTokenDto } from './dto/refresh-token.dto.js';
@@ -32,6 +36,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly tokenService: TokenService,
+    private readonly rolesService: RolesService,
+    private readonly invitationsService: InvitationsService,
   ) {}
 
   @Post('login')
@@ -69,6 +75,37 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Get('invitations/:token')
+  async getInvitationByToken(@Param('token') token: string) {
+    return this.invitationsService.getInvitationByToken(token);
+  }
+
+  @Post('invitations/:token/accept')
+  @HttpCode(HttpStatus.OK)
+  async acceptInvitation(
+    @Param('token') token: string,
+    @Body() dto: AcceptInvitationDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const meta = {
+      userAgent: req.headers['user-agent'],
+      ipAddress: req.ip || req.socket.remoteAddress,
+    };
+
+    const result = await this.invitationsService.acceptInvitation(token, dto, meta);
+
+    res.cookie('refreshToken', result.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/api/v1/auth',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return result;
   }
 
   @Post('forgot-password')
@@ -175,6 +212,17 @@ export class AuthController {
   async getProfile(@CurrentUser() user: AuthenticatedUser) {
     return this.authService.getProfile(user.id, user.tenantId);
   }
+
+  @Get('me/permissions')
+  @UseGuards(JwtAuthGuard)
+  async getEffectivePermissions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Headers('x-tenant-id') headerTenantId?: string,
+  ) {
+    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    return this.rolesService.getEffectivePermissions(user.id, tenantId);
+  }
+
 
   @Post('me')
   @HttpCode(HttpStatus.OK)

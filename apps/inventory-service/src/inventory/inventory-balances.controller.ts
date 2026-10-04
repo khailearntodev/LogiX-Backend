@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { PermissionsGuard, RequirePermissions } from '@logix/auth';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface.js';
 import { InventoryBalanceService } from './services/inventory-balance.service.js';
@@ -18,7 +19,7 @@ import { AdjustStockDto } from './dto/adjust-stock.dto.js';
 import { UpdateLowStockThresholdDto } from './dto/update-low-stock-threshold.dto.js';
 
 @Controller('inventory/balances')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class InventoryBalancesController {
   constructor(
     private readonly balanceService: InventoryBalanceService,
@@ -26,6 +27,7 @@ export class InventoryBalancesController {
   ) {}
 
   @Get()
+  @RequirePermissions('inventory:stock:read')
   async listBalances(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: QueryBalancesDto,
@@ -34,6 +36,7 @@ export class InventoryBalancesController {
   }
 
   @Get(':warehouseId/:productId')
+  @RequirePermissions('inventory:stock:read')
   async getBalance(
     @CurrentUser() user: AuthenticatedUser,
     @Param('warehouseId', ParseUUIDPipe) warehouseId: string,
@@ -43,6 +46,7 @@ export class InventoryBalancesController {
   }
 
   @Patch(':warehouseId/:productId/adjust')
+  @RequirePermissions('inventory:stock:adjust')
   async adjustStock(
     @CurrentUser() user: AuthenticatedUser,
     @Param('warehouseId', ParseUUIDPipe) warehouseId: string,
@@ -53,6 +57,7 @@ export class InventoryBalancesController {
   }
 
   @Patch(':warehouseId/:productId/threshold')
+  @RequirePermissions('inventory:stock:adjust')
   async updateThreshold(
     @CurrentUser() user: AuthenticatedUser,
     @Param('warehouseId', ParseUUIDPipe) warehouseId: string,

@@ -10,10 +10,14 @@ import { PrismaService } from '../../database/prisma.service.js';
 import { CreateOrganizationDto } from '../dto/create-organization.dto.js';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto.js';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 @Injectable()
 export class OrganizationService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly rolesService: RolesService,
+  ) { }
 
   async getTenants(userId: string) {
     const user = await this.prisma.user.findFirst({
@@ -86,6 +90,9 @@ export class OrganizationService {
         status: 'ACTIVE',
       },
     });
+
+    // Tự động khởi tạo 3 vai trò hệ thống (OWNER, ADMIN, MEMBER) và gán role OWNER
+    await this.rolesService.initializeTenantRoles(newTenant.id, userId);
 
     return {
       id: newTenant.id,
@@ -330,6 +337,16 @@ export class OrganizationService {
       throw new NotFoundException('Không tìm thấy thành viên trong tổ chức');
     }
 
+    // Không cho phép tự thay đổi vai trò của chính mình
+    if (targetMembership.userId === callerUserId) {
+      throw new BadRequestException('Bạn không được phép tự thay đổi vai trò của chính mình');
+    }
+
+    // Không ai được phép thay đổi vai trò của Chủ sở hữu
+    if (targetMembership.role === 'OWNER') {
+      throw new ForbiddenException('Không thể thay đổi vai trò của Chủ sở hữu (OWNER)');
+    }
+
     // Nếu người thực hiện là ADMIN: không được thay đổi quyền của OWNER, không được nâng ai lên làm OWNER
     if (caller.role === 'ADMIN') {
       if (targetMembership.role === 'OWNER') {
@@ -424,26 +441,9 @@ export class OrganizationService {
       throw new BadRequestException('Bạn không thể tự khai trừ chính mình khỏi tổ chức');
     }
 
-    // Nếu người thực hiện là ADMIN: không được xóa ADMIN khác hoặc OWNER
-    if (caller.role === 'ADMIN') {
-      if (targetMembership.role === 'OWNER' || targetMembership.role === 'ADMIN') {
-        throw new ForbiddenException('Quản trị viên không thể khai trừ Chủ sở hữu hoặc Quản trị viên khác');
-      }
-    }
-
-    // Nếu người bị xóa là OWNER duy nhất
+    // Không ai được phép khai trừ Chủ sở hữu
     if (targetMembership.role === 'OWNER') {
-      const ownerCount = await this.prisma.userTenant.count({
-        where: {
-          tenantId,
-          role: 'OWNER',
-          status: 'ACTIVE',
-          deletedAt: null,
-        },
-      });
-      if (ownerCount <= 1) {
-        throw new BadRequestException('Không thể khai trừ Chủ sở hữu duy nhất của tổ chức');
-      }
+      throw new ForbiddenException('Không thể khai trừ Chủ sở hữu (OWNER) khỏi tổ chức');
     }
 
     // Thực hiện soft-delete thành viên khỏi tổ chức
@@ -462,59 +462,79 @@ export class OrganizationService {
   }
 
   async deleteOrganization(userId: string, tenantId: string) {
-    const caller = await this.prisma.userTenant.findFirst({
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId, deletedAt: null },
+      select: { id: true, isSuperAdmin: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy tài khoản người dùng');
+    }
+
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { id: tenantId, deletedAt: null },
+    });
+
+    if (!tenant) {
+      throw new NotFoundException('Không tìm thấy tổ chức hoặc tổ chức đã bị xóa');
+    }
+
+    const isSuperAdmin = user.isSuperAdmin === true;
+
+    // Kiểm tra membership của người gọi trong tổ chức (nếu có)
+    const callerMembership = await this.prisma.userTenant.findFirst({
       where: {
         userId,
         tenantId,
         status: 'ACTIVE',
         deletedAt: null,
-        user: {
-          status: 'ACTIVE',
-          deletedAt: null,
-        },
-        tenant: {
-          status: 'ACTIVE',
-          deletedAt: null,
-        },
-      },
-      include: {
-        tenant: true,
       },
     });
 
-    if (!caller || !caller.tenant) {
-      throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
+    const isOwner = callerMembership?.role === 'OWNER';
+
+    // Ràng buộc thẩm quyền: Tuyệt đối chỉ SUPER_ADMIN hoặc OWNER mới được quyền xóa tổ chức
+    if (!isSuperAdmin && !isOwner) {
+      throw new ForbiddenException('Bạn không có quyền thực hiện thao tác này');
     }
 
-    if (caller.role !== 'OWNER') {
-      throw new ForbiddenException('Chỉ Chủ sở hữu mới có quyền xóa tổ chức');
-    }
-
-    // Nghiệp vụ: Chỉ được xóa tổ chức khi trong tổ chức KHÔNG CÒN AI KHÁC ngoài chính OWNER này
-    const otherMembersCount = await this.prisma.userTenant.count({
-      where: {
-        tenantId,
-        status: 'ACTIVE',
-        deletedAt: null,
-        id: { not: caller.id },
-        user: {
+    // Nghiệp vụ an toàn: Đối với OWNER, bắt buộc không còn thành viên nào khác trong tổ chức
+    if (!isSuperAdmin) {
+      const otherMembersCount = await this.prisma.userTenant.count({
+        where: {
+          tenantId,
           status: 'ACTIVE',
           deletedAt: null,
+          userId: { not: userId },
+          user: {
+            status: 'ACTIVE',
+            deletedAt: null,
+          },
         },
-      },
-    });
+      });
 
-    if (otherMembersCount > 0) {
-      throw new BadRequestException(
-        'Không thể xóa tổ chức khi vẫn còn thành viên khác (kể cả Chủ sở hữu khác). Hãy khai trừ hoặc chuyển tất cả các thành viên ra khỏi tổ chức trước khi xóa.',
-      );
+      if (otherMembersCount > 0) {
+        throw new BadRequestException(
+          'Không thể xóa tổ chức khi vẫn còn thành viên khác. Hãy khai trừ tất cả các thành viên ra khỏi tổ chức trước khi xóa.',
+        );
+      }
     }
 
     const timestamp = Date.now();
-    const anonymizedCode = `deleted_${timestamp}_${caller.tenant.code}`;
+    const anonymizedCode = `deleted_${timestamp}_${tenant.code}`;
 
-    // Cắt đứt liên kết tổ chức với OWNER này, ẩn danh hóa code và thu hồi sessions của tổ chức
+    // Tìm các tài khoản đang đặt tổ chức này làm mặc định để chuẩn bị chuyển giao
+    const usersWithThisAsDefault = await this.prisma.userTenant.findMany({
+      where: {
+        tenantId,
+        isDefault: true,
+      },
+      select: { userId: true },
+    });
+
+    // Thực hiện ngắt kết nối an toàn trong transaction
     await this.prisma.$transaction([
+      // 1. Vô hiệu hóa tổ chức và ẩn danh hóa mã định danh để tránh conflict unique key
       this.prisma.tenant.update({
         where: { id: tenantId },
         data: {
@@ -523,14 +543,24 @@ export class OrganizationService {
           deletedAt: new Date(),
         },
       }),
-      this.prisma.userTenant.update({
-        where: { id: caller.id },
+      // 2. Vô hiệu hóa toàn bộ quyền hạn và liên kết thành viên trong tổ chức
+      this.prisma.userTenant.updateMany({
+        where: { tenantId, deletedAt: null },
         data: {
           status: 'INACTIVE',
           deletedAt: new Date(),
           isDefault: false,
         },
       }),
+      // 3. Thu hồi toàn bộ các lời mời đang chờ gia nhập tổ chức
+      this.prisma.tenantInvitation.updateMany({
+        where: { tenantId, deletedAt: null },
+        data: {
+          status: 'REVOKED',
+          deletedAt: new Date(),
+        },
+      }),
+      // 4. Thu hồi toàn bộ các phiên đăng nhập (sessions) gắn với tổ chức
       this.prisma.session.updateMany({
         where: { tenantId, revokedAt: null },
         data: {
@@ -540,11 +570,11 @@ export class OrganizationService {
       }),
     ]);
 
-    // Nếu tổ chức vừa xóa là mặc định của user, chuyển default sang 1 tổ chức còn lại (nếu có)
-    if (caller.isDefault) {
+    // Di dời default organization cho các user bị ảnh hưởng sang tổ chức hoạt động khác
+    for (const item of usersWithThisAsDefault) {
       const remainingUserTenant = await this.prisma.userTenant.findFirst({
         where: {
-          userId,
+          userId: item.userId,
           status: 'ACTIVE',
           deletedAt: null,
           tenantId: { not: tenantId },

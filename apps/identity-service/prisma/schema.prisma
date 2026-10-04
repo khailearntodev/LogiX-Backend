@@ -28,6 +28,7 @@ model Tenant {
   userRoles           UserRole[]
   sessions            Session[]
   passwordResetTokens PasswordResetToken[]
+  invitations         TenantInvitation[]
 
   @@index([status, createdAt(sort: Desc)], map: "ix_tenants_status_created")
   @@map("tenants")
@@ -42,6 +43,7 @@ model User {
   phoneNumber            String?              @map("phone_number") @db.VarChar(50)
   avatarUrl              String?              @map("avatar_url") @db.Text
   status                 String               @db.VarChar(20)
+  isSuperAdmin           Boolean              @default(false) @map("is_super_admin")
   tokenVersion           BigInt               @default(1) @map("token_version")
   lastLoginAt            DateTime?            @map("last_login_at") @db.Timestamptz(6)
   createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -54,6 +56,7 @@ model User {
   passwordResetTokens    PasswordResetToken[]
   rolePermissionsGranted RolePermission[]     @relation("RolePermissionGrantedBy")
   userRolesGranted       UserRole[]           @relation("UserRoleGrantedBy")
+  invitationsSent        TenantInvitation[]   @relation("InvitationInvitedBy")
 
   @@index([status, createdAt(sort: Desc)], map: "ix_users_status")
   @@map("users")
@@ -102,7 +105,11 @@ model Role {
 
 model Permission {
   id              String           @id @default(uuid()) @db.Uuid
+  module          String           @db.VarChar(50)
+  resource        String           @db.VarChar(50)
+  action          String           @db.VarChar(50)
   code            String           @unique(map: "ux_permissions_code") @db.VarChar(100)
+  name            String           @db.VarChar(150)
   description     String?          @db.Text
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -110,6 +117,7 @@ model Permission {
   deletedAt       DateTime?        @map("deleted_at") @db.Timestamptz(6)
   rolePermissions RolePermission[]
 
+  @@index([module, resource], map: "ix_permissions_module_resource")
   @@map("permissions")
   @@schema("identity")
 }
@@ -197,5 +205,28 @@ model PasswordResetToken {
 
   @@index([userId, tokenHash])
   @@map("password_reset_tokens")
+  @@schema("identity")
+}
+
+model TenantInvitation {
+  id         String    @id @default(uuid()) @db.Uuid
+  tenantId   String    @map("tenant_id") @db.Uuid
+  email      String    @db.VarChar(320)
+  roleIds    String[]  @map("role_ids") @db.Uuid
+  inviterId  String    @map("inviter_id") @db.Uuid
+  token      String    @unique(map: "ux_tenant_invitations_token") @db.VarChar(255)
+  status     String    @default("PENDING") @db.VarChar(50)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  acceptedAt DateTime? @map("accepted_at") @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inviter    User      @relation("InvitationInvitedBy", fields: [inviterId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status], map: "ix_tenant_invitations_tenant_status")
+  @@index([email], map: "ix_tenant_invitations_email")
+  @@map("tenant_invitations")
   @@schema("identity")
 }
