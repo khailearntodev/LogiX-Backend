@@ -9,13 +9,19 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { InvitationsService } from './invitations.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { TokenService } from '../../auth/services/token.service.js';
+import { MailService } from '../../mail/services/mail.service.js';
 
 describe('InvitationsService', () => {
   let invitationsService: InvitationsService;
   let prisma: any;
   let tokenService: any;
+  let mailService: any;
 
   beforeEach(async () => {
+    mailService = {
+      sendInvitationEmail: vi.fn().mockResolvedValue(true),
+      sendResetPasswordEmail: vi.fn().mockResolvedValue(true),
+    };
     prisma = {
       userTenant: {
         findFirst: vi.fn(),
@@ -28,6 +34,9 @@ describe('InvitationsService', () => {
       },
       userRole: {
         upsert: vi.fn(),
+      },
+      rolePermission: {
+        findMany: vi.fn().mockResolvedValue([]),
       },
       user: {
         findFirst: vi.fn(),
@@ -56,6 +65,7 @@ describe('InvitationsService', () => {
         InvitationsService,
         { provide: PrismaService, useValue: prisma },
         { provide: TokenService, useValue: tokenService },
+        { provide: MailService, useValue: mailService },
       ],
     }).compile();
 

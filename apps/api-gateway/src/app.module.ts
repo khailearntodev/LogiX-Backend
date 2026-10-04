@@ -39,12 +39,14 @@ import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Chuyển hướng các request /api/v1/auth sang identity-service
+    // Chuyển hướng các request /api/v1/auth và /api/v1/iam sang identity-service
     consumer
       .apply(AuthProxyMiddleware)
       .forRoutes(
         { path: 'api/v1/auth', method: RequestMethod.ALL },
         { path: 'api/v1/auth/*', method: RequestMethod.ALL },
+        { path: 'api/v1/iam', method: RequestMethod.ALL },
+        { path: 'api/v1/iam/*', method: RequestMethod.ALL },
       );
   }
 }

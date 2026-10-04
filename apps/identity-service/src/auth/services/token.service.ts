@@ -18,9 +18,12 @@ export class TokenService {
   }
 
   generateRefreshToken(payload: JwtPayload): string {
-    return this.jwtService.sign(payload as Record<string, any>, {
-      expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
-    });
+    return this.jwtService.sign(
+      { ...payload, jti: crypto.randomUUID() } as Record<string, any>,
+      {
+        expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any,
+      },
+    );
   }
 
   hashToken(token: string): string {

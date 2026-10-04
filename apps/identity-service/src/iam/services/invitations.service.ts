@@ -11,6 +11,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service.js';
 import { TokenService } from '../../auth/services/token.service.js';
+import { MailService } from '../../mail/services/mail.service.js';
 import { CreateInvitationDto } from '../dto/create-invitation.dto.js';
 import { AcceptInvitationDto } from '../../auth/dto/accept-invitation.dto.js';
 
@@ -20,6 +21,7 @@ export class InvitationsService {
     private readonly prisma: PrismaService,
     @Inject(forwardRef(() => TokenService))
     private readonly tokenService: TokenService,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -103,6 +105,17 @@ export class InvitationsService {
     });
 
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3009';
+    const inviteLink = `${frontendUrl}/invite?token=${token}`;
+
+    // 7. Gửi email mời thành viên qua Gmail SMTP
+    await this.mailService.sendInvitationEmail({
+      toEmail: invitation.email,
+      inviterName: invitation.inviter?.displayName || invitation.inviter?.email || 'Quản trị viên',
+      tenantName: invitation.tenant?.name || 'Tổ chức LogiX',
+      roles: validRoles.map((r) => ({ name: r.name, code: r.code })),
+      inviteLink,
+      expiresAt,
+    });
 
     return {
       id: invitation.id,
@@ -110,7 +123,7 @@ export class InvitationsService {
       status: invitation.status,
       expiresAt: invitation.expiresAt,
       roles: validRoles.map((r) => ({ id: r.id, code: r.code, name: r.name })),
-      inviteLink: `${frontendUrl}/invite?token=${token}`,
+      inviteLink,
       token,
       message: 'Tạo lời mời tham gia tổ chức thành công',
     };
@@ -121,7 +134,11 @@ export class InvitationsService {
    */
   async getInvitations(tenantId: string) {
     const invitations = await this.prisma.tenantInvitation.findMany({
-      where: { tenantId, deletedAt: null },
+      where: {
+        tenantId,
+        deletedAt: null,
+        status: { not: 'ACCEPTED' },
+      },
       include: {
         inviter: { select: { id: true, displayName: true, email: true } },
       },
@@ -187,6 +204,10 @@ export class InvitationsService {
   async resendInvitation(tenantId: string, invitationId: string) {
     const invitation = await this.prisma.tenantInvitation.findFirst({
       where: { id: invitationId, tenantId, deletedAt: null },
+      include: {
+        tenant: { select: { id: true, name: true, code: true } },
+        inviter: { select: { id: true, displayName: true, email: true } },
+      },
     });
 
     if (!invitation) {
@@ -209,7 +230,24 @@ export class InvitationsService {
       },
     });
 
-    const inviteLink = `${process.env.APP_URL || 'http://localhost:3000'}/invite?token=${newToken}`;
+    const roles = await this.prisma.role.findMany({
+      where: { id: { in: invitation.roleIds || [] }, tenantId },
+      select: { id: true, code: true, name: true },
+    });
+
+    const safeRoles = roles || [];
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3009';
+    const inviteLink = `${frontendUrl}/invite?token=${newToken}`;
+
+    // Gửi email cập nhật qua Gmail SMTP
+    await this.mailService.sendInvitationEmail({
+      toEmail: updated.email,
+      inviterName: invitation.inviter?.displayName || invitation.inviter?.email || 'Quản trị viên',
+      tenantName: invitation.tenant?.name || 'Tổ chức LogiX',
+      roles: safeRoles.map((r) => ({ name: r.name, code: r.code })),
+      inviteLink,
+      expiresAt: newExpiresAt,
+    });
 
     return {
       id: updated.id,
@@ -277,14 +315,18 @@ export class InvitationsService {
       select: { id: true, email: true, displayName: true },
     });
 
+    const userExists = Boolean(existingUser);
+
     return {
       id: invitation.id,
+      valid: true,
       email: invitation.email,
       expiresAt: invitation.expiresAt,
       tenant: invitation.tenant,
       inviter: invitation.inviter,
       roles,
-      userExists: Boolean(existingUser),
+      userExists,
+      requiresRegistration: !userExists,
     };
   }
 
@@ -334,7 +376,7 @@ export class InvitationsService {
     }
 
     // 2. Chạy transaction gán thành viên và các roles
-    const result = await this.prisma.$transaction(async (tx) => {
+    const { membership, validRoles } = await this.prisma.$transaction(async (tx) => {
       // a. Kiểm tra thành viên đã active trong tenant chưa
       const existingMembership = await tx.userTenant.findFirst({
         where: { userId: user.id, tenantId: invitation.tenantId, deletedAt: null },
@@ -404,21 +446,40 @@ export class InvitationsService {
         });
       }
 
-      // g. Cập nhật lời mời thành ACCEPTED
+      // g. Cập nhật lời mời thành ACCEPTED và xóa bản ghi lời mời (soft-delete)
       await tx.tenantInvitation.update({
         where: { id: invitation.id },
-        data: { status: 'ACCEPTED', acceptedAt: new Date() },
+        data: { status: 'ACCEPTED', acceptedAt: new Date(), deletedAt: new Date() },
       });
 
       return { membership, validRoles };
     });
 
-    // 3. Sinh token đăng nhập trực tiếp vào tenant vừa tham gia
+    let permissions: string[] = [];
+    if (user.isSuperAdmin || membership.role === 'OWNER') {
+      permissions = ['*'];
+    } else {
+      const assignedRoleIds = validRoles.map((r) => r.id);
+      const rolePerms = await this.prisma.rolePermission.findMany({
+        where: { roleId: { in: assignedRoleIds }, deletedAt: null },
+        include: { permission: true },
+      });
+      const permSet = new Set<string>();
+      for (const rp of rolePerms) {
+        if (rp.permission && !rp.permission.deletedAt) {
+          permSet.add(rp.permission.code);
+        }
+      }
+      permissions = Array.from(permSet);
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,
       tenantId: invitation.tenantId,
+      role: membership.role,
       isSuperAdmin: Boolean(user.isSuperAdmin),
+      permissions,
     };
 
     const accessToken = this.tokenService.generateAccessToken(payload);
@@ -453,9 +514,9 @@ export class InvitationsService {
         code: preview.tenant.code,
         name: preview.tenant.name,
         logoUrl: preview.tenant.logoUrl,
-        role: result.membership.role,
+        role: membership.role,
       },
-      assignedRoles: result.validRoles.map((r) => ({ id: r.id, code: r.code, name: r.name })),
+      assignedRoles: validRoles.map((r) => ({ id: r.id, code: r.code, name: r.name })),
       message: 'Chấp nhận lời mời và gia nhập tổ chức thành công',
     };
   }

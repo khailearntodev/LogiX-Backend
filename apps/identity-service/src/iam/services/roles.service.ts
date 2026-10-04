@@ -126,10 +126,22 @@ export class RolesService {
    * Lấy danh mục tất cả quyền có trong hệ thống (nhóm theo module, resource)
    */
   async getAllPermissions() {
-    return this.prisma.permission.findMany({
+    const permissions = await this.prisma.permission.findMany({
       where: { deletedAt: null },
       orderBy: [{ module: 'asc' }, { resource: 'asc' }, { action: 'asc' }],
     });
+
+    return permissions.map((p) => ({
+      id: p.id,
+      module: p.module,
+      resource: p.resource,
+      action: p.action,
+      code: p.code,
+      name: p.name,
+      description: p.description,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    }));
   }
 
   /**
@@ -215,7 +227,15 @@ export class RolesService {
       isSystem: role.isSystem,
       memberCount: role._count.userRoles,
       permissionIds: role.rolePermissions.map((rp) => rp.permissionId),
-      permissions: role.rolePermissions.map((rp) => rp.permission),
+      permissions: role.rolePermissions.map((rp) => ({
+        id: rp.permission.id,
+        module: rp.permission.module,
+        resource: rp.permission.resource,
+        action: rp.permission.action,
+        code: rp.permission.code,
+        name: rp.permission.name,
+        description: rp.permission.description,
+      })),
       createdAt: role.createdAt,
       updatedAt: role.updatedAt,
     };
@@ -416,6 +436,16 @@ export class RolesService {
 
     if (!membership) {
       throw new NotFoundException('Thành viên không thuộc về tổ chức này hoặc tài khoản đã bị khóa');
+    }
+
+    // Không thể thay đổi vai trò của OWNER
+    if (membership.role === 'OWNER') {
+      throw new ForbiddenException('Không thể thay đổi vai trò của Chủ sở hữu (OWNER)');
+    }
+
+    // Không thể tự thay đổi vai trò của chính mình
+    if (targetUserId === assignerId) {
+      throw new BadRequestException('Bạn không được phép tự thay đổi vai trò của chính mình');
     }
 
     // 2. Kiểm tra các vai trò hợp lệ trong tenant

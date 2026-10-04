@@ -17,6 +17,7 @@ import { SwitchTenantDto } from '../dto/switch-tenant.dto.js';
 import { UpdateProfileDto } from '../dto/update-profile.dto.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
 import { RolesService } from '../../iam/services/roles.service.js';
+import { MailService } from '../../mail/services/mail.service.js';
 
 @Injectable()
 export class AuthService {
@@ -24,6 +25,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
     private readonly rolesService: RolesService,
+    private readonly mailService: MailService,
   ) { }
 
   async login(dto: LoginDto, meta?: { userAgent?: string; ipAddress?: string }) {
@@ -70,7 +72,9 @@ export class AuthService {
           sub: user.id,
           email: user.email,
           tenantId,
+          role: 'OWNER',
           isSuperAdmin: true,
+          permissions: ['*'],
         };
 
         const accessToken = this.tokenService.generateAccessToken(payload);
@@ -155,11 +159,46 @@ export class AuthService {
       }),
     ]);
 
+    let permissions: string[] = [];
+    if (user.isSuperAdmin || selectedUserTenant.role === 'OWNER') {
+      permissions = ['*'];
+    } else {
+      const userRoles = await this.prisma.userRole.findMany({
+        where: {
+          userId: user.id,
+          tenantId: selectedUserTenant.tenantId,
+          deletedAt: null,
+        },
+        include: {
+          role: {
+            include: {
+              rolePermissions: {
+                where: { deletedAt: null },
+                include: { permission: true },
+              },
+            },
+          },
+        },
+      });
+
+      const permSet = new Set<string>();
+      for (const ur of userRoles) {
+        for (const rp of ur.role.rolePermissions) {
+          if (rp.permission && !rp.permission.deletedAt) {
+            permSet.add(rp.permission.code);
+          }
+        }
+      }
+      permissions = Array.from(permSet);
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,
       tenantId: selectedUserTenant.tenantId,
+      role: selectedUserTenant.role,
       isSuperAdmin: Boolean(user.isSuperAdmin),
+      permissions,
     };
 
     const accessToken = this.tokenService.generateAccessToken(payload);
@@ -394,11 +433,46 @@ export class AuthService {
       });
     }
 
+    let permissions: string[] = [];
+    if (userTenant.user.isSuperAdmin || userTenant.role === 'OWNER') {
+      permissions = ['*'];
+    } else {
+      const userRoles = await this.prisma.userRole.findMany({
+        where: {
+          userId: userTenant.userId,
+          tenantId: userTenant.tenantId,
+          deletedAt: null,
+        },
+        include: {
+          role: {
+            include: {
+              rolePermissions: {
+                where: { deletedAt: null },
+                include: { permission: true },
+              },
+            },
+          },
+        },
+      });
+
+      const permSet = new Set<string>();
+      for (const ur of userRoles) {
+        for (const rp of ur.role.rolePermissions) {
+          if (rp.permission && !rp.permission.deletedAt) {
+            permSet.add(rp.permission.code);
+          }
+        }
+      }
+      permissions = Array.from(permSet);
+    }
+
     const payload = {
       sub: userTenant.userId,
       email: userTenant.user.email,
       tenantId: userTenant.tenantId,
+      role: userTenant.role,
       isSuperAdmin: Boolean(userTenant.user.isSuperAdmin),
+      permissions,
     };
 
     const accessToken = this.tokenService.generateAccessToken(payload);
@@ -460,9 +534,19 @@ export class AuthService {
       },
     });
 
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3009';
+    const resetLink = `${frontendUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+
+    // Gửi email khôi phục mật khẩu qua Gmail SMTP
+    await this.mailService.sendResetPasswordEmail({
+      toEmail: user.email,
+      displayName: user.displayName || user.email.split('@')[0],
+      resetLink,
+      expiresAt,
+    });
+
     return {
       message: 'Hướng dẫn khôi phục mật khẩu đã được gửi đến email của bạn.',
-      devToken: process.env.NODE_ENV !== 'production' ? rawToken : undefined,
     };
   }
 

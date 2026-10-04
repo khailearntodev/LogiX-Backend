@@ -5,6 +5,7 @@ import { AuthService } from './auth.service.js';
 import { TokenService } from './token.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { RolesService } from '../../iam/services/roles.service.js';
+import { MailService } from '../../mail/services/mail.service.js';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -35,6 +36,7 @@ describe('AuthService', () => {
       },
       userRole: {
         create: vi.fn().mockResolvedValue({}),
+        findMany: vi.fn().mockResolvedValue([]),
       },
       userTenant: {
         findFirst: vi.fn(),
@@ -58,12 +60,18 @@ describe('AuthService', () => {
       hashToken: vi.fn((t) => `hashed_${t}`),
     };
 
+    const mailService = {
+      sendInvitationEmail: vi.fn().mockResolvedValue(true),
+      sendResetPasswordEmail: vi.fn().mockResolvedValue(true),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: PrismaService, useValue: prismaService },
         { provide: TokenService, useValue: tokenService },
         { provide: RolesService, useValue: rolesService },
+        { provide: MailService, useValue: mailService },
       ],
     }).compile();
 

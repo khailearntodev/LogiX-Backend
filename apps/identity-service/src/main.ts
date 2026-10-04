@@ -1,3 +1,5 @@
+import './env.js';
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
@@ -15,6 +17,20 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3009',
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'x-tenant-id',
+      'X-Tenant-Id',
+      'x-correlation-id',
+      'X-Correlation-Id',
+      'x-request-id',
+      'X-Request-Id',
+    ],
   });
 
   app.useGlobalPipes(

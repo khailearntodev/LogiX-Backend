@@ -400,4 +400,32 @@ describe('RolesService', () => {
       ].sort());
     });
   });
+
+  describe('assignMemberRoles', () => {
+    it('should throw ForbiddenException if target member is OWNER', async () => {
+      prisma.userTenant.findFirst.mockResolvedValue({
+        userId: 'owner-id',
+        tenantId: 'tenant-1',
+        role: 'OWNER',
+        status: 'ACTIVE',
+      });
+
+      await expect(
+        rolesService.assignMemberRoles('tenant-1', 'owner-id', ['role-1'], 'admin-id'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException if assigner tries to change their own role', async () => {
+      prisma.userTenant.findFirst.mockResolvedValue({
+        userId: 'user-1',
+        tenantId: 'tenant-1',
+        role: 'MEMBER',
+        status: 'ACTIVE',
+      });
+
+      await expect(
+        rolesService.assignMemberRoles('tenant-1', 'user-1', ['role-1'], 'user-1'),
+      ).rejects.toThrow(BadRequestException);
+    });
+  });
 });
