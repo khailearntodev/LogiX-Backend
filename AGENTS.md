@@ -98,6 +98,64 @@ indexed by `docs/architecture/README.md`.
   migration), never `prisma db push`. New NOT NULL snapshot columns require
   empty tables or a backfill step in the migration.
 
+### Production Code Standards
+
+LogiX is a public repository for a B2B production platform. Every change must
+be safe to deploy as-is.
+
+**No hardcoding**
+
+- Never commit secrets, tokens, passwords, connection strings, internal URLs,
+  ports, tenant/user IDs, or environment-specific hosts. `.env` stays local;
+  commit only `.env.example` with placeholders and empty secret values.
+- Business limits and tunables (max lines, TTLs, page sizes, retry counts)
+  come from validated config or named constants in the owning domain module,
+  never magic numbers scattered in handlers.
+- Permission codes, statuses, event types, and error codes come from shared
+  constants/enums (`@logix/auth`, `@logix/messaging`, `@logix/errors`, domain
+  `*-status.ts`), not string literals repeated at call sites.
+
+**No dangerous fallbacks (fail fast, fail closed)**
+
+- Every service validates its environment with a zod schema through
+  `LogixConfigModule` and reads values with `ConfigService.getOrThrow`. A
+  missing or invalid variable must stop startup; never write
+  `process.env.X ?? 'default'`, `|| 'http://localhost:...'`, or a default
+  secret.
+- Security decisions fail closed: missing/invalid token, tenant, permission,
+  or internal caller means 401/403, never "allow". Do not grant `'*'` or a
+  role by default; an absent `permissions` claim means no permissions.
+- Do not swallow errors (`catch {}` / returning empty data / `null` to hide a
+  failure). Map them to typed `@logix/errors` errors or rethrow. Degrade only
+  where the BRD explicitly allows it (e.g., AI services unavailable), and make
+  the degraded state visible.
+- Business invariants (stock, state transitions, tenant ownership,
+  idempotency) are enforced server-side and in the database where possible;
+  never "repair" invalid input silently.
+- Acceptable `??` defaults are limited to neutral, non-privileged values for
+  optional data (e.g., an empty list, `null` for an absent optional field).
+
+**Clean code**
+
+- Follow existing module structure (controller → service → domain/repository),
+  DTO validation with `class-validator`, and SRP; keep controllers thin and
+  domain rules in pure, testable functions.
+- No dead code, scaffold leftovers, commented-out blocks, `console.log`, or
+  `any` without a justified comment. Comment only non-obvious intent.
+- User-facing error messages follow the existing Vietnamese message
+  convention; logs must not contain secrets, tokens, or personal data.
+
+**Testing**
+
+- Every behavior change ships with automated proof: unit tests for domain
+  rules and guards (including negative/security cases), e2e/integration
+  evidence for API, tenant isolation, events, and idempotency.
+- Runtime API checks run through the Gateway against real services; cover the
+  401/403/success paths and tenant isolation for new endpoints.
+- Temporary QA scripts and QA data (use a recognizable prefix such as
+  `qa.<feature>.`) must be removed after verification; never commit them.
+- Never weaken, skip, or delete existing tests to make a change pass.
+
 ### Validation
 
 Use the smallest affected service check, then normally run the repository proof:

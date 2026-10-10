@@ -13,6 +13,7 @@ export {
   type OrderCreatedPayload,
   type OrderConfirmedPayload,
   type OrderPendingStockPayload,
+  type StockMovementPayload,
   type StockReceivedPayload,
   type InventoryReservedPayload,
   type InventoryAdjustedPayload,

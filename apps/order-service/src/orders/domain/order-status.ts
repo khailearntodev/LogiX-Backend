@@ -1,0 +1,15 @@
+export const ORDER_STATUS = {
+  DRAFT: 'DRAFT',
+  PENDING_STOCK: 'PENDING_STOCK',
+  CONFIRMED: 'CONFIRMED',
+  PICKING: 'PICKING',
+  READY_TO_SHIP: 'READY_TO_SHIP',
+  IN_DELIVERY: 'IN_DELIVERY',
+  DELIVERY_FAILED: 'DELIVERY_FAILED',
+  COMPLETED: 'COMPLETED',
+  CANCELED: 'CANCELED',
+} as const;
+
+export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
+
+export const ORDER_STATUSES: readonly OrderStatus[] = Object.values(ORDER_STATUS);

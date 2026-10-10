@@ -27,9 +27,13 @@ model SalesOrder {
   externalChannel         String?              @map("external_channel") @db.VarChar(50)
   externalOrderId         String?              @map("external_order_id") @db.VarChar(100)
   idempotencyKey          String?              @map("idempotency_key") @db.VarChar(100)
+  /// SHA-256 (hex) of the normalized create payload; detects reuse of an Idempotency-Key with a different body.
+  idempotencyRequestHash  String?              @map("idempotency_request_hash") @db.VarChar(64)
   totalQuantity           Decimal              @map("total_quantity") @db.Decimal(18, 3)
   totalWeight             Decimal              @map("total_weight") @db.Decimal(18, 3)
   totalVolume             Decimal              @map("total_volume") @db.Decimal(18, 6)
+  /// FIFO anchor for reservation retry; reset when a PENDING_STOCK order is edited.
+  pendingSince            DateTime?            @map("pending_since") @db.Timestamptz(6)
   confirmedAt             DateTime?            @map("confirmed_at") @db.Timestamptz(6)
   canceledAt              DateTime?            @map("canceled_at") @db.Timestamptz(6)
   completedAt             DateTime?            @map("completed_at") @db.Timestamptz(6)
@@ -47,6 +51,18 @@ model SalesOrder {
   @@index([tenantId, customerId, createdAt(sort: Desc)], map: "ix_orders_customer_created")
   @@index([tenantId, warehouseId, status, createdAt], map: "ix_orders_warehouse_status")
   @@map("sales_orders")
+  @@schema("orders")
+}
+
+/// Per-tenant daily counter for order numbers (SO-YYYYMMDD-000001); incremented with UPDATE ... RETURNING.
+model OrderNumberSequence {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  period    String   @db.Char(8)
+  lastValue BigInt   @default(0) @map("last_value")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@id([tenantId, period], map: "pk_order_number_sequences")
+  @@map("order_number_sequences")
   @@schema("orders")
 }
 

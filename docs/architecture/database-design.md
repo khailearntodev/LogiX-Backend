@@ -1387,8 +1387,8 @@ Quy tắc:
 - Consumer nhận snapshot qua payload event hoặc API contract, không đọc DB service khác.
 - `ward`/`district` để nullable vì từ 01/07/2025 địa giới hành chính chỉ còn hai cấp
   (tỉnh, xã/phường); dữ liệu cũ vẫn có thể có cấp huyện.
-- Không lưu `unit_price` snapshot: pricing nằm ngoài MVP; trường `unitPrice` trong
-  `OrderCreatedPayload` hiện chưa có cột tương ứng trong `order_lines`.
+- Không lưu `unit_price` snapshot: pricing nằm ngoài MVP, nên `OrderCreatedPayload`
+  cũng không mang `unitPrice`.
 
 ## 17. Mapping event vào persistence
 
