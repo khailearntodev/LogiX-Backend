@@ -80,6 +80,24 @@ indexed by `docs/architecture/README.md`.
   (e.g., pure Authentication & Session Lifecycle in `auth`, Organization/Tenant
   management in `organizations`).
 
+### Snapshot And Address Rules
+
+- Master Data owns customer addresses (`SHIPPING` ship-to, `BILLING` bill-to),
+  warehouses, and suppliers; Identity owns the optional tenant legal profile.
+  Consumers keep only the ID plus an immutable JSON snapshot.
+- Capture snapshots at the documented moment (order creation, shipment
+  creation, trip creation, route approval) and never refresh them from Master
+  Data afterwards; see `docs/architecture/database-design.md` §16.1.
+- Build snapshots from API responses or event payloads using the shared types
+  in `@logix/messaging`; never read another service's database or add
+  cross-service foreign keys to obtain them.
+- An order delivery address must be `SHIPPING`. Bill-to, supplier, and tenant
+  legal profile are schema-only extensions outside the MVP; do not add APIs or
+  flows for invoicing/procurement without an accepted BRD change.
+- Schema changes go through `prisma migrate dev --name <change>` (committed
+  migration), never `prisma db push`. New NOT NULL snapshot columns require
+  empty tables or a backfill step in the migration.
+
 ### Validation
 
 Use the smallest affected service check, then normally run the repository proof:

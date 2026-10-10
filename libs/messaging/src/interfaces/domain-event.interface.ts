@@ -9,6 +9,65 @@
  * @see docs/architecture/event-architecture.md §11
  */
 
+// ─── Shared Snapshots ───────────────────────────────────────────────────────
+// Immutable copies of Master Data / Identity records carried inside events so
+// consumers never read another service's database. Shapes mirror the JSON
+// stored in *_snapshot columns. @see docs/architecture/data-ownership.md
+
+export interface AddressSnapshot {
+  addressId: string;
+  addressVersion: number;
+  addressType: 'SHIPPING' | 'BILLING';
+  label: string | null;
+  recipientName: string;
+  phone: string | null;
+  addressLine: string;
+  ward: string | null;
+  district: string | null;
+  province: string;
+  postalCode: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  deliveryNote: string | null;
+}
+
+export interface CustomerSnapshot {
+  customerId: string;
+  customerVersion: number;
+  code: string;
+  name: string;
+  taxCode: string | null;
+  phone: string | null;
+  email: string | null;
+}
+
+export interface WarehouseSnapshot {
+  warehouseId: string;
+  warehouseVersion: number;
+  code: string;
+  name: string;
+  addressLine: string;
+  ward: string | null;
+  district: string | null;
+  province: string;
+  postalCode: string | null;
+  latitude: string;
+  longitude: string;
+}
+
+/** Tenant legal profile printed as the issuer on dispatch documents. */
+export interface IssuerSnapshot {
+  tenantId: string;
+  legalName: string;
+  taxCode: string | null;
+  phone: string | null;
+  addressLine: string;
+  ward: string | null;
+  district: string | null;
+  province: string;
+  postalCode: string | null;
+}
+
 // ─── Order Events ───────────────────────────────────────────────────────────
 
 export interface OrderCreatedPayload {
@@ -25,6 +84,12 @@ export interface OrderCreatedPayload {
 export interface OrderConfirmedPayload {
   orderId: string;
   confirmedAt: string;
+  customerId: string;
+  deliveryAddressId: string;
+  warehouseId: string;
+  customerSnapshot: CustomerSnapshot;
+  deliveryAddressSnapshot: AddressSnapshot;
+  warehouseSnapshot: WarehouseSnapshot;
 }
 
 export interface OrderPendingStockPayload {
@@ -72,6 +137,12 @@ export interface ShipmentReadyPayload {
   shipmentId: string;
   orderId: string;
   warehouseId: string;
+  deliveryAddressId: string;
+  /** Copied verbatim into transport.trip_stops.address_snapshot. */
+  deliveryAddressSnapshot: AddressSnapshot;
+  customerSnapshot: CustomerSnapshot;
+  totalWeight: string;
+  totalVolume: string;
 }
 
 // ─── Transport Events ───────────────────────────────────────────────────────

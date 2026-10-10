@@ -6,6 +6,10 @@ export {
 export {
   type DomainEventMap,
   type DomainEventType,
+  type AddressSnapshot,
+  type CustomerSnapshot,
+  type WarehouseSnapshot,
+  type IssuerSnapshot,
   type OrderCreatedPayload,
   type OrderConfirmedPayload,
   type OrderPendingStockPayload,

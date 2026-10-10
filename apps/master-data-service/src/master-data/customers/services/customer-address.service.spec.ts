@@ -15,6 +15,7 @@ function addressRow(overrides: Record<string, unknown> = {}) {
     id: ADDRESS,
     tenantId: TENANT,
     customerId: CUSTOMER,
+    addressType: 'SHIPPING',
     label: null,
     recipientName: 'Nguyễn Văn A',
     phone: null,
@@ -25,6 +26,7 @@ function addressRow(overrides: Record<string, unknown> = {}) {
     postalCode: null,
     latitude: new Prisma.Decimal('21.012345'),
     longitude: null,
+    deliveryNote: null,
     isDefault: false,
     status: RecordStatus.ACTIVE,
     version: 1n,
@@ -73,7 +75,7 @@ describe('CustomerAddressService', () => {
     service = module.get(CustomerAddressService);
   });
 
-  it('clears the previous default before promoting another address', async () => {
+  it('clears the previous default of the same address type before promoting', async () => {
     prisma.customerAddress.findFirst.mockResolvedValue(addressRow());
     prisma.customerAddress.update.mockResolvedValue(
       addressRow({ isDefault: true }),
@@ -85,6 +87,7 @@ describe('CustomerAddressService', () => {
       where: {
         tenantId: TENANT,
         customerId: CUSTOMER,
+        addressType: 'SHIPPING',
         isDefault: true,
         deletedAt: null,
       },
@@ -93,6 +96,70 @@ describe('CustomerAddressService', () => {
     // Clearing must happen inside the same transaction as the promotion.
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(result.isDefault).toBe(true);
+  });
+
+  it('promoting a billing address only clears the billing default', async () => {
+    prisma.customerAddress.findFirst.mockResolvedValue(
+      addressRow({ addressType: 'BILLING' }),
+    );
+    prisma.customerAddress.update.mockResolvedValue(
+      addressRow({ addressType: 'BILLING', isDefault: true }),
+    );
+
+    await service.setDefault(TENANT, CUSTOMER, ADDRESS);
+
+    expect(prisma.customerAddress.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ addressType: 'BILLING' }),
+      }),
+    );
+  });
+
+  it('creates a SHIPPING address by default and stores the delivery note', async () => {
+    prisma.customerAddress.create.mockResolvedValue(
+      addressRow({ isDefault: true, deliveryNote: 'Giao giờ hành chính' }),
+    );
+
+    const result = await service.create(TENANT, CUSTOMER, {
+      recipientName: 'Nguyễn Văn A',
+      addressLine: '12 Nguyễn Trãi',
+      province: 'Hà Nội',
+      deliveryNote: 'Giao giờ hành chính',
+      isDefault: true,
+    });
+
+    expect(prisma.customerAddress.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ addressType: 'SHIPPING' }),
+      }),
+    );
+    expect(prisma.customerAddress.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        addressType: 'SHIPPING',
+        deliveryNote: 'Giao giờ hành chính',
+      }),
+    });
+    expect(result.addressType).toBe('SHIPPING');
+    expect(result.deliveryNote).toBe('Giao giờ hành chính');
+  });
+
+  it('creates a BILLING address when requested', async () => {
+    prisma.customerAddress.create.mockResolvedValue(
+      addressRow({ addressType: 'BILLING' }),
+    );
+
+    await service.create(TENANT, CUSTOMER, {
+      addressType: 'BILLING',
+      recipientName: 'Công ty A',
+      addressLine: '1 Tràng Tiền',
+      province: 'Hà Nội',
+    });
+
+    expect(prisma.customerAddress.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ addressType: 'BILLING' }),
+    });
+    // Not a default, so no other address may be touched.
+    expect(prisma.customerAddress.updateMany).not.toHaveBeenCalled();
   });
 
   it('refuses to make a disabled address the default', async () => {

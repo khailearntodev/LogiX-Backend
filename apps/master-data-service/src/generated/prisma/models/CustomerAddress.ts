@@ -42,6 +42,7 @@ export type CustomerAddressMinAggregateOutputType = {
   id: string | null
   tenantId: string | null
   customerId: string | null
+  addressType: string | null
   label: string | null
   recipientName: string | null
   phone: string | null
@@ -52,6 +53,7 @@ export type CustomerAddressMinAggregateOutputType = {
   postalCode: string | null
   latitude: runtime.Decimal | null
   longitude: runtime.Decimal | null
+  deliveryNote: string | null
   isDefault: boolean | null
   status: string | null
   createdAt: Date | null
@@ -64,6 +66,7 @@ export type CustomerAddressMaxAggregateOutputType = {
   id: string | null
   tenantId: string | null
   customerId: string | null
+  addressType: string | null
   label: string | null
   recipientName: string | null
   phone: string | null
@@ -74,6 +77,7 @@ export type CustomerAddressMaxAggregateOutputType = {
   postalCode: string | null
   latitude: runtime.Decimal | null
   longitude: runtime.Decimal | null
+  deliveryNote: string | null
   isDefault: boolean | null
   status: string | null
   createdAt: Date | null
@@ -86,6 +90,7 @@ export type CustomerAddressCountAggregateOutputType = {
   id: number
   tenantId: number
   customerId: number
+  addressType: number
   label: number
   recipientName: number
   phone: number
@@ -96,6 +101,7 @@ export type CustomerAddressCountAggregateOutputType = {
   postalCode: number
   latitude: number
   longitude: number
+  deliveryNote: number
   isDefault: number
   status: number
   createdAt: number
@@ -122,6 +128,7 @@ export type CustomerAddressMinAggregateInputType = {
   id?: true
   tenantId?: true
   customerId?: true
+  addressType?: true
   label?: true
   recipientName?: true
   phone?: true
@@ -132,6 +139,7 @@ export type CustomerAddressMinAggregateInputType = {
   postalCode?: true
   latitude?: true
   longitude?: true
+  deliveryNote?: true
   isDefault?: true
   status?: true
   createdAt?: true
@@ -144,6 +152,7 @@ export type CustomerAddressMaxAggregateInputType = {
   id?: true
   tenantId?: true
   customerId?: true
+  addressType?: true
   label?: true
   recipientName?: true
   phone?: true
@@ -154,6 +163,7 @@ export type CustomerAddressMaxAggregateInputType = {
   postalCode?: true
   latitude?: true
   longitude?: true
+  deliveryNote?: true
   isDefault?: true
   status?: true
   createdAt?: true
@@ -166,6 +176,7 @@ export type CustomerAddressCountAggregateInputType = {
   id?: true
   tenantId?: true
   customerId?: true
+  addressType?: true
   label?: true
   recipientName?: true
   phone?: true
@@ -176,6 +187,7 @@ export type CustomerAddressCountAggregateInputType = {
   postalCode?: true
   latitude?: true
   longitude?: true
+  deliveryNote?: true
   isDefault?: true
   status?: true
   createdAt?: true
@@ -275,6 +287,7 @@ export type CustomerAddressGroupByOutputType = {
   id: string
   tenantId: string
   customerId: string
+  addressType: string
   label: string | null
   recipientName: string
   phone: string | null
@@ -285,6 +298,7 @@ export type CustomerAddressGroupByOutputType = {
   postalCode: string | null
   latitude: runtime.Decimal | null
   longitude: runtime.Decimal | null
+  deliveryNote: string | null
   isDefault: boolean
   status: string
   createdAt: Date
@@ -320,6 +334,7 @@ export type CustomerAddressWhereInput = {
   id?: Prisma.UuidFilter<"CustomerAddress"> | string
   tenantId?: Prisma.UuidFilter<"CustomerAddress"> | string
   customerId?: Prisma.UuidFilter<"CustomerAddress"> | string
+  addressType?: Prisma.StringFilter<"CustomerAddress"> | string
   label?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   recipientName?: Prisma.StringFilter<"CustomerAddress"> | string
   phone?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
@@ -330,6 +345,7 @@ export type CustomerAddressWhereInput = {
   postalCode?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   latitude?: Prisma.DecimalNullableFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.DecimalNullableFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   isDefault?: Prisma.BoolFilter<"CustomerAddress"> | boolean
   status?: Prisma.StringFilter<"CustomerAddress"> | string
   createdAt?: Prisma.DateTimeFilter<"CustomerAddress"> | Date | string
@@ -343,6 +359,7 @@ export type CustomerAddressOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  addressType?: Prisma.SortOrder
   label?: Prisma.SortOrderInput | Prisma.SortOrder
   recipientName?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -353,6 +370,7 @@ export type CustomerAddressOrderByWithRelationInput = {
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryNote?: Prisma.SortOrderInput | Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -369,6 +387,7 @@ export type CustomerAddressWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.CustomerAddressWhereInput | Prisma.CustomerAddressWhereInput[]
   tenantId?: Prisma.UuidFilter<"CustomerAddress"> | string
   customerId?: Prisma.UuidFilter<"CustomerAddress"> | string
+  addressType?: Prisma.StringFilter<"CustomerAddress"> | string
   label?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   recipientName?: Prisma.StringFilter<"CustomerAddress"> | string
   phone?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
@@ -379,6 +398,7 @@ export type CustomerAddressWhereUniqueInput = Prisma.AtLeast<{
   postalCode?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   latitude?: Prisma.DecimalNullableFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.DecimalNullableFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   isDefault?: Prisma.BoolFilter<"CustomerAddress"> | boolean
   status?: Prisma.StringFilter<"CustomerAddress"> | string
   createdAt?: Prisma.DateTimeFilter<"CustomerAddress"> | Date | string
@@ -392,6 +412,7 @@ export type CustomerAddressOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  addressType?: Prisma.SortOrder
   label?: Prisma.SortOrderInput | Prisma.SortOrder
   recipientName?: Prisma.SortOrder
   phone?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -402,6 +423,7 @@ export type CustomerAddressOrderByWithAggregationInput = {
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
   latitude?: Prisma.SortOrderInput | Prisma.SortOrder
   longitude?: Prisma.SortOrderInput | Prisma.SortOrder
+  deliveryNote?: Prisma.SortOrderInput | Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -422,6 +444,7 @@ export type CustomerAddressScalarWhereWithAggregatesInput = {
   id?: Prisma.UuidWithAggregatesFilter<"CustomerAddress"> | string
   tenantId?: Prisma.UuidWithAggregatesFilter<"CustomerAddress"> | string
   customerId?: Prisma.UuidWithAggregatesFilter<"CustomerAddress"> | string
+  addressType?: Prisma.StringWithAggregatesFilter<"CustomerAddress"> | string
   label?: Prisma.StringNullableWithAggregatesFilter<"CustomerAddress"> | string | null
   recipientName?: Prisma.StringWithAggregatesFilter<"CustomerAddress"> | string
   phone?: Prisma.StringNullableWithAggregatesFilter<"CustomerAddress"> | string | null
@@ -432,6 +455,7 @@ export type CustomerAddressScalarWhereWithAggregatesInput = {
   postalCode?: Prisma.StringNullableWithAggregatesFilter<"CustomerAddress"> | string | null
   latitude?: Prisma.DecimalNullableWithAggregatesFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.DecimalNullableWithAggregatesFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.StringNullableWithAggregatesFilter<"CustomerAddress"> | string | null
   isDefault?: Prisma.BoolWithAggregatesFilter<"CustomerAddress"> | boolean
   status?: Prisma.StringWithAggregatesFilter<"CustomerAddress"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CustomerAddress"> | Date | string
@@ -443,6 +467,7 @@ export type CustomerAddressScalarWhereWithAggregatesInput = {
 export type CustomerAddressCreateInput = {
   id?: string
   tenantId: string
+  addressType?: string
   label?: string | null
   recipientName: string
   phone?: string | null
@@ -453,6 +478,7 @@ export type CustomerAddressCreateInput = {
   postalCode?: string | null
   latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: string | null
   isDefault?: boolean
   status: string
   createdAt?: Date | string
@@ -466,6 +492,7 @@ export type CustomerAddressUncheckedCreateInput = {
   id?: string
   tenantId: string
   customerId: string
+  addressType?: string
   label?: string | null
   recipientName: string
   phone?: string | null
@@ -476,6 +503,7 @@ export type CustomerAddressUncheckedCreateInput = {
   postalCode?: string | null
   latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: string | null
   isDefault?: boolean
   status: string
   createdAt?: Date | string
@@ -487,6 +515,7 @@ export type CustomerAddressUncheckedCreateInput = {
 export type CustomerAddressUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -497,6 +526,7 @@ export type CustomerAddressUpdateInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -510,6 +540,7 @@ export type CustomerAddressUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -520,6 +551,7 @@ export type CustomerAddressUncheckedUpdateInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -532,6 +564,7 @@ export type CustomerAddressCreateManyInput = {
   id?: string
   tenantId: string
   customerId: string
+  addressType?: string
   label?: string | null
   recipientName: string
   phone?: string | null
@@ -542,6 +575,7 @@ export type CustomerAddressCreateManyInput = {
   postalCode?: string | null
   latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: string | null
   isDefault?: boolean
   status: string
   createdAt?: Date | string
@@ -553,6 +587,7 @@ export type CustomerAddressCreateManyInput = {
 export type CustomerAddressUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -563,6 +598,7 @@ export type CustomerAddressUpdateManyMutationInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -575,6 +611,7 @@ export type CustomerAddressUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -585,6 +622,7 @@ export type CustomerAddressUncheckedUpdateManyInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -607,6 +645,7 @@ export type CustomerAddressCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  addressType?: Prisma.SortOrder
   label?: Prisma.SortOrder
   recipientName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
@@ -617,6 +656,7 @@ export type CustomerAddressCountOrderByAggregateInput = {
   postalCode?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
+  deliveryNote?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -635,6 +675,7 @@ export type CustomerAddressMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  addressType?: Prisma.SortOrder
   label?: Prisma.SortOrder
   recipientName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
@@ -645,6 +686,7 @@ export type CustomerAddressMaxOrderByAggregateInput = {
   postalCode?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
+  deliveryNote?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -657,6 +699,7 @@ export type CustomerAddressMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
+  addressType?: Prisma.SortOrder
   label?: Prisma.SortOrder
   recipientName?: Prisma.SortOrder
   phone?: Prisma.SortOrder
@@ -667,6 +710,7 @@ export type CustomerAddressMinOrderByAggregateInput = {
   postalCode?: Prisma.SortOrder
   latitude?: Prisma.SortOrder
   longitude?: Prisma.SortOrder
+  deliveryNote?: Prisma.SortOrder
   isDefault?: Prisma.SortOrder
   status?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -738,6 +782,7 @@ export type BoolFieldUpdateOperationsInput = {
 export type CustomerAddressCreateWithoutCustomerInput = {
   id?: string
   tenantId: string
+  addressType?: string
   label?: string | null
   recipientName: string
   phone?: string | null
@@ -748,6 +793,7 @@ export type CustomerAddressCreateWithoutCustomerInput = {
   postalCode?: string | null
   latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: string | null
   isDefault?: boolean
   status: string
   createdAt?: Date | string
@@ -759,6 +805,7 @@ export type CustomerAddressCreateWithoutCustomerInput = {
 export type CustomerAddressUncheckedCreateWithoutCustomerInput = {
   id?: string
   tenantId: string
+  addressType?: string
   label?: string | null
   recipientName: string
   phone?: string | null
@@ -769,6 +816,7 @@ export type CustomerAddressUncheckedCreateWithoutCustomerInput = {
   postalCode?: string | null
   latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: string | null
   isDefault?: boolean
   status: string
   createdAt?: Date | string
@@ -810,6 +858,7 @@ export type CustomerAddressScalarWhereInput = {
   id?: Prisma.UuidFilter<"CustomerAddress"> | string
   tenantId?: Prisma.UuidFilter<"CustomerAddress"> | string
   customerId?: Prisma.UuidFilter<"CustomerAddress"> | string
+  addressType?: Prisma.StringFilter<"CustomerAddress"> | string
   label?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   recipientName?: Prisma.StringFilter<"CustomerAddress"> | string
   phone?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
@@ -820,6 +869,7 @@ export type CustomerAddressScalarWhereInput = {
   postalCode?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   latitude?: Prisma.DecimalNullableFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.DecimalNullableFilter<"CustomerAddress"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.StringNullableFilter<"CustomerAddress"> | string | null
   isDefault?: Prisma.BoolFilter<"CustomerAddress"> | boolean
   status?: Prisma.StringFilter<"CustomerAddress"> | string
   createdAt?: Prisma.DateTimeFilter<"CustomerAddress"> | Date | string
@@ -831,6 +881,7 @@ export type CustomerAddressScalarWhereInput = {
 export type CustomerAddressCreateManyCustomerInput = {
   id?: string
   tenantId: string
+  addressType?: string
   label?: string | null
   recipientName: string
   phone?: string | null
@@ -841,6 +892,7 @@ export type CustomerAddressCreateManyCustomerInput = {
   postalCode?: string | null
   latitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: string | null
   isDefault?: boolean
   status: string
   createdAt?: Date | string
@@ -852,6 +904,7 @@ export type CustomerAddressCreateManyCustomerInput = {
 export type CustomerAddressUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -862,6 +915,7 @@ export type CustomerAddressUpdateWithoutCustomerInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -873,6 +927,7 @@ export type CustomerAddressUpdateWithoutCustomerInput = {
 export type CustomerAddressUncheckedUpdateWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -883,6 +938,7 @@ export type CustomerAddressUncheckedUpdateWithoutCustomerInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -894,6 +950,7 @@ export type CustomerAddressUncheckedUpdateWithoutCustomerInput = {
 export type CustomerAddressUncheckedUpdateManyWithoutCustomerInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  addressType?: Prisma.StringFieldUpdateOperationsInput | string
   label?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   recipientName?: Prisma.StringFieldUpdateOperationsInput | string
   phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -904,6 +961,7 @@ export type CustomerAddressUncheckedUpdateManyWithoutCustomerInput = {
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   latitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
   longitude?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  deliveryNote?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   isDefault?: Prisma.BoolFieldUpdateOperationsInput | boolean
   status?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -918,6 +976,7 @@ export type CustomerAddressSelect<ExtArgs extends runtime.Types.Extensions.Inter
   id?: boolean
   tenantId?: boolean
   customerId?: boolean
+  addressType?: boolean
   label?: boolean
   recipientName?: boolean
   phone?: boolean
@@ -928,6 +987,7 @@ export type CustomerAddressSelect<ExtArgs extends runtime.Types.Extensions.Inter
   postalCode?: boolean
   latitude?: boolean
   longitude?: boolean
+  deliveryNote?: boolean
   isDefault?: boolean
   status?: boolean
   createdAt?: boolean
@@ -941,6 +1001,7 @@ export type CustomerAddressSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   id?: boolean
   tenantId?: boolean
   customerId?: boolean
+  addressType?: boolean
   label?: boolean
   recipientName?: boolean
   phone?: boolean
@@ -951,6 +1012,7 @@ export type CustomerAddressSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   postalCode?: boolean
   latitude?: boolean
   longitude?: boolean
+  deliveryNote?: boolean
   isDefault?: boolean
   status?: boolean
   createdAt?: boolean
@@ -964,6 +1026,7 @@ export type CustomerAddressSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   id?: boolean
   tenantId?: boolean
   customerId?: boolean
+  addressType?: boolean
   label?: boolean
   recipientName?: boolean
   phone?: boolean
@@ -974,6 +1037,7 @@ export type CustomerAddressSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   postalCode?: boolean
   latitude?: boolean
   longitude?: boolean
+  deliveryNote?: boolean
   isDefault?: boolean
   status?: boolean
   createdAt?: boolean
@@ -987,6 +1051,7 @@ export type CustomerAddressSelectScalar = {
   id?: boolean
   tenantId?: boolean
   customerId?: boolean
+  addressType?: boolean
   label?: boolean
   recipientName?: boolean
   phone?: boolean
@@ -997,6 +1062,7 @@ export type CustomerAddressSelectScalar = {
   postalCode?: boolean
   latitude?: boolean
   longitude?: boolean
+  deliveryNote?: boolean
   isDefault?: boolean
   status?: boolean
   createdAt?: boolean
@@ -1005,7 +1071,7 @@ export type CustomerAddressSelectScalar = {
   deletedAt?: boolean
 }
 
-export type CustomerAddressOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "customerId" | "label" | "recipientName" | "phone" | "addressLine" | "ward" | "district" | "province" | "postalCode" | "latitude" | "longitude" | "isDefault" | "status" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["customerAddress"]>
+export type CustomerAddressOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "customerId" | "addressType" | "label" | "recipientName" | "phone" | "addressLine" | "ward" | "district" | "province" | "postalCode" | "latitude" | "longitude" | "deliveryNote" | "isDefault" | "status" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["customerAddress"]>
 export type CustomerAddressInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
 }
@@ -1025,6 +1091,10 @@ export type $CustomerAddressPayload<ExtArgs extends runtime.Types.Extensions.Int
     id: string
     tenantId: string
     customerId: string
+    /**
+     * SHIPPING (ship-to) or BILLING (bill-to). Defaults are unique per type.
+     */
+    addressType: string
     label: string | null
     recipientName: string
     phone: string | null
@@ -1035,6 +1105,7 @@ export type $CustomerAddressPayload<ExtArgs extends runtime.Types.Extensions.Int
     postalCode: string | null
     latitude: runtime.Decimal | null
     longitude: runtime.Decimal | null
+    deliveryNote: string | null
     isDefault: boolean
     status: string
     createdAt: Date
@@ -1468,6 +1539,7 @@ export interface CustomerAddressFieldRefs {
   readonly id: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly tenantId: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly customerId: Prisma.FieldRef<"CustomerAddress", 'String'>
+  readonly addressType: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly label: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly recipientName: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly phone: Prisma.FieldRef<"CustomerAddress", 'String'>
@@ -1478,6 +1550,7 @@ export interface CustomerAddressFieldRefs {
   readonly postalCode: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly latitude: Prisma.FieldRef<"CustomerAddress", 'Decimal'>
   readonly longitude: Prisma.FieldRef<"CustomerAddress", 'Decimal'>
+  readonly deliveryNote: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly isDefault: Prisma.FieldRef<"CustomerAddress", 'Boolean'>
   readonly status: Prisma.FieldRef<"CustomerAddress", 'String'>
   readonly createdAt: Prisma.FieldRef<"CustomerAddress", 'DateTime'>

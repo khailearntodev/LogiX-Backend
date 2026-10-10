@@ -95,6 +95,9 @@ export type DeliveryTripCountAggregateOutputType = {
   warehouseId: number
   vehicleId: number
   driverId: number
+  depotSnapshot: number
+  vehicleSnapshot: number
+  driverSnapshot: number
   status: number
   plannedStartAt: number
   actualStartAt: number
@@ -183,6 +186,9 @@ export type DeliveryTripCountAggregateInputType = {
   warehouseId?: true
   vehicleId?: true
   driverId?: true
+  depotSnapshot?: true
+  vehicleSnapshot?: true
+  driverSnapshot?: true
   status?: true
   plannedStartAt?: true
   actualStartAt?: true
@@ -294,6 +300,9 @@ export type DeliveryTripGroupByOutputType = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: runtime.JsonValue
+  vehicleSnapshot: runtime.JsonValue | null
+  driverSnapshot: runtime.JsonValue | null
   status: string
   plannedStartAt: Date
   actualStartAt: Date | null
@@ -341,6 +350,9 @@ export type DeliveryTripWhereInput = {
   warehouseId?: Prisma.UuidFilter<"DeliveryTrip"> | string
   vehicleId?: Prisma.UuidFilter<"DeliveryTrip"> | string
   driverId?: Prisma.UuidFilter<"DeliveryTrip"> | string
+  depotSnapshot?: Prisma.JsonFilter<"DeliveryTrip">
+  vehicleSnapshot?: Prisma.JsonNullableFilter<"DeliveryTrip">
+  driverSnapshot?: Prisma.JsonNullableFilter<"DeliveryTrip">
   status?: Prisma.StringFilter<"DeliveryTrip"> | string
   plannedStartAt?: Prisma.DateTimeFilter<"DeliveryTrip"> | Date | string
   actualStartAt?: Prisma.DateTimeNullableFilter<"DeliveryTrip"> | Date | string | null
@@ -370,6 +382,9 @@ export type DeliveryTripOrderByWithRelationInput = {
   warehouseId?: Prisma.SortOrder
   vehicleId?: Prisma.SortOrder
   driverId?: Prisma.SortOrder
+  depotSnapshot?: Prisma.SortOrder
+  vehicleSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  driverSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   plannedStartAt?: Prisma.SortOrder
   actualStartAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -403,6 +418,9 @@ export type DeliveryTripWhereUniqueInput = Prisma.AtLeast<{
   warehouseId?: Prisma.UuidFilter<"DeliveryTrip"> | string
   vehicleId?: Prisma.UuidFilter<"DeliveryTrip"> | string
   driverId?: Prisma.UuidFilter<"DeliveryTrip"> | string
+  depotSnapshot?: Prisma.JsonFilter<"DeliveryTrip">
+  vehicleSnapshot?: Prisma.JsonNullableFilter<"DeliveryTrip">
+  driverSnapshot?: Prisma.JsonNullableFilter<"DeliveryTrip">
   status?: Prisma.StringFilter<"DeliveryTrip"> | string
   plannedStartAt?: Prisma.DateTimeFilter<"DeliveryTrip"> | Date | string
   actualStartAt?: Prisma.DateTimeNullableFilter<"DeliveryTrip"> | Date | string | null
@@ -432,6 +450,9 @@ export type DeliveryTripOrderByWithAggregationInput = {
   warehouseId?: Prisma.SortOrder
   vehicleId?: Prisma.SortOrder
   driverId?: Prisma.SortOrder
+  depotSnapshot?: Prisma.SortOrder
+  vehicleSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  driverSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   plannedStartAt?: Prisma.SortOrder
   actualStartAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -464,6 +485,9 @@ export type DeliveryTripScalarWhereWithAggregatesInput = {
   warehouseId?: Prisma.UuidWithAggregatesFilter<"DeliveryTrip"> | string
   vehicleId?: Prisma.UuidWithAggregatesFilter<"DeliveryTrip"> | string
   driverId?: Prisma.UuidWithAggregatesFilter<"DeliveryTrip"> | string
+  depotSnapshot?: Prisma.JsonWithAggregatesFilter<"DeliveryTrip">
+  vehicleSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"DeliveryTrip">
+  driverSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"DeliveryTrip">
   status?: Prisma.StringWithAggregatesFilter<"DeliveryTrip"> | string
   plannedStartAt?: Prisma.DateTimeWithAggregatesFilter<"DeliveryTrip"> | Date | string
   actualStartAt?: Prisma.DateTimeNullableWithAggregatesFilter<"DeliveryTrip"> | Date | string | null
@@ -488,6 +512,9 @@ export type DeliveryTripCreateInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -516,6 +543,9 @@ export type DeliveryTripUncheckedCreateInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -544,6 +574,9 @@ export type DeliveryTripUpdateInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -572,6 +605,9 @@ export type DeliveryTripUncheckedUpdateInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -600,6 +636,9 @@ export type DeliveryTripCreateManyInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -624,6 +663,9 @@ export type DeliveryTripUpdateManyMutationInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -647,6 +689,9 @@ export type DeliveryTripUncheckedUpdateManyInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -676,6 +721,9 @@ export type DeliveryTripCountOrderByAggregateInput = {
   warehouseId?: Prisma.SortOrder
   vehicleId?: Prisma.SortOrder
   driverId?: Prisma.SortOrder
+  depotSnapshot?: Prisma.SortOrder
+  vehicleSnapshot?: Prisma.SortOrder
+  driverSnapshot?: Prisma.SortOrder
   status?: Prisma.SortOrder
   plannedStartAt?: Prisma.SortOrder
   actualStartAt?: Prisma.SortOrder
@@ -907,6 +955,9 @@ export type DeliveryTripCreateWithoutShipmentsInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -934,6 +985,9 @@ export type DeliveryTripUncheckedCreateWithoutShipmentsInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -977,6 +1031,9 @@ export type DeliveryTripUpdateWithoutShipmentsInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1004,6 +1061,9 @@ export type DeliveryTripUncheckedUpdateWithoutShipmentsInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1031,6 +1091,9 @@ export type DeliveryTripCreateWithoutStopsInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1058,6 +1121,9 @@ export type DeliveryTripUncheckedCreateWithoutStopsInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1101,6 +1167,9 @@ export type DeliveryTripUpdateWithoutStopsInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1128,6 +1197,9 @@ export type DeliveryTripUncheckedUpdateWithoutStopsInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1155,6 +1227,9 @@ export type DeliveryTripCreateWithoutRoutePlansInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1182,6 +1257,9 @@ export type DeliveryTripUncheckedCreateWithoutRoutePlansInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1214,6 +1292,9 @@ export type DeliveryTripCreateWithoutApprovedRoutePlanInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1241,6 +1322,9 @@ export type DeliveryTripUncheckedCreateWithoutApprovedRoutePlanInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1289,6 +1373,9 @@ export type DeliveryTripUpdateWithoutRoutePlansInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1316,6 +1403,9 @@ export type DeliveryTripUncheckedUpdateWithoutRoutePlansInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1362,6 +1452,9 @@ export type DeliveryTripScalarWhereInput = {
   warehouseId?: Prisma.UuidFilter<"DeliveryTrip"> | string
   vehicleId?: Prisma.UuidFilter<"DeliveryTrip"> | string
   driverId?: Prisma.UuidFilter<"DeliveryTrip"> | string
+  depotSnapshot?: Prisma.JsonFilter<"DeliveryTrip">
+  vehicleSnapshot?: Prisma.JsonNullableFilter<"DeliveryTrip">
+  driverSnapshot?: Prisma.JsonNullableFilter<"DeliveryTrip">
   status?: Prisma.StringFilter<"DeliveryTrip"> | string
   plannedStartAt?: Prisma.DateTimeFilter<"DeliveryTrip"> | Date | string
   actualStartAt?: Prisma.DateTimeNullableFilter<"DeliveryTrip"> | Date | string | null
@@ -1386,6 +1479,9 @@ export type DeliveryTripCreateWithoutDispatchesInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1413,6 +1509,9 @@ export type DeliveryTripUncheckedCreateWithoutDispatchesInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1456,6 +1555,9 @@ export type DeliveryTripUpdateWithoutDispatchesInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1483,6 +1585,9 @@ export type DeliveryTripUncheckedUpdateWithoutDispatchesInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1510,6 +1615,9 @@ export type DeliveryTripCreateManyApprovedRoutePlanInput = {
   warehouseId: string
   vehicleId: string
   driverId: string
+  depotSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   plannedStartAt: Date | string
   actualStartAt?: Date | string | null
@@ -1533,6 +1641,9 @@ export type DeliveryTripUpdateWithoutApprovedRoutePlanInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1560,6 +1671,9 @@ export type DeliveryTripUncheckedUpdateWithoutApprovedRoutePlanInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1587,6 +1701,9 @@ export type DeliveryTripUncheckedUpdateManyWithoutApprovedRoutePlanInput = {
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   vehicleId?: Prisma.StringFieldUpdateOperationsInput | string
   driverId?: Prisma.StringFieldUpdateOperationsInput | string
+  depotSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   plannedStartAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   actualStartAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1668,6 +1785,9 @@ export type DeliveryTripSelect<ExtArgs extends runtime.Types.Extensions.Internal
   warehouseId?: boolean
   vehicleId?: boolean
   driverId?: boolean
+  depotSnapshot?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
   status?: boolean
   plannedStartAt?: boolean
   actualStartAt?: boolean
@@ -1698,6 +1818,9 @@ export type DeliveryTripSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   warehouseId?: boolean
   vehicleId?: boolean
   driverId?: boolean
+  depotSnapshot?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
   status?: boolean
   plannedStartAt?: boolean
   actualStartAt?: boolean
@@ -1723,6 +1846,9 @@ export type DeliveryTripSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   warehouseId?: boolean
   vehicleId?: boolean
   driverId?: boolean
+  depotSnapshot?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
   status?: boolean
   plannedStartAt?: boolean
   actualStartAt?: boolean
@@ -1748,6 +1874,9 @@ export type DeliveryTripSelectScalar = {
   warehouseId?: boolean
   vehicleId?: boolean
   driverId?: boolean
+  depotSnapshot?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
   status?: boolean
   plannedStartAt?: boolean
   actualStartAt?: boolean
@@ -1765,7 +1894,7 @@ export type DeliveryTripSelectScalar = {
   deletedAt?: boolean
 }
 
-export type DeliveryTripOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripNumber" | "warehouseId" | "vehicleId" | "driverId" | "status" | "plannedStartAt" | "actualStartAt" | "completedAt" | "totalWeight" | "totalVolume" | "approvedRoutePlanId" | "dispatchVersion" | "dispatchedAt" | "canceledAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["deliveryTrip"]>
+export type DeliveryTripOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripNumber" | "warehouseId" | "vehicleId" | "driverId" | "depotSnapshot" | "vehicleSnapshot" | "driverSnapshot" | "status" | "plannedStartAt" | "actualStartAt" | "completedAt" | "totalWeight" | "totalVolume" | "approvedRoutePlanId" | "dispatchVersion" | "dispatchedAt" | "canceledAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["deliveryTrip"]>
 export type DeliveryTripInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   approvedRoutePlan?: boolean | Prisma.DeliveryTrip$approvedRoutePlanArgs<ExtArgs>
   routePlans?: boolean | Prisma.DeliveryTrip$routePlansArgs<ExtArgs>
@@ -1797,6 +1926,15 @@ export type $DeliveryTripPayload<ExtArgs extends runtime.Types.Extensions.Intern
     warehouseId: string
     vehicleId: string
     driverId: string
+    /**
+     * Depot address captured when the trip is created (route start/end point).
+     */
+    depotSnapshot: runtime.JsonValue
+    /**
+     * Vehicle/driver details frozen when the route plan is approved.
+     */
+    vehicleSnapshot: runtime.JsonValue | null
+    driverSnapshot: runtime.JsonValue | null
     status: string
     plannedStartAt: Date
     actualStartAt: Date | null
@@ -2246,6 +2384,9 @@ export interface DeliveryTripFieldRefs {
   readonly warehouseId: Prisma.FieldRef<"DeliveryTrip", 'String'>
   readonly vehicleId: Prisma.FieldRef<"DeliveryTrip", 'String'>
   readonly driverId: Prisma.FieldRef<"DeliveryTrip", 'String'>
+  readonly depotSnapshot: Prisma.FieldRef<"DeliveryTrip", 'Json'>
+  readonly vehicleSnapshot: Prisma.FieldRef<"DeliveryTrip", 'Json'>
+  readonly driverSnapshot: Prisma.FieldRef<"DeliveryTrip", 'Json'>
   readonly status: Prisma.FieldRef<"DeliveryTrip", 'String'>
   readonly plannedStartAt: Prisma.FieldRef<"DeliveryTrip", 'DateTime'>
   readonly actualStartAt: Prisma.FieldRef<"DeliveryTrip", 'DateTime'>

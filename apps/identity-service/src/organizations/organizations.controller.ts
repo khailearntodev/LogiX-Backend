@@ -91,6 +91,15 @@ export class OrganizationsController {
     return this.organizationService.removeMember(user.id, tenantId, memberId);
   }
 
+  @Post(':tenantId/leave')
+  @HttpCode(HttpStatus.OK)
+  async leaveOrganization(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tenantId') tenantId: string,
+  ) {
+    return this.organizationService.leaveOrganization(user.id, tenantId);
+  }
+
   @Delete(':tenantId')
   @HttpCode(HttpStatus.OK)
   async deleteOrganization(

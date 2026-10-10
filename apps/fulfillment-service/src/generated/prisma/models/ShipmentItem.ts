@@ -47,6 +47,8 @@ export type ShipmentItemMinAggregateOutputType = {
   orderLineId: string | null
   productId: string | null
   skuSnapshot: string | null
+  productNameSnapshot: string | null
+  unitSnapshot: string | null
   quantity: runtime.Decimal | null
   weight: runtime.Decimal | null
   volume: runtime.Decimal | null
@@ -63,6 +65,8 @@ export type ShipmentItemMaxAggregateOutputType = {
   orderLineId: string | null
   productId: string | null
   skuSnapshot: string | null
+  productNameSnapshot: string | null
+  unitSnapshot: string | null
   quantity: runtime.Decimal | null
   weight: runtime.Decimal | null
   volume: runtime.Decimal | null
@@ -79,6 +83,8 @@ export type ShipmentItemCountAggregateOutputType = {
   orderLineId: number
   productId: number
   skuSnapshot: number
+  productNameSnapshot: number
+  unitSnapshot: number
   quantity: number
   weight: number
   volume: number
@@ -111,6 +117,8 @@ export type ShipmentItemMinAggregateInputType = {
   orderLineId?: true
   productId?: true
   skuSnapshot?: true
+  productNameSnapshot?: true
+  unitSnapshot?: true
   quantity?: true
   weight?: true
   volume?: true
@@ -127,6 +135,8 @@ export type ShipmentItemMaxAggregateInputType = {
   orderLineId?: true
   productId?: true
   skuSnapshot?: true
+  productNameSnapshot?: true
+  unitSnapshot?: true
   quantity?: true
   weight?: true
   volume?: true
@@ -143,6 +153,8 @@ export type ShipmentItemCountAggregateInputType = {
   orderLineId?: true
   productId?: true
   skuSnapshot?: true
+  productNameSnapshot?: true
+  unitSnapshot?: true
   quantity?: true
   weight?: true
   volume?: true
@@ -246,6 +258,8 @@ export type ShipmentItemGroupByOutputType = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal
   weight: runtime.Decimal
   volume: runtime.Decimal
@@ -285,6 +299,8 @@ export type ShipmentItemWhereInput = {
   orderLineId?: Prisma.UuidFilter<"ShipmentItem"> | string
   productId?: Prisma.UuidFilter<"ShipmentItem"> | string
   skuSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
+  productNameSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
+  unitSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
   quantity?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -302,6 +318,8 @@ export type ShipmentItemOrderByWithRelationInput = {
   orderLineId?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   skuSnapshot?: Prisma.SortOrder
+  productNameSnapshot?: Prisma.SortOrder
+  unitSnapshot?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
@@ -323,6 +341,8 @@ export type ShipmentItemWhereUniqueInput = Prisma.AtLeast<{
   orderLineId?: Prisma.UuidFilter<"ShipmentItem"> | string
   productId?: Prisma.UuidFilter<"ShipmentItem"> | string
   skuSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
+  productNameSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
+  unitSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
   quantity?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -340,6 +360,8 @@ export type ShipmentItemOrderByWithAggregationInput = {
   orderLineId?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   skuSnapshot?: Prisma.SortOrder
+  productNameSnapshot?: Prisma.SortOrder
+  unitSnapshot?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
@@ -364,6 +386,8 @@ export type ShipmentItemScalarWhereWithAggregatesInput = {
   orderLineId?: Prisma.UuidWithAggregatesFilter<"ShipmentItem"> | string
   productId?: Prisma.UuidWithAggregatesFilter<"ShipmentItem"> | string
   skuSnapshot?: Prisma.StringWithAggregatesFilter<"ShipmentItem"> | string
+  productNameSnapshot?: Prisma.StringWithAggregatesFilter<"ShipmentItem"> | string
+  unitSnapshot?: Prisma.StringWithAggregatesFilter<"ShipmentItem"> | string
   quantity?: Prisma.DecimalWithAggregatesFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalWithAggregatesFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalWithAggregatesFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -379,6 +403,8 @@ export type ShipmentItemCreateInput = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -396,6 +422,8 @@ export type ShipmentItemUncheckedCreateInput = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -411,6 +439,8 @@ export type ShipmentItemUpdateInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -428,6 +458,8 @@ export type ShipmentItemUncheckedUpdateInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -444,6 +476,8 @@ export type ShipmentItemCreateManyInput = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -459,6 +493,8 @@ export type ShipmentItemUpdateManyMutationInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -475,6 +511,8 @@ export type ShipmentItemUncheckedUpdateManyInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -507,6 +545,8 @@ export type ShipmentItemCountOrderByAggregateInput = {
   orderLineId?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   skuSnapshot?: Prisma.SortOrder
+  productNameSnapshot?: Prisma.SortOrder
+  unitSnapshot?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
@@ -530,6 +570,8 @@ export type ShipmentItemMaxOrderByAggregateInput = {
   orderLineId?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   skuSnapshot?: Prisma.SortOrder
+  productNameSnapshot?: Prisma.SortOrder
+  unitSnapshot?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
@@ -546,6 +588,8 @@ export type ShipmentItemMinOrderByAggregateInput = {
   orderLineId?: Prisma.SortOrder
   productId?: Prisma.SortOrder
   skuSnapshot?: Prisma.SortOrder
+  productNameSnapshot?: Prisma.SortOrder
+  unitSnapshot?: Prisma.SortOrder
   quantity?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
@@ -610,6 +654,8 @@ export type ShipmentItemCreateWithoutShipmentInput = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -625,6 +671,8 @@ export type ShipmentItemUncheckedCreateWithoutShipmentInput = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -670,6 +718,8 @@ export type ShipmentItemScalarWhereInput = {
   orderLineId?: Prisma.UuidFilter<"ShipmentItem"> | string
   productId?: Prisma.UuidFilter<"ShipmentItem"> | string
   skuSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
+  productNameSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
+  unitSnapshot?: Prisma.StringFilter<"ShipmentItem"> | string
   quantity?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFilter<"ShipmentItem"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -685,6 +735,8 @@ export type ShipmentItemCreateManyShipmentInput = {
   orderLineId: string
   productId: string
   skuSnapshot: string
+  productNameSnapshot: string
+  unitSnapshot: string
   quantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -700,6 +752,8 @@ export type ShipmentItemUpdateWithoutShipmentInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -715,6 +769,8 @@ export type ShipmentItemUncheckedUpdateWithoutShipmentInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -730,6 +786,8 @@ export type ShipmentItemUncheckedUpdateManyWithoutShipmentInput = {
   orderLineId?: Prisma.StringFieldUpdateOperationsInput | string
   productId?: Prisma.StringFieldUpdateOperationsInput | string
   skuSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  productNameSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
+  unitSnapshot?: Prisma.StringFieldUpdateOperationsInput | string
   quantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -748,6 +806,8 @@ export type ShipmentItemSelect<ExtArgs extends runtime.Types.Extensions.Internal
   orderLineId?: boolean
   productId?: boolean
   skuSnapshot?: boolean
+  productNameSnapshot?: boolean
+  unitSnapshot?: boolean
   quantity?: boolean
   weight?: boolean
   volume?: boolean
@@ -765,6 +825,8 @@ export type ShipmentItemSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   orderLineId?: boolean
   productId?: boolean
   skuSnapshot?: boolean
+  productNameSnapshot?: boolean
+  unitSnapshot?: boolean
   quantity?: boolean
   weight?: boolean
   volume?: boolean
@@ -782,6 +844,8 @@ export type ShipmentItemSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   orderLineId?: boolean
   productId?: boolean
   skuSnapshot?: boolean
+  productNameSnapshot?: boolean
+  unitSnapshot?: boolean
   quantity?: boolean
   weight?: boolean
   volume?: boolean
@@ -799,6 +863,8 @@ export type ShipmentItemSelectScalar = {
   orderLineId?: boolean
   productId?: boolean
   skuSnapshot?: boolean
+  productNameSnapshot?: boolean
+  unitSnapshot?: boolean
   quantity?: boolean
   weight?: boolean
   volume?: boolean
@@ -808,7 +874,7 @@ export type ShipmentItemSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ShipmentItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentId" | "orderLineId" | "productId" | "skuSnapshot" | "quantity" | "weight" | "volume" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["shipmentItem"]>
+export type ShipmentItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentId" | "orderLineId" | "productId" | "skuSnapshot" | "productNameSnapshot" | "unitSnapshot" | "quantity" | "weight" | "volume" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["shipmentItem"]>
 export type ShipmentItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
 }
@@ -831,6 +897,8 @@ export type $ShipmentItemPayload<ExtArgs extends runtime.Types.Extensions.Intern
     orderLineId: string
     productId: string
     skuSnapshot: string
+    productNameSnapshot: string
+    unitSnapshot: string
     quantity: runtime.Decimal
     weight: runtime.Decimal
     volume: runtime.Decimal
@@ -1268,6 +1336,8 @@ export interface ShipmentItemFieldRefs {
   readonly orderLineId: Prisma.FieldRef<"ShipmentItem", 'String'>
   readonly productId: Prisma.FieldRef<"ShipmentItem", 'String'>
   readonly skuSnapshot: Prisma.FieldRef<"ShipmentItem", 'String'>
+  readonly productNameSnapshot: Prisma.FieldRef<"ShipmentItem", 'String'>
+  readonly unitSnapshot: Prisma.FieldRef<"ShipmentItem", 'String'>
   readonly quantity: Prisma.FieldRef<"ShipmentItem", 'Decimal'>
   readonly weight: Prisma.FieldRef<"ShipmentItem", 'Decimal'>
   readonly volume: Prisma.FieldRef<"ShipmentItem", 'Decimal'>

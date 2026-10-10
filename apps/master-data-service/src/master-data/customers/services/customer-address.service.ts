@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { Prisma } from '../../../generated/prisma/client.js';
-import { RecordStatus } from '../../common/master-data.constants.js';
+import {
+  CustomerAddressType,
+  RecordStatus,
+} from '../../common/master-data.constants.js';
 import { toCustomerAddressView } from '../../common/master-data.mappers.js';
 import type { CustomerAddressView } from '../../common/master-data.types.js';
 import type {
@@ -21,7 +24,11 @@ export class CustomerAddressService {
 
     const rows = await this.prisma.customerAddress.findMany({
       where: { tenantId, customerId, deletedAt: null },
-      orderBy: [{ isDefault: 'desc' }, { recipientName: 'asc' }],
+      orderBy: [
+        { addressType: 'desc' },
+        { isDefault: 'desc' },
+        { recipientName: 'asc' },
+      ],
     });
 
     return rows.map(toCustomerAddressView);
@@ -35,16 +42,18 @@ export class CustomerAddressService {
     await this.requireCustomer(tenantId, customerId);
 
     const makeDefault = dto.isDefault === true;
+    const addressType = dto.addressType ?? CustomerAddressType.SHIPPING;
 
     const row = await this.prisma.$transaction(async (tx) => {
       if (makeDefault) {
-        await this.clearDefault(tx, tenantId, customerId);
+        await this.clearDefault(tx, tenantId, customerId, addressType);
       }
 
       return tx.customerAddress.create({
         data: {
           tenantId,
           customerId,
+          addressType,
           label: dto.label ?? null,
           recipientName: dto.recipientName,
           phone: dto.phone ?? null,
@@ -55,6 +64,7 @@ export class CustomerAddressService {
           postalCode: dto.postalCode ?? null,
           latitude: dto.latitude ? new Prisma.Decimal(dto.latitude) : null,
           longitude: dto.longitude ? new Prisma.Decimal(dto.longitude) : null,
+          deliveryNote: dto.deliveryNote ?? null,
           isDefault: makeDefault,
           status: RecordStatus.ACTIVE,
         },
@@ -93,6 +103,9 @@ export class CustomerAddressService {
         ...(dto.longitude === undefined
           ? {}
           : { longitude: new Prisma.Decimal(dto.longitude) }),
+        ...(dto.deliveryNote === undefined
+          ? {}
+          : { deliveryNote: dto.deliveryNote }),
         version: { increment: 1 },
       },
     });
@@ -102,8 +115,9 @@ export class CustomerAddressService {
 
   /**
    * Clear-then-set in one transaction so `ux_customer_default_address`
-   * (partial unique on tenant + customer where is_default and ACTIVE) cannot be
-   * violated by two concurrent promotions.
+   * (partial unique on tenant + customer + address type where is_default and
+   * ACTIVE) cannot be violated by two concurrent promotions. Defaults are
+   * scoped per address type, so a SHIPPING default never clears BILLING.
    */
   async setDefault(
     tenantId: string,
@@ -119,7 +133,7 @@ export class CustomerAddressService {
     }
 
     const row = await this.prisma.$transaction(async (tx) => {
-      await this.clearDefault(tx, tenantId, customerId);
+      await this.clearDefault(tx, tenantId, customerId, current.addressType);
 
       return tx.customerAddress.update({
         where: { id: addressId },
@@ -159,9 +173,16 @@ export class CustomerAddressService {
     tx: Prisma.TransactionClient,
     tenantId: string,
     customerId: string,
+    addressType: string,
   ): Promise<void> {
     await tx.customerAddress.updateMany({
-      where: { tenantId, customerId, isDefault: true, deletedAt: null },
+      where: {
+        tenantId,
+        customerId,
+        addressType,
+        isDefault: true,
+        deletedAt: null,
+      },
       data: { isDefault: false },
     });
   }
@@ -188,7 +209,7 @@ export class CustomerAddressService {
     });
 
     if (!row) {
-      throw new NotFoundException('Không tìm thấy địa chỉ giao hàng');
+      throw new NotFoundException('Không tìm thấy địa chỉ khách hàng');
     }
 
     return row;

@@ -10,12 +10,23 @@ datasource db {
 }
 
 model Tenant {
-  id        String  @id @default(uuid()) @db.Uuid
-  code      String  @db.VarChar(50)
-  name      String  @db.VarChar(200)
-  logoUrl   String? @map("logo_url") @db.Text
-  status    String  @db.VarChar(20)
-  settings  Json
+  id       String  @id @default(uuid()) @db.Uuid
+  code     String  @db.VarChar(50)
+  name     String  @db.VarChar(200)
+  logoUrl  String? @map("logo_url") @db.Text
+  status   String  @db.VarChar(20)
+  settings Json
+
+  /// Optional legal profile used as issuer data on printed delivery documents.
+  /// Nullable because existing tenants were created before this profile existed.
+  legalName   String? @map("legal_name") @db.VarChar(255)
+  taxCode     String? @map("tax_code") @db.VarChar(50)
+  phone       String? @db.VarChar(30)
+  addressLine String? @map("address_line") @db.Text
+  ward        String? @db.VarChar(100)
+  district    String? @db.VarChar(100)
+  province    String? @db.VarChar(100)
+  postalCode  String? @map("postal_code") @db.VarChar(20)
 
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -222,8 +233,8 @@ model TenantInvitation {
   updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   deletedAt  DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  tenant     Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  inviter    User      @relation("InvitationInvitedBy", fields: [inviterId], references: [id], onDelete: Cascade)
+  tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  inviter User   @relation("InvitationInvitedBy", fields: [inviterId], references: [id], onDelete: Cascade)
 
   @@index([tenantId, status], map: "ix_tenant_invitations_tenant_status")
   @@index([email], map: "ix_tenant_invitations_email")

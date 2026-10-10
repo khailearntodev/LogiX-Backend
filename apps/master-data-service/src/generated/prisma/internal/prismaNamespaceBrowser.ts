@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Customer: 'Customer',
   CustomerAddress: 'CustomerAddress',
+  Supplier: 'Supplier',
   Product: 'Product',
   Warehouse: 'Warehouse',
   Vehicle: 'Vehicle',
@@ -99,6 +100,7 @@ export const CustomerAddressScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
   customerId: 'customerId',
+  addressType: 'addressType',
   label: 'label',
   recipientName: 'recipientName',
   phone: 'phone',
@@ -109,6 +111,7 @@ export const CustomerAddressScalarFieldEnum = {
   postalCode: 'postalCode',
   latitude: 'latitude',
   longitude: 'longitude',
+  deliveryNote: 'deliveryNote',
   isDefault: 'isDefault',
   status: 'status',
   createdAt: 'createdAt',
@@ -118,6 +121,32 @@ export const CustomerAddressScalarFieldEnum = {
 } as const
 
 export type CustomerAddressScalarFieldEnum = (typeof CustomerAddressScalarFieldEnum)[keyof typeof CustomerAddressScalarFieldEnum]
+
+
+export const SupplierScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  code: 'code',
+  name: 'name',
+  taxCode: 'taxCode',
+  contactName: 'contactName',
+  phone: 'phone',
+  email: 'email',
+  addressLine: 'addressLine',
+  ward: 'ward',
+  district: 'district',
+  province: 'province',
+  postalCode: 'postalCode',
+  latitude: 'latitude',
+  longitude: 'longitude',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  version: 'version',
+  deletedAt: 'deletedAt'
+} as const
+
+export type SupplierScalarFieldEnum = (typeof SupplierScalarFieldEnum)[keyof typeof SupplierScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
