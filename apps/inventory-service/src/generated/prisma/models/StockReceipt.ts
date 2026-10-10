@@ -39,6 +39,7 @@ export type StockReceiptMinAggregateOutputType = {
   tenantId: string | null
   receiptNumber: string | null
   warehouseId: string | null
+  supplierId: string | null
   idempotencyKey: string | null
   status: string | null
   receivedAt: Date | null
@@ -55,6 +56,7 @@ export type StockReceiptMaxAggregateOutputType = {
   tenantId: string | null
   receiptNumber: string | null
   warehouseId: string | null
+  supplierId: string | null
   idempotencyKey: string | null
   status: string | null
   receivedAt: Date | null
@@ -71,6 +73,8 @@ export type StockReceiptCountAggregateOutputType = {
   tenantId: number
   receiptNumber: number
   warehouseId: number
+  supplierId: number
+  supplierSnapshot: number
   idempotencyKey: number
   status: number
   receivedAt: number
@@ -97,6 +101,7 @@ export type StockReceiptMinAggregateInputType = {
   tenantId?: true
   receiptNumber?: true
   warehouseId?: true
+  supplierId?: true
   idempotencyKey?: true
   status?: true
   receivedAt?: true
@@ -113,6 +118,7 @@ export type StockReceiptMaxAggregateInputType = {
   tenantId?: true
   receiptNumber?: true
   warehouseId?: true
+  supplierId?: true
   idempotencyKey?: true
   status?: true
   receivedAt?: true
@@ -129,6 +135,8 @@ export type StockReceiptCountAggregateInputType = {
   tenantId?: true
   receiptNumber?: true
   warehouseId?: true
+  supplierId?: true
+  supplierSnapshot?: true
   idempotencyKey?: true
   status?: true
   receivedAt?: true
@@ -232,6 +240,8 @@ export type StockReceiptGroupByOutputType = {
   tenantId: string
   receiptNumber: string
   warehouseId: string
+  supplierId: string | null
+  supplierSnapshot: runtime.JsonValue | null
   idempotencyKey: string
   status: string
   receivedAt: Date
@@ -271,6 +281,8 @@ export type StockReceiptWhereInput = {
   tenantId?: Prisma.UuidFilter<"StockReceipt"> | string
   receiptNumber?: Prisma.StringFilter<"StockReceipt"> | string
   warehouseId?: Prisma.UuidFilter<"StockReceipt"> | string
+  supplierId?: Prisma.UuidNullableFilter<"StockReceipt"> | string | null
+  supplierSnapshot?: Prisma.JsonNullableFilter<"StockReceipt">
   idempotencyKey?: Prisma.StringFilter<"StockReceipt"> | string
   status?: Prisma.StringFilter<"StockReceipt"> | string
   receivedAt?: Prisma.DateTimeFilter<"StockReceipt"> | Date | string
@@ -288,6 +300,8 @@ export type StockReceiptOrderByWithRelationInput = {
   tenantId?: Prisma.SortOrder
   receiptNumber?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  supplierId?: Prisma.SortOrderInput | Prisma.SortOrder
+  supplierSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
@@ -310,6 +324,8 @@ export type StockReceiptWhereUniqueInput = Prisma.AtLeast<{
   tenantId?: Prisma.UuidFilter<"StockReceipt"> | string
   receiptNumber?: Prisma.StringFilter<"StockReceipt"> | string
   warehouseId?: Prisma.UuidFilter<"StockReceipt"> | string
+  supplierId?: Prisma.UuidNullableFilter<"StockReceipt"> | string | null
+  supplierSnapshot?: Prisma.JsonNullableFilter<"StockReceipt">
   idempotencyKey?: Prisma.StringFilter<"StockReceipt"> | string
   status?: Prisma.StringFilter<"StockReceipt"> | string
   receivedAt?: Prisma.DateTimeFilter<"StockReceipt"> | Date | string
@@ -327,6 +343,8 @@ export type StockReceiptOrderByWithAggregationInput = {
   tenantId?: Prisma.SortOrder
   receiptNumber?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  supplierId?: Prisma.SortOrderInput | Prisma.SortOrder
+  supplierSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
@@ -351,6 +369,8 @@ export type StockReceiptScalarWhereWithAggregatesInput = {
   tenantId?: Prisma.UuidWithAggregatesFilter<"StockReceipt"> | string
   receiptNumber?: Prisma.StringWithAggregatesFilter<"StockReceipt"> | string
   warehouseId?: Prisma.UuidWithAggregatesFilter<"StockReceipt"> | string
+  supplierId?: Prisma.UuidNullableWithAggregatesFilter<"StockReceipt"> | string | null
+  supplierSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"StockReceipt">
   idempotencyKey?: Prisma.StringWithAggregatesFilter<"StockReceipt"> | string
   status?: Prisma.StringWithAggregatesFilter<"StockReceipt"> | string
   receivedAt?: Prisma.DateTimeWithAggregatesFilter<"StockReceipt"> | Date | string
@@ -367,6 +387,8 @@ export type StockReceiptCreateInput = {
   tenantId: string
   receiptNumber: string
   warehouseId: string
+  supplierId?: string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey: string
   status: string
   receivedAt: Date | string
@@ -384,6 +406,8 @@ export type StockReceiptUncheckedCreateInput = {
   tenantId: string
   receiptNumber: string
   warehouseId: string
+  supplierId?: string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey: string
   status: string
   receivedAt: Date | string
@@ -401,6 +425,8 @@ export type StockReceiptUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   receiptNumber?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  supplierId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   receivedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -418,6 +444,8 @@ export type StockReceiptUncheckedUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   receiptNumber?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  supplierId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   receivedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -435,6 +463,8 @@ export type StockReceiptCreateManyInput = {
   tenantId: string
   receiptNumber: string
   warehouseId: string
+  supplierId?: string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey: string
   status: string
   receivedAt: Date | string
@@ -451,6 +481,8 @@ export type StockReceiptUpdateManyMutationInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   receiptNumber?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  supplierId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   receivedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -467,6 +499,8 @@ export type StockReceiptUncheckedUpdateManyInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   receiptNumber?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  supplierId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   receivedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -493,6 +527,8 @@ export type StockReceiptCountOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   receiptNumber?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  supplierId?: Prisma.SortOrder
+  supplierSnapshot?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
@@ -513,6 +549,7 @@ export type StockReceiptMaxOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   receiptNumber?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  supplierId?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
@@ -529,6 +566,7 @@ export type StockReceiptMinOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   receiptNumber?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  supplierId?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   receivedAt?: Prisma.SortOrder
@@ -568,6 +606,8 @@ export type StockReceiptCreateWithoutLinesInput = {
   tenantId: string
   receiptNumber: string
   warehouseId: string
+  supplierId?: string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey: string
   status: string
   receivedAt: Date | string
@@ -584,6 +624,8 @@ export type StockReceiptUncheckedCreateWithoutLinesInput = {
   tenantId: string
   receiptNumber: string
   warehouseId: string
+  supplierId?: string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey: string
   status: string
   receivedAt: Date | string
@@ -616,6 +658,8 @@ export type StockReceiptUpdateWithoutLinesInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   receiptNumber?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  supplierId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   receivedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -632,6 +676,8 @@ export type StockReceiptUncheckedUpdateWithoutLinesInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   receiptNumber?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  supplierId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  supplierSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   receivedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -679,6 +725,8 @@ export type StockReceiptSelect<ExtArgs extends runtime.Types.Extensions.Internal
   tenantId?: boolean
   receiptNumber?: boolean
   warehouseId?: boolean
+  supplierId?: boolean
+  supplierSnapshot?: boolean
   idempotencyKey?: boolean
   status?: boolean
   receivedAt?: boolean
@@ -697,6 +745,8 @@ export type StockReceiptSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   tenantId?: boolean
   receiptNumber?: boolean
   warehouseId?: boolean
+  supplierId?: boolean
+  supplierSnapshot?: boolean
   idempotencyKey?: boolean
   status?: boolean
   receivedAt?: boolean
@@ -713,6 +763,8 @@ export type StockReceiptSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   tenantId?: boolean
   receiptNumber?: boolean
   warehouseId?: boolean
+  supplierId?: boolean
+  supplierSnapshot?: boolean
   idempotencyKey?: boolean
   status?: boolean
   receivedAt?: boolean
@@ -729,6 +781,8 @@ export type StockReceiptSelectScalar = {
   tenantId?: boolean
   receiptNumber?: boolean
   warehouseId?: boolean
+  supplierId?: boolean
+  supplierSnapshot?: boolean
   idempotencyKey?: boolean
   status?: boolean
   receivedAt?: boolean
@@ -740,7 +794,7 @@ export type StockReceiptSelectScalar = {
   deletedAt?: boolean
 }
 
-export type StockReceiptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "receiptNumber" | "warehouseId" | "idempotencyKey" | "status" | "receivedAt" | "actorId" | "correlationId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["stockReceipt"]>
+export type StockReceiptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "receiptNumber" | "warehouseId" | "supplierId" | "supplierSnapshot" | "idempotencyKey" | "status" | "receivedAt" | "actorId" | "correlationId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["stockReceipt"]>
 export type StockReceiptInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lines?: boolean | Prisma.StockReceipt$linesArgs<ExtArgs>
   _count?: boolean | Prisma.StockReceiptCountOutputTypeDefaultArgs<ExtArgs>
@@ -758,6 +812,11 @@ export type $StockReceiptPayload<ExtArgs extends runtime.Types.Extensions.Intern
     tenantId: string
     receiptNumber: string
     warehouseId: string
+    /**
+     * Optional Master Data supplier reference (no cross-service FK) plus snapshot.
+     */
+    supplierId: string | null
+    supplierSnapshot: runtime.JsonValue | null
     idempotencyKey: string
     status: string
     receivedAt: Date
@@ -1195,6 +1254,8 @@ export interface StockReceiptFieldRefs {
   readonly tenantId: Prisma.FieldRef<"StockReceipt", 'String'>
   readonly receiptNumber: Prisma.FieldRef<"StockReceipt", 'String'>
   readonly warehouseId: Prisma.FieldRef<"StockReceipt", 'String'>
+  readonly supplierId: Prisma.FieldRef<"StockReceipt", 'String'>
+  readonly supplierSnapshot: Prisma.FieldRef<"StockReceipt", 'Json'>
   readonly idempotencyKey: Prisma.FieldRef<"StockReceipt", 'String'>
   readonly status: Prisma.FieldRef<"StockReceipt", 'String'>
   readonly receivedAt: Prisma.FieldRef<"StockReceipt", 'DateTime'>

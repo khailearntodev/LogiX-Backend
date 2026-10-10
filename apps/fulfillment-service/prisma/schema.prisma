@@ -10,28 +10,33 @@ datasource db {
 }
 
 model Shipment {
-  id                 String                  @id @default(uuid()) @db.Uuid
-  tenantId           String                  @map("tenant_id") @db.Uuid
-  shipmentNumber     String                  @map("shipment_number") @db.VarChar(50)
-  orderId            String                  @map("order_id") @db.Uuid
-  warehouseId        String                  @map("warehouse_id") @db.Uuid
-  deliveryAddressId  String                  @map("delivery_address_id") @db.Uuid
-  status             String                  @db.VarChar(20)
-  totalWeight        Decimal                 @map("total_weight") @db.Decimal(18, 3)
-  totalVolume        Decimal                 @map("total_volume") @db.Decimal(18, 6)
-  reservationGroupId String                  @map("reservation_group_id") @db.Uuid
-  assignedTripId     String?                 @map("assigned_trip_id") @db.Uuid
-  dispatchIssuedAt   DateTime?               @map("dispatch_issued_at") @db.Timestamptz(6)
-  readyAt            DateTime?               @map("ready_at") @db.Timestamptz(6)
-  deliveredAt        DateTime?               @map("delivered_at") @db.Timestamptz(6)
-  failedAt           DateTime?               @map("failed_at") @db.Timestamptz(6)
-  failureReason      String?                 @map("failure_reason") @db.Text
-  createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  version            BigInt                  @default(1)
-  deletedAt          DateTime?               @map("deleted_at") @db.Timestamptz(6)
-  items              ShipmentItem[]
-  statusHistory      ShipmentStatusHistory[]
+  id                      String                  @id @default(uuid()) @db.Uuid
+  tenantId                String                  @map("tenant_id") @db.Uuid
+  shipmentNumber          String                  @map("shipment_number") @db.VarChar(50)
+  orderId                 String                  @map("order_id") @db.Uuid
+  warehouseId             String                  @map("warehouse_id") @db.Uuid
+  deliveryAddressId       String                  @map("delivery_address_id") @db.Uuid
+  /// Copied from the OrderConfirmed event; never re-read from Order or Master Data.
+  customerSnapshot        Json                    @map("customer_snapshot")
+  deliveryAddressSnapshot Json                    @map("delivery_address_snapshot")
+  /// Tenant legal profile printed on dispatch documents (optional).
+  issuerSnapshot          Json?                   @map("issuer_snapshot")
+  status                  String                  @db.VarChar(20)
+  totalWeight             Decimal                 @map("total_weight") @db.Decimal(18, 3)
+  totalVolume             Decimal                 @map("total_volume") @db.Decimal(18, 6)
+  reservationGroupId      String                  @map("reservation_group_id") @db.Uuid
+  assignedTripId          String?                 @map("assigned_trip_id") @db.Uuid
+  dispatchIssuedAt        DateTime?               @map("dispatch_issued_at") @db.Timestamptz(6)
+  readyAt                 DateTime?               @map("ready_at") @db.Timestamptz(6)
+  deliveredAt             DateTime?               @map("delivered_at") @db.Timestamptz(6)
+  failedAt                DateTime?               @map("failed_at") @db.Timestamptz(6)
+  failureReason           String?                 @map("failure_reason") @db.Text
+  createdAt               DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version                 BigInt                  @default(1)
+  deletedAt               DateTime?               @map("deleted_at") @db.Timestamptz(6)
+  items                   ShipmentItem[]
+  statusHistory           ShipmentStatusHistory[]
 
   @@unique([tenantId, orderId], map: "ux_shipments_order")
   @@unique([tenantId, shipmentNumber], map: "ux_shipments_number")
@@ -41,20 +46,22 @@ model Shipment {
 }
 
 model ShipmentItem {
-  id          String    @id @default(uuid()) @db.Uuid
-  tenantId    String    @map("tenant_id") @db.Uuid
-  shipmentId  String    @map("shipment_id") @db.Uuid
-  orderLineId String    @map("order_line_id") @db.Uuid
-  productId   String    @map("product_id") @db.Uuid
-  skuSnapshot String    @map("sku_snapshot") @db.VarChar(100)
-  quantity    Decimal   @db.Decimal(18, 3)
-  weight      Decimal   @db.Decimal(18, 3)
-  volume      Decimal   @db.Decimal(18, 6)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  version     BigInt    @default(1)
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
-  shipment    Shipment  @relation(fields: [shipmentId], references: [id])
+  id                  String    @id @default(uuid()) @db.Uuid
+  tenantId            String    @map("tenant_id") @db.Uuid
+  shipmentId          String    @map("shipment_id") @db.Uuid
+  orderLineId         String    @map("order_line_id") @db.Uuid
+  productId           String    @map("product_id") @db.Uuid
+  skuSnapshot         String    @map("sku_snapshot") @db.VarChar(100)
+  productNameSnapshot String    @map("product_name_snapshot") @db.VarChar(200)
+  unitSnapshot        String    @map("unit_snapshot") @db.VarChar(30)
+  quantity            Decimal   @db.Decimal(18, 3)
+  weight              Decimal   @db.Decimal(18, 3)
+  volume              Decimal   @db.Decimal(18, 6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version             BigInt    @default(1)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+  shipment            Shipment  @relation(fields: [shipmentId], references: [id])
 
   @@unique([tenantId, shipmentId, orderLineId], map: "ux_shipment_items_order_line")
   @@index([tenantId, shipmentId], map: "ix_shipment_items_shipment")

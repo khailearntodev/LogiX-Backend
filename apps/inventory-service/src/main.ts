@@ -1,3 +1,6 @@
+// Load .env into process.env before other imports: the validated config strips
+// keys outside its schema (e.g. JWT_SECRET used by JwtStrategy).
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';

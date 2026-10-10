@@ -16,6 +16,11 @@ model DeliveryTrip {
   warehouseId         String         @map("warehouse_id") @db.Uuid
   vehicleId           String         @map("vehicle_id") @db.Uuid
   driverId            String         @map("driver_id") @db.Uuid
+  /// Depot address captured when the trip is created (route start/end point).
+  depotSnapshot       Json           @map("depot_snapshot")
+  /// Vehicle/driver details frozen when the route plan is approved.
+  vehicleSnapshot     Json?          @map("vehicle_snapshot")
+  driverSnapshot      Json?          @map("driver_snapshot")
   status              String         @db.VarChar(20)
   plannedStartAt      DateTime       @map("planned_start_at") @db.Timestamptz(6)
   actualStartAt       DateTime?      @map("actual_start_at") @db.Timestamptz(6)
@@ -103,6 +108,8 @@ model RoutePlan {
   status           String          @db.VarChar(20)
   source           String          @db.VarChar(30)
   inputHash        String          @map("input_hash") @db.VarChar(64)
+  /// Exact solver input (depot, stops, coordinates, capacities) hashed into inputHash.
+  inputSnapshot    Json            @map("input_snapshot")
   solverName       String          @map("solver_name") @db.VarChar(100)
   solverVersion    String          @map("solver_version") @db.VarChar(50)
   objective        String          @db.VarChar(100)

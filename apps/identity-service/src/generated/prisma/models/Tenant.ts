@@ -40,6 +40,14 @@ export type TenantMinAggregateOutputType = {
   name: string | null
   logoUrl: string | null
   status: string | null
+  legalName: string | null
+  taxCode: string | null
+  phone: string | null
+  addressLine: string | null
+  ward: string | null
+  district: string | null
+  province: string | null
+  postalCode: string | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -52,6 +60,14 @@ export type TenantMaxAggregateOutputType = {
   name: string | null
   logoUrl: string | null
   status: string | null
+  legalName: string | null
+  taxCode: string | null
+  phone: string | null
+  addressLine: string | null
+  ward: string | null
+  district: string | null
+  province: string | null
+  postalCode: string | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -65,6 +81,14 @@ export type TenantCountAggregateOutputType = {
   logoUrl: number
   status: number
   settings: number
+  legalName: number
+  taxCode: number
+  phone: number
+  addressLine: number
+  ward: number
+  district: number
+  province: number
+  postalCode: number
   createdAt: number
   updatedAt: number
   version: number
@@ -87,6 +111,14 @@ export type TenantMinAggregateInputType = {
   name?: true
   logoUrl?: true
   status?: true
+  legalName?: true
+  taxCode?: true
+  phone?: true
+  addressLine?: true
+  ward?: true
+  district?: true
+  province?: true
+  postalCode?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -99,6 +131,14 @@ export type TenantMaxAggregateInputType = {
   name?: true
   logoUrl?: true
   status?: true
+  legalName?: true
+  taxCode?: true
+  phone?: true
+  addressLine?: true
+  ward?: true
+  district?: true
+  province?: true
+  postalCode?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -112,6 +152,14 @@ export type TenantCountAggregateInputType = {
   logoUrl?: true
   status?: true
   settings?: true
+  legalName?: true
+  taxCode?: true
+  phone?: true
+  addressLine?: true
+  ward?: true
+  district?: true
+  province?: true
+  postalCode?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -212,6 +260,14 @@ export type TenantGroupByOutputType = {
   logoUrl: string | null
   status: string
   settings: runtime.JsonValue
+  legalName: string | null
+  taxCode: string | null
+  phone: string | null
+  addressLine: string | null
+  ward: string | null
+  district: string | null
+  province: string | null
+  postalCode: string | null
   createdAt: Date
   updatedAt: Date
   version: bigint
@@ -248,6 +304,14 @@ export type TenantWhereInput = {
   logoUrl?: Prisma.StringNullableFilter<"Tenant"> | string | null
   status?: Prisma.StringFilter<"Tenant"> | string
   settings?: Prisma.JsonFilter<"Tenant">
+  legalName?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  taxCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  phone?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  addressLine?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  ward?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  district?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  province?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  postalCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   version?: Prisma.BigIntFilter<"Tenant"> | bigint | number
@@ -268,6 +332,14 @@ export type TenantOrderByWithRelationInput = {
   logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   settings?: Prisma.SortOrder
+  legalName?: Prisma.SortOrderInput | Prisma.SortOrder
+  taxCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  addressLine?: Prisma.SortOrderInput | Prisma.SortOrder
+  ward?: Prisma.SortOrderInput | Prisma.SortOrder
+  district?: Prisma.SortOrderInput | Prisma.SortOrder
+  province?: Prisma.SortOrderInput | Prisma.SortOrder
+  postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -291,6 +363,14 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   logoUrl?: Prisma.StringNullableFilter<"Tenant"> | string | null
   status?: Prisma.StringFilter<"Tenant"> | string
   settings?: Prisma.JsonFilter<"Tenant">
+  legalName?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  taxCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  phone?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  addressLine?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  ward?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  district?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  province?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  postalCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   version?: Prisma.BigIntFilter<"Tenant"> | bigint | number
@@ -311,6 +391,14 @@ export type TenantOrderByWithAggregationInput = {
   logoUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   settings?: Prisma.SortOrder
+  legalName?: Prisma.SortOrderInput | Prisma.SortOrder
+  taxCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  phone?: Prisma.SortOrderInput | Prisma.SortOrder
+  addressLine?: Prisma.SortOrderInput | Prisma.SortOrder
+  ward?: Prisma.SortOrderInput | Prisma.SortOrder
+  district?: Prisma.SortOrderInput | Prisma.SortOrder
+  province?: Prisma.SortOrderInput | Prisma.SortOrder
+  postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -332,6 +420,14 @@ export type TenantScalarWhereWithAggregatesInput = {
   logoUrl?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"Tenant"> | string
   settings?: Prisma.JsonWithAggregatesFilter<"Tenant">
+  legalName?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  taxCode?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  phone?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  addressLine?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  ward?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  district?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  province?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  postalCode?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   version?: Prisma.BigIntWithAggregatesFilter<"Tenant"> | bigint | number
@@ -345,6 +441,14 @@ export type TenantCreateInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -365,6 +469,14 @@ export type TenantUncheckedCreateInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -385,6 +497,14 @@ export type TenantUpdateInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -405,6 +525,14 @@ export type TenantUncheckedUpdateInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -425,6 +553,14 @@ export type TenantCreateManyInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -438,6 +574,14 @@ export type TenantUpdateManyMutationInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -451,6 +595,14 @@ export type TenantUncheckedUpdateManyInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -464,6 +616,14 @@ export type TenantCountOrderByAggregateInput = {
   logoUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
   settings?: Prisma.SortOrder
+  legalName?: Prisma.SortOrder
+  taxCode?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
+  addressLine?: Prisma.SortOrder
+  ward?: Prisma.SortOrder
+  district?: Prisma.SortOrder
+  province?: Prisma.SortOrder
+  postalCode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -480,6 +640,14 @@ export type TenantMaxOrderByAggregateInput = {
   name?: Prisma.SortOrder
   logoUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  legalName?: Prisma.SortOrder
+  taxCode?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
+  addressLine?: Prisma.SortOrder
+  ward?: Prisma.SortOrder
+  district?: Prisma.SortOrder
+  province?: Prisma.SortOrder
+  postalCode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -492,6 +660,14 @@ export type TenantMinOrderByAggregateInput = {
   name?: Prisma.SortOrder
   logoUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  legalName?: Prisma.SortOrder
+  taxCode?: Prisma.SortOrder
+  phone?: Prisma.SortOrder
+  addressLine?: Prisma.SortOrder
+  ward?: Prisma.SortOrder
+  district?: Prisma.SortOrder
+  province?: Prisma.SortOrder
+  postalCode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -636,6 +812,14 @@ export type TenantCreateWithoutUserTenantsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -655,6 +839,14 @@ export type TenantUncheckedCreateWithoutUserTenantsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -690,6 +882,14 @@ export type TenantUpdateWithoutUserTenantsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -709,6 +909,14 @@ export type TenantUncheckedUpdateWithoutUserTenantsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -728,6 +936,14 @@ export type TenantCreateWithoutRolesInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -747,6 +963,14 @@ export type TenantUncheckedCreateWithoutRolesInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -782,6 +1006,14 @@ export type TenantUpdateWithoutRolesInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -801,6 +1033,14 @@ export type TenantUncheckedUpdateWithoutRolesInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -820,6 +1060,14 @@ export type TenantCreateWithoutRolePermissionsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -839,6 +1087,14 @@ export type TenantUncheckedCreateWithoutRolePermissionsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -874,6 +1130,14 @@ export type TenantUpdateWithoutRolePermissionsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -893,6 +1157,14 @@ export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -912,6 +1184,14 @@ export type TenantCreateWithoutUserRolesInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -931,6 +1211,14 @@ export type TenantUncheckedCreateWithoutUserRolesInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -966,6 +1254,14 @@ export type TenantUpdateWithoutUserRolesInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -985,6 +1281,14 @@ export type TenantUncheckedUpdateWithoutUserRolesInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1004,6 +1308,14 @@ export type TenantCreateWithoutSessionsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1023,6 +1335,14 @@ export type TenantUncheckedCreateWithoutSessionsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1058,6 +1378,14 @@ export type TenantUpdateWithoutSessionsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1077,6 +1405,14 @@ export type TenantUncheckedUpdateWithoutSessionsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1096,6 +1432,14 @@ export type TenantCreateWithoutPasswordResetTokensInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1115,6 +1459,14 @@ export type TenantUncheckedCreateWithoutPasswordResetTokensInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1150,6 +1502,14 @@ export type TenantUpdateWithoutPasswordResetTokensInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1169,6 +1529,14 @@ export type TenantUncheckedUpdateWithoutPasswordResetTokensInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1188,6 +1556,14 @@ export type TenantCreateWithoutInvitationsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1207,6 +1583,14 @@ export type TenantUncheckedCreateWithoutInvitationsInput = {
   logoUrl?: string | null
   status: string
   settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1242,6 +1626,14 @@ export type TenantUpdateWithoutInvitationsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1261,6 +1653,14 @@ export type TenantUncheckedUpdateWithoutInvitationsInput = {
   logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1365,6 +1765,14 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   logoUrl?: boolean
   status?: boolean
   settings?: boolean
+  legalName?: boolean
+  taxCode?: boolean
+  phone?: boolean
+  addressLine?: boolean
+  ward?: boolean
+  district?: boolean
+  province?: boolean
+  postalCode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -1386,6 +1794,14 @@ export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   logoUrl?: boolean
   status?: boolean
   settings?: boolean
+  legalName?: boolean
+  taxCode?: boolean
+  phone?: boolean
+  addressLine?: boolean
+  ward?: boolean
+  district?: boolean
+  province?: boolean
+  postalCode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -1399,6 +1815,14 @@ export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   logoUrl?: boolean
   status?: boolean
   settings?: boolean
+  legalName?: boolean
+  taxCode?: boolean
+  phone?: boolean
+  addressLine?: boolean
+  ward?: boolean
+  district?: boolean
+  province?: boolean
+  postalCode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -1412,13 +1836,21 @@ export type TenantSelectScalar = {
   logoUrl?: boolean
   status?: boolean
   settings?: boolean
+  legalName?: boolean
+  taxCode?: boolean
+  phone?: boolean
+  addressLine?: boolean
+  ward?: boolean
+  district?: boolean
+  province?: boolean
+  postalCode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
 }
 
-export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "logoUrl" | "status" | "settings" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tenant"]>
+export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "logoUrl" | "status" | "settings" | "legalName" | "taxCode" | "phone" | "addressLine" | "ward" | "district" | "province" | "postalCode" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tenant"]>
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   userTenants?: boolean | Prisma.Tenant$userTenantsArgs<ExtArgs>
   roles?: boolean | Prisma.Tenant$rolesArgs<ExtArgs>
@@ -1450,6 +1882,18 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     logoUrl: string | null
     status: string
     settings: runtime.JsonValue
+    /**
+     * Optional legal profile used as issuer data on printed delivery documents.
+     * Nullable because existing tenants were created before this profile existed.
+     */
+    legalName: string | null
+    taxCode: string | null
+    phone: string | null
+    addressLine: string | null
+    ward: string | null
+    district: string | null
+    province: string | null
+    postalCode: string | null
     createdAt: Date
     updatedAt: Date
     version: bigint
@@ -1890,6 +2334,14 @@ export interface TenantFieldRefs {
   readonly logoUrl: Prisma.FieldRef<"Tenant", 'String'>
   readonly status: Prisma.FieldRef<"Tenant", 'String'>
   readonly settings: Prisma.FieldRef<"Tenant", 'Json'>
+  readonly legalName: Prisma.FieldRef<"Tenant", 'String'>
+  readonly taxCode: Prisma.FieldRef<"Tenant", 'String'>
+  readonly phone: Prisma.FieldRef<"Tenant", 'String'>
+  readonly addressLine: Prisma.FieldRef<"Tenant", 'String'>
+  readonly ward: Prisma.FieldRef<"Tenant", 'String'>
+  readonly district: Prisma.FieldRef<"Tenant", 'String'>
+  readonly province: Prisma.FieldRef<"Tenant", 'String'>
+  readonly postalCode: Prisma.FieldRef<"Tenant", 'String'>
   readonly createdAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly version: Prisma.FieldRef<"Tenant", 'BigInt'>

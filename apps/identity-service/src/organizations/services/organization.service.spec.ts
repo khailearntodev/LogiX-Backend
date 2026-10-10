@@ -39,6 +39,9 @@ describe('OrganizationService', () => {
       session: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
+      userRole: {
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
       $transaction: vi.fn((promises) => Promise.all(promises)),
     };
 
@@ -159,6 +162,14 @@ describe('OrganizationService', () => {
           logoUrl: 'https://logo.png',
           status: 'ACTIVE',
           settings: { timezone: 'Asia/Ho_Chi_Minh' },
+          legalName: 'Công ty TNHH LogiX',
+          taxCode: '0312345678',
+          phone: null,
+          addressLine: '12 Nguyễn Huệ',
+          ward: null,
+          district: 'Quận 1',
+          province: 'TP. Hồ Chí Minh',
+          postalCode: null,
           createdAt: now,
           updatedAt: now,
           deletedAt: null,
@@ -170,6 +181,16 @@ describe('OrganizationService', () => {
       expect(org.name).toBe('LogiX HQ');
       expect(org.role).toBe('ADMIN');
       expect(org.settings).toEqual({ timezone: 'Asia/Ho_Chi_Minh' });
+      expect(org.legalProfile).toEqual({
+        legalName: 'Công ty TNHH LogiX',
+        taxCode: '0312345678',
+        phone: null,
+        addressLine: '12 Nguyễn Huệ',
+        ward: null,
+        district: 'Quận 1',
+        province: 'TP. Hồ Chí Minh',
+        postalCode: null,
+      });
     });
   });
 
@@ -250,6 +271,113 @@ describe('OrganizationService', () => {
 
       expect(result.name).toBe('Admin Updated Name');
       expect(result.role).toBe('ADMIN');
+    });
+
+    it('should update and normalize the tenant legal profile', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        role: 'OWNER',
+        isDefault: true,
+        tenant: { id: 't1', status: 'ACTIVE', deletedAt: null, addressLine: null, province: null },
+      });
+      prismaService.tenant.update.mockImplementation(({ data }: any) => ({
+        id: 't1',
+        code: 'logix-hq',
+        name: 'LogiX HQ',
+        logoUrl: null,
+        legalName: null,
+        taxCode: null,
+        phone: null,
+        addressLine: null,
+        ward: null,
+        district: null,
+        province: null,
+        postalCode: null,
+        ...data,
+      }));
+
+      const result = await organizationService.updateOrganization('u1', 't1', {
+        legalName: '  Công ty TNHH LogiX  ',
+        taxCode: '0312345678',
+        phone: '',
+        addressLine: '12 Nguyễn Huệ',
+        ward: 'Bến Nghé',
+        district: 'Quận 1',
+        province: 'TP. Hồ Chí Minh',
+      });
+
+      expect(prismaService.tenant.update).toHaveBeenCalledWith({
+        where: { id: 't1' },
+        data: {
+          legalName: 'Công ty TNHH LogiX',
+          taxCode: '0312345678',
+          phone: null,
+          addressLine: '12 Nguyễn Huệ',
+          ward: 'Bến Nghé',
+          district: 'Quận 1',
+          province: 'TP. Hồ Chí Minh',
+        },
+      });
+      expect(result.legalProfile).toEqual({
+        legalName: 'Công ty TNHH LogiX',
+        taxCode: '0312345678',
+        phone: null,
+        addressLine: '12 Nguyễn Huệ',
+        ward: 'Bến Nghé',
+        district: 'Quận 1',
+        province: 'TP. Hồ Chí Minh',
+        postalCode: null,
+      });
+    });
+
+    it('should reject a legal address line without a province', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        role: 'ADMIN',
+        tenant: { id: 't1', status: 'ACTIVE', deletedAt: null, addressLine: null, province: null },
+      });
+
+      await expect(
+        organizationService.updateOrganization('u1', 't1', { addressLine: '12 Nguyễn Huệ' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaService.tenant.update).not.toHaveBeenCalled();
+    });
+
+    it('should reject clearing only the province of an existing legal address', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        role: 'OWNER',
+        tenant: {
+          id: 't1',
+          status: 'ACTIVE',
+          deletedAt: null,
+          addressLine: '12 Nguyễn Huệ',
+          province: 'TP. Hồ Chí Minh',
+        },
+      });
+
+      await expect(
+        organizationService.updateOrganization('u1', 't1', { province: null }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prismaService.tenant.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow clearing both legal address line and province together', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        role: 'OWNER',
+        tenant: {
+          id: 't1',
+          status: 'ACTIVE',
+          deletedAt: null,
+          addressLine: '12 Nguyễn Huệ',
+          province: 'TP. Hồ Chí Minh',
+        },
+      });
+      prismaService.tenant.update.mockResolvedValue({ id: 't1', addressLine: null, province: null });
+
+      await organizationService.updateOrganization('u1', 't1', { addressLine: '', province: null });
+
+      expect(prismaService.tenant.update).toHaveBeenCalledWith({
+        where: { id: 't1' },
+        data: { addressLine: null, province: null },
+      });
     });
   });
 
@@ -415,7 +543,7 @@ describe('OrganizationService', () => {
         expect.objectContaining({
           where: { id: 't1' },
           data: expect.objectContaining({
-            status: 'INACTIVE',
+            status: 'DISABLED',
           }),
         }),
       );
@@ -444,10 +572,89 @@ describe('OrganizationService', () => {
         expect.objectContaining({
           where: { id: 't1' },
           data: expect.objectContaining({
-            status: 'INACTIVE',
+            status: 'DISABLED',
           }),
         }),
       );
+    });
+  });
+
+  describe('leaveOrganization', () => {
+    const activeMembership = {
+      id: 'ut1',
+      userId: 'u1',
+      tenantId: 't1',
+      role: 'MEMBER',
+      isDefault: false,
+      tenant: { name: 'Org 1' },
+    };
+
+    it('should throw NotFoundException if user is not an active member', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue(null);
+
+      await expect(organizationService.leaveOrganization('u1', 't1')).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should forbid OWNER from leaving', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({ ...activeMembership, role: 'OWNER' });
+
+      await expect(organizationService.leaveOrganization('u1', 't1')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should reject leaving when user has no other active organization', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue(activeMembership);
+      prismaService.userTenant.count.mockResolvedValue(0);
+
+      await expect(organizationService.leaveOrganization('u1', 't1')).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(prismaService.userTenant.count).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({ userId: 'u1', tenantId: { not: 't1' } }),
+        }),
+      );
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should reject leaving the default organization', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({ ...activeMembership, isDefault: true });
+      prismaService.userTenant.count.mockResolvedValue(1);
+
+      await expect(organizationService.leaveOrganization('u1', 't1')).rejects.toThrow(
+        /mặc định/,
+      );
+      expect(prismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('should soft-delete membership, role grants and revoke sessions on success', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue(activeMembership);
+      prismaService.userTenant.count.mockResolvedValue(1);
+
+      const result = await organizationService.leaveOrganization('u1', 't1');
+
+      expect(result).toEqual({
+        tenantId: 't1',
+        message: expect.stringContaining('Org 1'),
+      });
+      expect(prismaService.$transaction).toHaveBeenCalled();
+      expect(prismaService.userTenant.update).toHaveBeenCalledWith({
+        where: { id: 'ut1' },
+        data: expect.objectContaining({ status: 'INACTIVE', isDefault: false, deletedAt: expect.any(Date) }),
+      });
+      expect(prismaService.userRole.updateMany).toHaveBeenCalledWith({
+        where: { tenantId: 't1', userId: 'u1', deletedAt: null },
+        data: { deletedAt: expect.any(Date) },
+      });
+      expect(prismaService.session.updateMany).toHaveBeenCalledWith({
+        where: { tenantId: 't1', userId: 'u1', revokedAt: null },
+        data: expect.objectContaining({ revokeReason: 'LEFT_TENANT', revokedAt: expect.any(Date) }),
+      });
     });
   });
 });

@@ -10,32 +10,37 @@ datasource db {
 }
 
 model SalesOrder {
-  id                String               @id @default(uuid()) @db.Uuid
-  tenantId          String               @map("tenant_id") @db.Uuid
-  orderNumber       String               @map("order_number") @db.VarChar(50)
-  customerId        String               @map("customer_id") @db.Uuid
-  deliveryAddressId String               @map("delivery_address_id") @db.Uuid
-  warehouseId       String               @map("warehouse_id") @db.Uuid
-  currency          String               @db.Char(3)
-  status            String               @db.VarChar(30)
-  orderSource       String               @map("order_source") @db.VarChar(30)
-  externalChannel   String?              @map("external_channel") @db.VarChar(50)
-  externalOrderId   String?              @map("external_order_id") @db.VarChar(100)
-  idempotencyKey    String?              @map("idempotency_key") @db.VarChar(100)
-  totalQuantity     Decimal              @map("total_quantity") @db.Decimal(18, 3)
-  totalWeight       Decimal              @map("total_weight") @db.Decimal(18, 3)
-  totalVolume       Decimal              @map("total_volume") @db.Decimal(18, 6)
-  confirmedAt       DateTime?            @map("confirmed_at") @db.Timestamptz(6)
-  canceledAt        DateTime?            @map("canceled_at") @db.Timestamptz(6)
-  completedAt       DateTime?            @map("completed_at") @db.Timestamptz(6)
-  cancelReason      String?              @map("cancel_reason") @db.Text
-  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  version           BigInt               @default(1)
-  deletedAt         DateTime?            @map("deleted_at") @db.Timestamptz(6)
-  lines             OrderLine[]
-  statusHistory     OrderStatusHistory[]
-  shortages         OrderShortage[]
+  id                      String               @id @default(uuid()) @db.Uuid
+  tenantId                String               @map("tenant_id") @db.Uuid
+  orderNumber             String               @map("order_number") @db.VarChar(50)
+  customerId              String               @map("customer_id") @db.Uuid
+  deliveryAddressId       String               @map("delivery_address_id") @db.Uuid
+  warehouseId             String               @map("warehouse_id") @db.Uuid
+  /// Immutable copies captured from Master Data at order creation; locked from CONFIRMED.
+  customerSnapshot        Json                 @map("customer_snapshot")
+  deliveryAddressSnapshot Json                 @map("delivery_address_snapshot")
+  warehouseSnapshot       Json                 @map("warehouse_snapshot")
+  billingAddressSnapshot  Json?                @map("billing_address_snapshot")
+  currency                String               @db.Char(3)
+  status                  String               @db.VarChar(30)
+  orderSource             String               @map("order_source") @db.VarChar(30)
+  externalChannel         String?              @map("external_channel") @db.VarChar(50)
+  externalOrderId         String?              @map("external_order_id") @db.VarChar(100)
+  idempotencyKey          String?              @map("idempotency_key") @db.VarChar(100)
+  totalQuantity           Decimal              @map("total_quantity") @db.Decimal(18, 3)
+  totalWeight             Decimal              @map("total_weight") @db.Decimal(18, 3)
+  totalVolume             Decimal              @map("total_volume") @db.Decimal(18, 6)
+  confirmedAt             DateTime?            @map("confirmed_at") @db.Timestamptz(6)
+  canceledAt              DateTime?            @map("canceled_at") @db.Timestamptz(6)
+  completedAt             DateTime?            @map("completed_at") @db.Timestamptz(6)
+  cancelReason            String?              @map("cancel_reason") @db.Text
+  createdAt               DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version                 BigInt               @default(1)
+  deletedAt               DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  lines                   OrderLine[]
+  statusHistory           OrderStatusHistory[]
+  shortages               OrderShortage[]
 
   @@unique([tenantId, orderNumber], map: "ux_orders_tenant_number")
   @@index([tenantId, status, createdAt(sort: Desc)], map: "ix_orders_tenant_status_created")

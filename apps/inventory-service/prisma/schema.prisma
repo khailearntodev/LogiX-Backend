@@ -114,20 +114,23 @@ model StockMovement {
 }
 
 model StockReceipt {
-  id             String             @id @default(uuid()) @db.Uuid
-  tenantId       String             @map("tenant_id") @db.Uuid
-  receiptNumber  String             @map("receipt_number") @db.VarChar(50)
-  warehouseId    String             @map("warehouse_id") @db.Uuid
-  idempotencyKey String             @map("idempotency_key") @db.VarChar(100)
-  status         String             @db.VarChar(20)
-  receivedAt     DateTime           @map("received_at") @db.Timestamptz(6)
-  actorId        String?            @map("actor_id") @db.Uuid
-  correlationId  String             @map("correlation_id") @db.Uuid
-  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  version        BigInt             @default(1)
-  deletedAt      DateTime?          @map("deleted_at") @db.Timestamptz(6)
-  lines          StockReceiptLine[]
+  id               String             @id @default(uuid()) @db.Uuid
+  tenantId         String             @map("tenant_id") @db.Uuid
+  receiptNumber    String             @map("receipt_number") @db.VarChar(50)
+  warehouseId      String             @map("warehouse_id") @db.Uuid
+  /// Optional Master Data supplier reference (no cross-service FK) plus snapshot.
+  supplierId       String?            @map("supplier_id") @db.Uuid
+  supplierSnapshot Json?              @map("supplier_snapshot")
+  idempotencyKey   String             @map("idempotency_key") @db.VarChar(100)
+  status           String             @db.VarChar(20)
+  receivedAt       DateTime           @map("received_at") @db.Timestamptz(6)
+  actorId          String?            @map("actor_id") @db.Uuid
+  correlationId    String             @map("correlation_id") @db.Uuid
+  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt             @default(1)
+  deletedAt        DateTime?          @map("deleted_at") @db.Timestamptz(6)
+  lines            StockReceiptLine[]
 
   @@unique([tenantId, receiptNumber], map: "ux_receipts_tenant_number")
   @@unique([tenantId, idempotencyKey], map: "ux_receipts_idempotency")

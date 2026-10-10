@@ -97,6 +97,7 @@ export type RoutePlanCountAggregateOutputType = {
   status: number
   source: number
   inputHash: number
+  inputSnapshot: number
   solverName: number
   solverVersion: number
   objective: number
@@ -186,6 +187,7 @@ export type RoutePlanCountAggregateInputType = {
   status?: true
   source?: true
   inputHash?: true
+  inputSnapshot?: true
   solverName?: true
   solverVersion?: true
   objective?: true
@@ -298,6 +300,7 @@ export type RoutePlanGroupByOutputType = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: runtime.JsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -346,6 +349,7 @@ export type RoutePlanWhereInput = {
   status?: Prisma.StringFilter<"RoutePlan"> | string
   source?: Prisma.StringFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringFilter<"RoutePlan"> | string
+  inputSnapshot?: Prisma.JsonFilter<"RoutePlan">
   solverName?: Prisma.StringFilter<"RoutePlan"> | string
   solverVersion?: Prisma.StringFilter<"RoutePlan"> | string
   objective?: Prisma.StringFilter<"RoutePlan"> | string
@@ -376,6 +380,7 @@ export type RoutePlanOrderByWithRelationInput = {
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
+  inputSnapshot?: Prisma.SortOrder
   solverName?: Prisma.SortOrder
   solverVersion?: Prisma.SortOrder
   objective?: Prisma.SortOrder
@@ -411,6 +416,7 @@ export type RoutePlanWhereUniqueInput = Prisma.AtLeast<{
   status?: Prisma.StringFilter<"RoutePlan"> | string
   source?: Prisma.StringFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringFilter<"RoutePlan"> | string
+  inputSnapshot?: Prisma.JsonFilter<"RoutePlan">
   solverName?: Prisma.StringFilter<"RoutePlan"> | string
   solverVersion?: Prisma.StringFilter<"RoutePlan"> | string
   objective?: Prisma.StringFilter<"RoutePlan"> | string
@@ -441,6 +447,7 @@ export type RoutePlanOrderByWithAggregationInput = {
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
+  inputSnapshot?: Prisma.SortOrder
   solverName?: Prisma.SortOrder
   solverVersion?: Prisma.SortOrder
   objective?: Prisma.SortOrder
@@ -474,6 +481,7 @@ export type RoutePlanScalarWhereWithAggregatesInput = {
   status?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   source?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
+  inputSnapshot?: Prisma.JsonWithAggregatesFilter<"RoutePlan">
   solverName?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   solverVersion?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   objective?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
@@ -498,6 +506,7 @@ export type RoutePlanCreateInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -527,6 +536,7 @@ export type RoutePlanUncheckedCreateInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -554,6 +564,7 @@ export type RoutePlanUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -583,6 +594,7 @@ export type RoutePlanUncheckedUpdateInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -611,6 +623,7 @@ export type RoutePlanCreateManyInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -635,6 +648,7 @@ export type RoutePlanUpdateManyMutationInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -659,6 +673,7 @@ export type RoutePlanUncheckedUpdateManyInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -710,6 +725,7 @@ export type RoutePlanCountOrderByAggregateInput = {
   status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
+  inputSnapshot?: Prisma.SortOrder
   solverName?: Prisma.SortOrder
   solverVersion?: Prisma.SortOrder
   objective?: Prisma.SortOrder
@@ -931,6 +947,7 @@ export type RoutePlanCreateWithoutApprovedForTripsInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -959,6 +976,7 @@ export type RoutePlanUncheckedCreateWithoutApprovedForTripsInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -990,6 +1008,7 @@ export type RoutePlanCreateWithoutTripInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1017,6 +1036,7 @@ export type RoutePlanUncheckedCreateWithoutTripInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1065,6 +1085,7 @@ export type RoutePlanUpdateWithoutApprovedForTripsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1093,6 +1114,7 @@ export type RoutePlanUncheckedUpdateWithoutApprovedForTripsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1139,6 +1161,7 @@ export type RoutePlanScalarWhereInput = {
   status?: Prisma.StringFilter<"RoutePlan"> | string
   source?: Prisma.StringFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringFilter<"RoutePlan"> | string
+  inputSnapshot?: Prisma.JsonFilter<"RoutePlan">
   solverName?: Prisma.StringFilter<"RoutePlan"> | string
   solverVersion?: Prisma.StringFilter<"RoutePlan"> | string
   objective?: Prisma.StringFilter<"RoutePlan"> | string
@@ -1163,6 +1186,7 @@ export type RoutePlanCreateWithoutOverridesInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1191,6 +1215,7 @@ export type RoutePlanUncheckedCreateWithoutOverridesInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1222,6 +1247,7 @@ export type RoutePlanCreateWithoutOriginalPlanInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1250,6 +1276,7 @@ export type RoutePlanUncheckedCreateWithoutOriginalPlanInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1297,6 +1324,7 @@ export type RoutePlanUpdateWithoutOverridesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1325,6 +1353,7 @@ export type RoutePlanUncheckedUpdateWithoutOverridesInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1367,6 +1396,7 @@ export type RoutePlanCreateWithoutStopsInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1395,6 +1425,7 @@ export type RoutePlanUncheckedCreateWithoutStopsInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1437,6 +1468,7 @@ export type RoutePlanUpdateWithoutStopsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1465,6 +1497,7 @@ export type RoutePlanUncheckedUpdateWithoutStopsInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1491,6 +1524,7 @@ export type RoutePlanCreateManyTripInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1515,6 +1549,7 @@ export type RoutePlanUpdateWithoutTripInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1542,6 +1577,7 @@ export type RoutePlanUncheckedUpdateWithoutTripInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1569,6 +1605,7 @@ export type RoutePlanUncheckedUpdateManyWithoutTripInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1594,6 +1631,7 @@ export type RoutePlanCreateManyOriginalPlanInput = {
   status: string
   source: string
   inputHash: string
+  inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName: string
   solverVersion: string
   objective: string
@@ -1617,6 +1655,7 @@ export type RoutePlanUpdateWithoutOriginalPlanInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1645,6 +1684,7 @@ export type RoutePlanUncheckedUpdateWithoutOriginalPlanInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1672,6 +1712,7 @@ export type RoutePlanUncheckedUpdateManyWithoutOriginalPlanInput = {
   status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
+  inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   solverName?: Prisma.StringFieldUpdateOperationsInput | string
   solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
   objective?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1745,6 +1786,7 @@ export type RoutePlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   status?: boolean
   source?: boolean
   inputHash?: boolean
+  inputSnapshot?: boolean
   solverName?: boolean
   solverVersion?: boolean
   objective?: boolean
@@ -1776,6 +1818,7 @@ export type RoutePlanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   status?: boolean
   source?: boolean
   inputHash?: boolean
+  inputSnapshot?: boolean
   solverName?: boolean
   solverVersion?: boolean
   objective?: boolean
@@ -1803,6 +1846,7 @@ export type RoutePlanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   status?: boolean
   source?: boolean
   inputHash?: boolean
+  inputSnapshot?: boolean
   solverName?: boolean
   solverVersion?: boolean
   objective?: boolean
@@ -1830,6 +1874,7 @@ export type RoutePlanSelectScalar = {
   status?: boolean
   source?: boolean
   inputHash?: boolean
+  inputSnapshot?: boolean
   solverName?: boolean
   solverVersion?: boolean
   objective?: boolean
@@ -1846,7 +1891,7 @@ export type RoutePlanSelectScalar = {
   deletedAt?: boolean
 }
 
-export type RoutePlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "planVersion" | "routeRequestId" | "status" | "source" | "inputHash" | "solverName" | "solverVersion" | "objective" | "totalDistance" | "estimatedCost" | "metrics" | "originalPlanId" | "overrideReason" | "approvedBy" | "approvedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["routePlan"]>
+export type RoutePlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "planVersion" | "routeRequestId" | "status" | "source" | "inputHash" | "inputSnapshot" | "solverName" | "solverVersion" | "objective" | "totalDistance" | "estimatedCost" | "metrics" | "originalPlanId" | "overrideReason" | "approvedBy" | "approvedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["routePlan"]>
 export type RoutePlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
   approvedForTrips?: boolean | Prisma.RoutePlan$approvedForTripsArgs<ExtArgs>
@@ -1882,6 +1927,10 @@ export type $RoutePlanPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     status: string
     source: string
     inputHash: string
+    /**
+     * Exact solver input (depot, stops, coordinates, capacities) hashed into inputHash.
+     */
+    inputSnapshot: runtime.JsonValue
     solverName: string
     solverVersion: string
     objective: string
@@ -2332,6 +2381,7 @@ export interface RoutePlanFieldRefs {
   readonly status: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly source: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly inputHash: Prisma.FieldRef<"RoutePlan", 'String'>
+  readonly inputSnapshot: Prisma.FieldRef<"RoutePlan", 'Json'>
   readonly solverName: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly solverVersion: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly objective: Prisma.FieldRef<"RoutePlan", 'String'>

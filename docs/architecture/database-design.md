@@ -282,6 +282,8 @@ idempotency nghiệp vụ cuối cùng vẫn phải được owning service ki�
 | `default_currency` | `char(3)` | Currency dùng trong MVP |
 | `timezone` | `varchar(50)` | IANA timezone |
 | `settings` | `jsonb` | Cấu hình đã schema hóa |
+| `legal_name`, `tax_code`, `phone` | `varchar NULL` | Hồ sơ pháp lý tùy chọn, in làm bên phát hành trên chứng từ giao/xuất |
+| `address_line`, `ward`, `district`, `province`, `postal_code` | `NULL` | Địa chỉ pháp lý; `CHECK ck_tenants_legal_address`: `address_line` và `province` cùng có hoặc cùng NULL |
 | `created_at`, `updated_at` | `timestamptz` | Timestamp |
 | `version` | `bigint` | Optimistic lock |
 
@@ -383,15 +385,23 @@ và GIN trigram thay vì B-tree thông thường.
 
 ### 6.2 `customer_addresses`
 
-Các cột: `id`, `tenant_id`, `customer_id` (FK nội bộ), `label`, `recipient_name`,
-`phone`, `address_line`, `ward`, `district`, `province`, `postal_code`, `location
-geography(Point,4326)`, `is_default`, `status`, cột nền.
+Các cột: `id`, `tenant_id`, `customer_id` (FK nội bộ), `address_type`
+(`SHIPPING` = ship-to, `BILLING` = bill-to; mặc định `SHIPPING`, bất biến sau khi
+tạo), `label`, `recipient_name`, `phone`, `address_line`, `ward`, `district`,
+`province`, `postal_code`, `location geography(Point,4326)`, `delivery_note NULL`
+(chỉ dẫn giao hàng), `is_default`, `status`, cột nền.
+
+Mỗi khách hàng có tối đa một địa chỉ mặc định ACTIVE **cho mỗi loại** địa chỉ.
+Order chỉ được chọn địa chỉ `SHIPPING` làm địa chỉ giao.
 
 ```sql
+CHECK (address_type IN ('SHIPPING', 'BILLING'))
 CREATE INDEX ix_customer_addresses_customer
 ON customer_addresses (tenant_id, customer_id, status);
+CREATE INDEX ix_customer_addresses_type
+ON customer_addresses (tenant_id, customer_id, address_type, status);
 CREATE UNIQUE INDEX ux_customer_default_address
-ON customer_addresses (tenant_id, customer_id)
+ON customer_addresses (tenant_id, customer_id, address_type)
 WHERE is_default = true AND status = 'ACTIVE';
 CREATE INDEX ix_customer_addresses_location
 ON customer_addresses USING gist (location);
@@ -449,6 +459,18 @@ CREATE INDEX ix_drivers_active ON drivers (tenant_id, id)
 WHERE status = 'ACTIVE';
 ```
 
+### 6.7 `suppliers` (mở rộng, ngoài MVP)
+
+Các cột: `id`, `tenant_id`, `code`, `name`, `tax_code`, `contact_name`, `phone`,
+`email`, `address_line`, `ward`, `district`, `province`, `postal_code`, `latitude`,
+`longitude`, `status`, cột nền. Chỉ có schema để `stock_receipts` truy vết nguồn
+hàng; chưa có API/luồng nghiệp vụ (BRD loại trừ quản lý nhà cung cấp).
+
+```sql
+CREATE UNIQUE INDEX ux_suppliers_tenant_code ON suppliers (tenant_id, code);
+CREATE INDEX ix_suppliers_tenant_status_name ON suppliers (tenant_id, status, name);
+```
+
 Master data đã được tham chiếu chỉ disable, không hard delete. Database role ứng
 dụng có thể bị thu hồi quyền `DELETE` trên các bảng này sau khi luồng vận hành ổn định.
 
@@ -463,6 +485,10 @@ dụng có thể bị thu hồi quyền `DELETE` trên các bảng này sau khi 
 | `customer_id` | `uuid` | Tham chiếu Master Data, không FK |
 | `delivery_address_id` | `uuid` | Tham chiếu Master Data |
 | `warehouse_id` | `uuid` | Chính xác một kho/order |
+| `customer_snapshot` | `jsonb` | Bắt buộc; chụp từ Master Data khi tạo đơn |
+| `delivery_address_snapshot` | `jsonb` | Bắt buộc; địa chỉ `SHIPPING`, khóa từ `CONFIRMED` |
+| `warehouse_snapshot` | `jsonb` | Bắt buộc; kho xuất tại thời điểm tạo đơn |
+| `billing_address_snapshot` | `jsonb NULL` | Bill-to; chỉ ở mức schema (hóa đơn ngoài MVP) |
 | `currency` | `char(3)` | Currency của tenant |
 | `status` | `varchar(30)` | State machine BRD |
 | `order_source` | `varchar(30)` | `B2B`, `ECOMMERCE` nếu stretch |
@@ -685,9 +711,12 @@ tham chiếu movement gốc.
 
 ### 8.5 `stock_receipts`
 
-Các cột: `id`, `tenant_id`, `receipt_number`, `warehouse_id`, `idempotency_key`,
+Các cột: `id`, `tenant_id`, `receipt_number`, `warehouse_id`, `supplier_id NULL`
+(ID Master Data, không FK), `supplier_snapshot jsonb NULL`, `idempotency_key`,
 `status`, `received_at`, `actor_id`, `correlation_id`, cột nền. `stock_receipt_lines`
-gồm product, quantity và liên kết movement.
+gồm product, quantity và liên kết movement. `CHECK ck_stock_receipts_supplier_snapshot`:
+có `supplier_id` thì bắt buộc có snapshot object, và ngược lại. Quản lý nhà cung
+cấp/mua hàng nằm ngoài MVP; cột chỉ dùng để truy vết nguồn hàng khi có.
 
 ```sql
 CREATE UNIQUE INDEX ux_receipts_tenant_number
@@ -703,9 +732,13 @@ ON stock_receipts (tenant_id, warehouse_id, received_at DESC);
 ### 9.1 `shipments`
 
 Các cột: `id`, `tenant_id`, `shipment_number`, `order_id`, `warehouse_id`,
-`delivery_address_id`, `status`, `total_weight`, `total_volume`,
+`delivery_address_id`, `customer_snapshot jsonb`, `delivery_address_snapshot jsonb`,
+`issuer_snapshot jsonb NULL`, `status`, `total_weight`, `total_volume`,
 `reservation_group_id`, `assigned_trip_id NULL`, `dispatch_issued_at NULL`,
 `ready_at`, `delivered_at`, `failed_at`, `failure_reason`, cột nền.
+
+Snapshot khách hàng/địa chỉ được copy từ payload `OrderConfirmed`; `issuer_snapshot`
+là hồ sơ pháp lý tenant (tùy chọn) để in phiếu giao/xuất.
 
 `status`: `CREATED`, `READY`, `ASSIGNED`, `IN_TRANSIT`, `FAILED`, `DELIVERED`,
 `CANCELED`.
@@ -732,7 +765,8 @@ cho shipment state, còn Transport là authority cho membership của trip.
 ### 9.2 `shipment_items`
 
 Snapshot đóng gói gồm `id`, `tenant_id`, `shipment_id`, `order_line_id`,
-`product_id`, `sku_snapshot`, `quantity`, `weight`, `volume`.
+`product_id`, `sku_snapshot`, `product_name_snapshot`, `unit_snapshot`, `quantity`,
+`weight`, `volume`.
 
 ```sql
 UNIQUE (tenant_id, shipment_id, order_line_id)
@@ -751,9 +785,14 @@ shipment_version)` và index timeline `(tenant_id, shipment_id, occurred_at, id)
 ### 10.1 `delivery_trips`
 
 Các cột: `id`, `tenant_id`, `trip_number`, `warehouse_id`, `vehicle_id`,
-`driver_id`, `status`, `planned_start_at`, `actual_start_at`, `completed_at`,
+`driver_id`, `depot_snapshot jsonb`, `vehicle_snapshot jsonb NULL`,
+`driver_snapshot jsonb NULL`, `status`, `planned_start_at`, `actual_start_at`, `completed_at`,
 `total_weight`, `total_volume`, `approved_route_plan_id`, `dispatch_version`,
 `dispatched_at`, `canceled_at`, `cancel_reason`, cột nền.
+
+`depot_snapshot` (địa chỉ + tọa độ kho xuất phát) chụp khi tạo trip; `vehicle_snapshot`
+(biển số, tải trọng) và `driver_snapshot` (tên, SĐT, số GPLX) chụp khi route plan
+được duyệt để chứng từ dispatch không đổi khi Master Data thay đổi.
 
 `status`: `DRAFT`, `PLANNED`, `APPROVED`, `IN_PROGRESS`, `COMPLETED`, `CANCELED`.
 
@@ -810,6 +849,9 @@ Các cột: `id`, `tenant_id`, `trip_id`, `shipment_id`, `delivery_address_id`,
 `approved_sequence`, `status` (`PENDING`, `ARRIVED`, `DELIVERED`, `FAILED`),
 `current_attempt`, `arrived_at`, `completed_at`, cột nền.
 
+`address_snapshot` copy nguyên văn từ `shipments.delivery_address_snapshot` (qua
+payload `ShipmentReady`). Không thêm stop vào trip khi snapshot chưa có tọa độ.
+
 ```sql
 CREATE UNIQUE INDEX ux_trip_stop_shipment
 ON trip_stops (tenant_id, trip_id, shipment_id);
@@ -829,7 +871,9 @@ Các unique index đảm bảo mỗi shipment phục vụ đúng một lần và
 
 Các cột: `id`, `tenant_id`, `trip_id`, `plan_version`, `route_request_id`,
 `status` (`PROPOSED`, `APPROVED`, `SUPERSEDED`, `REJECTED`), `source`
-(`OPTIMIZER`, `MANUAL_OVERRIDE`), `input_hash`, `solver_name`, `solver_version`,
+(`OPTIMIZER`, `MANUAL_OVERRIDE`), `input_hash`, `input_snapshot jsonb` (đầu vào
+solver: depot, stops, tọa độ, tải trọng — chính là dữ liệu được băm thành
+`input_hash`), `solver_name`, `solver_version`,
 `objective`, `total_distance`, `estimated_cost`, `metrics jsonb`,
 `original_plan_id NULL`, `override_reason NULL`, `approved_by`, `approved_at`,
 `created_at`.
@@ -1291,6 +1335,7 @@ Các ID dưới đây là logical reference, không phải database FK:
 | Inventory | `order_id`, `order_line_id`; `warehouse_id`, `product_id` | Order; Master Data |
 | Fulfillment | `order_id`, `reservation_group_id`, `warehouse_id` | Order; Inventory; Master Data |
 | Transport | `shipment_id`, `warehouse_id`, `vehicle_id`, `driver_id` | Fulfillment; Master Data |
+| Inventory (receipt) | `supplier_id` | Master Data |
 | Forecast | `warehouse_id`, `product_id`, `source_order_id` | Master Data; Order |
 | Agent | Business entity ID trong tool metadata | Owning business service |
 | Audit | `entity_id`, `actor_id` | Owning service; Identity |
@@ -1302,6 +1347,48 @@ Các ID dưới đây là logical reference, không phải database FK:
 - dùng event để cập nhật projection nếu cần;
 - không cascade delete xuyên service;
 - không join qua database link hoặc shared ORM entity.
+
+### 16.1 Quy ước snapshot và loại địa chỉ
+
+Nguồn gốc địa chỉ:
+
+| Loại địa chỉ | Lưu tại (authority) | Trạng thái |
+|---|---|---|
+| Ship-to (`SHIPPING`) | `master_data.customer_addresses` | MVP |
+| Bill-to (`BILLING`) | `master_data.customer_addresses` | Chỉ schema; hóa đơn ngoài MVP |
+| Depot/kho | `master_data.warehouses` | MVP |
+| Nhà cung cấp | `master_data.suppliers` | Chỉ schema; mua hàng ngoài MVP |
+| Pháp lý tenant | `identity.tenants` (`legal_name`, `address_line`, ...) | Tùy chọn, in chứng từ |
+
+Snapshot bất biến:
+
+| Bảng/cột | Chụp khi | Nguồn |
+|---|---|---|
+| `sales_orders.customer_snapshot`, `delivery_address_snapshot`, `warehouse_snapshot` | Tạo đơn (khóa từ `CONFIRMED`) | Master Data (đồng bộ) |
+| `sales_orders.billing_address_snapshot` | Tạo đơn, nếu có | Master Data |
+| `shipments.customer_snapshot`, `delivery_address_snapshot` | Tạo shipment | Payload `OrderConfirmed` |
+| `shipments.issuer_snapshot` | Tạo shipment, nếu tenant có hồ sơ pháp lý | Identity |
+| `shipment_items.sku_snapshot`, `product_name_snapshot`, `unit_snapshot` | Tạo shipment | Order line/Master Data |
+| `delivery_trips.depot_snapshot` | Tạo trip | Master Data |
+| `delivery_trips.vehicle_snapshot`, `driver_snapshot` | Duyệt route plan | Master Data |
+| `trip_stops.address_snapshot` | Thêm stop | Payload `ShipmentReady` |
+| `route_plans.input_snapshot` | Gửi yêu cầu tối ưu | Transport |
+| `stock_receipts.supplier_snapshot` | Nhập kho có nhà cung cấp | Master Data |
+
+Quy tắc:
+
+- Mọi cột snapshot JSON có `CHECK (jsonb_typeof(col) = 'object')`.
+- Snapshot địa chỉ gồm `addressId`, `addressVersion`, `addressType`, `label`,
+  `recipientName`, `phone`, `addressLine`, `ward`, `district`, `province`,
+  `postalCode`, `latitude`, `longitude`, `deliveryNote` (kiểu chuẩn:
+  `AddressSnapshot` trong `@logix/messaging`).
+- Snapshot không bao giờ được cập nhật lại từ Master Data sau khi chụp; muốn đổi
+  địa chỉ trước `CONFIRMED` thì chụp snapshot mới cùng lúc đổi `delivery_address_id`.
+- Consumer nhận snapshot qua payload event hoặc API contract, không đọc DB service khác.
+- `ward`/`district` để nullable vì từ 01/07/2025 địa giới hành chính chỉ còn hai cấp
+  (tỉnh, xã/phường); dữ liệu cũ vẫn có thể có cấp huyện.
+- Không lưu `unit_price` snapshot: pricing nằm ngoài MVP; trường `unitPrice` trong
+  `OrderCreatedPayload` hiện chưa có cột tương ứng trong `order_lines`.
 
 ## 17. Mapping event vào persistence
 
