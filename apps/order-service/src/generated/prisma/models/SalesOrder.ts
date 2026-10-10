@@ -53,9 +53,11 @@ export type SalesOrderMinAggregateOutputType = {
   externalChannel: string | null
   externalOrderId: string | null
   idempotencyKey: string | null
+  idempotencyRequestHash: string | null
   totalQuantity: runtime.Decimal | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
+  pendingSince: Date | null
   confirmedAt: Date | null
   canceledAt: Date | null
   completedAt: Date | null
@@ -79,9 +81,11 @@ export type SalesOrderMaxAggregateOutputType = {
   externalChannel: string | null
   externalOrderId: string | null
   idempotencyKey: string | null
+  idempotencyRequestHash: string | null
   totalQuantity: runtime.Decimal | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
+  pendingSince: Date | null
   confirmedAt: Date | null
   canceledAt: Date | null
   completedAt: Date | null
@@ -109,9 +113,11 @@ export type SalesOrderCountAggregateOutputType = {
   externalChannel: number
   externalOrderId: number
   idempotencyKey: number
+  idempotencyRequestHash: number
   totalQuantity: number
   totalWeight: number
   totalVolume: number
+  pendingSince: number
   confirmedAt: number
   canceledAt: number
   completedAt: number
@@ -151,9 +157,11 @@ export type SalesOrderMinAggregateInputType = {
   externalChannel?: true
   externalOrderId?: true
   idempotencyKey?: true
+  idempotencyRequestHash?: true
   totalQuantity?: true
   totalWeight?: true
   totalVolume?: true
+  pendingSince?: true
   confirmedAt?: true
   canceledAt?: true
   completedAt?: true
@@ -177,9 +185,11 @@ export type SalesOrderMaxAggregateInputType = {
   externalChannel?: true
   externalOrderId?: true
   idempotencyKey?: true
+  idempotencyRequestHash?: true
   totalQuantity?: true
   totalWeight?: true
   totalVolume?: true
+  pendingSince?: true
   confirmedAt?: true
   canceledAt?: true
   completedAt?: true
@@ -207,9 +217,11 @@ export type SalesOrderCountAggregateInputType = {
   externalChannel?: true
   externalOrderId?: true
   idempotencyKey?: true
+  idempotencyRequestHash?: true
   totalQuantity?: true
   totalWeight?: true
   totalVolume?: true
+  pendingSince?: true
   confirmedAt?: true
   canceledAt?: true
   completedAt?: true
@@ -324,9 +336,11 @@ export type SalesOrderGroupByOutputType = {
   externalChannel: string | null
   externalOrderId: string | null
   idempotencyKey: string | null
+  idempotencyRequestHash: string | null
   totalQuantity: runtime.Decimal
   totalWeight: runtime.Decimal
   totalVolume: runtime.Decimal
+  pendingSince: Date | null
   confirmedAt: Date | null
   canceledAt: Date | null
   completedAt: Date | null
@@ -377,9 +391,11 @@ export type SalesOrderWhereInput = {
   externalChannel?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   externalOrderId?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   idempotencyKey?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
+  idempotencyRequestHash?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   totalQuantity?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
@@ -410,9 +426,11 @@ export type SalesOrderOrderByWithRelationInput = {
   externalChannel?: Prisma.SortOrderInput | Prisma.SortOrder
   externalOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  idempotencyRequestHash?: Prisma.SortOrderInput | Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  pendingSince?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -447,9 +465,11 @@ export type SalesOrderWhereUniqueInput = Prisma.AtLeast<{
   externalChannel?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   externalOrderId?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   idempotencyKey?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
+  idempotencyRequestHash?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   totalQuantity?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
@@ -480,9 +500,11 @@ export type SalesOrderOrderByWithAggregationInput = {
   externalChannel?: Prisma.SortOrderInput | Prisma.SortOrder
   externalOrderId?: Prisma.SortOrderInput | Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  idempotencyRequestHash?: Prisma.SortOrderInput | Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  pendingSince?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -518,9 +540,11 @@ export type SalesOrderScalarWhereWithAggregatesInput = {
   externalChannel?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
   externalOrderId?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
   idempotencyKey?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  idempotencyRequestHash?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
   totalQuantity?: Prisma.DecimalWithAggregatesFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalWithAggregatesFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalWithAggregatesFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   canceledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
@@ -548,9 +572,11 @@ export type SalesOrderCreateInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -581,9 +607,11 @@ export type SalesOrderUncheckedCreateInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -614,9 +642,11 @@ export type SalesOrderUpdateInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -647,9 +677,11 @@ export type SalesOrderUncheckedUpdateInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -680,9 +712,11 @@ export type SalesOrderCreateManyInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -710,9 +744,11 @@ export type SalesOrderUpdateManyMutationInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -740,9 +776,11 @@ export type SalesOrderUncheckedUpdateManyInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -775,9 +813,11 @@ export type SalesOrderCountOrderByAggregateInput = {
   externalChannel?: Prisma.SortOrder
   externalOrderId?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
+  idempotencyRequestHash?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  pendingSince?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -808,9 +848,11 @@ export type SalesOrderMaxOrderByAggregateInput = {
   externalChannel?: Prisma.SortOrder
   externalOrderId?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
+  idempotencyRequestHash?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  pendingSince?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -834,9 +876,11 @@ export type SalesOrderMinOrderByAggregateInput = {
   externalChannel?: Prisma.SortOrder
   externalOrderId?: Prisma.SortOrder
   idempotencyKey?: Prisma.SortOrder
+  idempotencyRequestHash?: Prisma.SortOrder
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  pendingSince?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
@@ -950,9 +994,11 @@ export type SalesOrderCreateWithoutLinesInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -982,9 +1028,11 @@ export type SalesOrderUncheckedCreateWithoutLinesInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -1030,9 +1078,11 @@ export type SalesOrderUpdateWithoutLinesInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1062,9 +1112,11 @@ export type SalesOrderUncheckedUpdateWithoutLinesInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1094,9 +1146,11 @@ export type SalesOrderCreateWithoutStatusHistoryInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -1126,9 +1180,11 @@ export type SalesOrderUncheckedCreateWithoutStatusHistoryInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -1174,9 +1230,11 @@ export type SalesOrderUpdateWithoutStatusHistoryInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1206,9 +1264,11 @@ export type SalesOrderUncheckedUpdateWithoutStatusHistoryInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1238,9 +1298,11 @@ export type SalesOrderCreateWithoutShortagesInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -1270,9 +1332,11 @@ export type SalesOrderUncheckedCreateWithoutShortagesInput = {
   externalChannel?: string | null
   externalOrderId?: string | null
   idempotencyKey?: string | null
+  idempotencyRequestHash?: string | null
   totalQuantity: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
@@ -1318,9 +1382,11 @@ export type SalesOrderUpdateWithoutShortagesInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1350,9 +1416,11 @@ export type SalesOrderUncheckedUpdateWithoutShortagesInput = {
   externalChannel?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   externalOrderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   idempotencyKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  idempotencyRequestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   totalQuantity?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1431,9 +1499,11 @@ export type SalesOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   externalChannel?: boolean
   externalOrderId?: boolean
   idempotencyKey?: boolean
+  idempotencyRequestHash?: boolean
   totalQuantity?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
+  pendingSince?: boolean
   confirmedAt?: boolean
   canceledAt?: boolean
   completedAt?: boolean
@@ -1465,9 +1535,11 @@ export type SalesOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   externalChannel?: boolean
   externalOrderId?: boolean
   idempotencyKey?: boolean
+  idempotencyRequestHash?: boolean
   totalQuantity?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
+  pendingSince?: boolean
   confirmedAt?: boolean
   canceledAt?: boolean
   completedAt?: boolean
@@ -1495,9 +1567,11 @@ export type SalesOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   externalChannel?: boolean
   externalOrderId?: boolean
   idempotencyKey?: boolean
+  idempotencyRequestHash?: boolean
   totalQuantity?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
+  pendingSince?: boolean
   confirmedAt?: boolean
   canceledAt?: boolean
   completedAt?: boolean
@@ -1525,9 +1599,11 @@ export type SalesOrderSelectScalar = {
   externalChannel?: boolean
   externalOrderId?: boolean
   idempotencyKey?: boolean
+  idempotencyRequestHash?: boolean
   totalQuantity?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
+  pendingSince?: boolean
   confirmedAt?: boolean
   canceledAt?: boolean
   completedAt?: boolean
@@ -1538,7 +1614,7 @@ export type SalesOrderSelectScalar = {
   deletedAt?: boolean
 }
 
-export type SalesOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderNumber" | "customerId" | "deliveryAddressId" | "warehouseId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "billingAddressSnapshot" | "currency" | "status" | "orderSource" | "externalChannel" | "externalOrderId" | "idempotencyKey" | "totalQuantity" | "totalWeight" | "totalVolume" | "confirmedAt" | "canceledAt" | "completedAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["salesOrder"]>
+export type SalesOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderNumber" | "customerId" | "deliveryAddressId" | "warehouseId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "billingAddressSnapshot" | "currency" | "status" | "orderSource" | "externalChannel" | "externalOrderId" | "idempotencyKey" | "idempotencyRequestHash" | "totalQuantity" | "totalWeight" | "totalVolume" | "pendingSince" | "confirmedAt" | "canceledAt" | "completedAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["salesOrder"]>
 export type SalesOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lines?: boolean | Prisma.SalesOrder$linesArgs<ExtArgs>
   statusHistory?: boolean | Prisma.SalesOrder$statusHistoryArgs<ExtArgs>
@@ -1575,9 +1651,17 @@ export type $SalesOrderPayload<ExtArgs extends runtime.Types.Extensions.Internal
     externalChannel: string | null
     externalOrderId: string | null
     idempotencyKey: string | null
+    /**
+     * SHA-256 (hex) of the normalized create payload; detects reuse of an Idempotency-Key with a different body.
+     */
+    idempotencyRequestHash: string | null
     totalQuantity: runtime.Decimal
     totalWeight: runtime.Decimal
     totalVolume: runtime.Decimal
+    /**
+     * FIFO anchor for reservation retry; reset when a PENDING_STOCK order is edited.
+     */
+    pendingSince: Date | null
     confirmedAt: Date | null
     canceledAt: Date | null
     completedAt: Date | null
@@ -2028,9 +2112,11 @@ export interface SalesOrderFieldRefs {
   readonly externalChannel: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly externalOrderId: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly idempotencyKey: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly idempotencyRequestHash: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly totalQuantity: Prisma.FieldRef<"SalesOrder", 'Decimal'>
   readonly totalWeight: Prisma.FieldRef<"SalesOrder", 'Decimal'>
   readonly totalVolume: Prisma.FieldRef<"SalesOrder", 'Decimal'>
+  readonly pendingSince: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly confirmedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly canceledAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>

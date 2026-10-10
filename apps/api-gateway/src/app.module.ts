@@ -9,10 +9,14 @@ import { AppService } from './app.service.js';
 import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
 import { InventoryProxyMiddleware } from './proxy/inventory-proxy.middleware.js';
 import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.js';
+import { OrderProxyMiddleware } from './proxy/order-proxy.middleware.js';
+import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 
 @Module({
   imports: [
-    LogixConfigModule.forRoot(),
+    LogixConfigModule.forRoot({
+      schema: gatewayConfigSchema,
+    }),
 
     LogixLoggerModule.forRoot({
       serviceName: 'api-gateway',
@@ -69,6 +73,13 @@ export class AppModule implements NestModule {
         { path: 'api/v1/warehouses/*', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles/*', method: RequestMethod.ALL },
+      );
+
+    consumer
+      .apply(OrderProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/orders', method: RequestMethod.ALL },
+        { path: 'api/v1/orders/*', method: RequestMethod.ALL },
       );
   }
 }

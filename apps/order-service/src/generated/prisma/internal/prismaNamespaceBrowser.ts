@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   SalesOrder: 'SalesOrder',
+  OrderNumberSequence: 'OrderNumberSequence',
   OrderLine: 'OrderLine',
   OrderStatusHistory: 'OrderStatusHistory',
   OrderShortage: 'OrderShortage',
@@ -92,9 +93,11 @@ export const SalesOrderScalarFieldEnum = {
   externalChannel: 'externalChannel',
   externalOrderId: 'externalOrderId',
   idempotencyKey: 'idempotencyKey',
+  idempotencyRequestHash: 'idempotencyRequestHash',
   totalQuantity: 'totalQuantity',
   totalWeight: 'totalWeight',
   totalVolume: 'totalVolume',
+  pendingSince: 'pendingSince',
   confirmedAt: 'confirmedAt',
   canceledAt: 'canceledAt',
   completedAt: 'completedAt',
@@ -106,6 +109,16 @@ export const SalesOrderScalarFieldEnum = {
 } as const
 
 export type SalesOrderScalarFieldEnum = (typeof SalesOrderScalarFieldEnum)[keyof typeof SalesOrderScalarFieldEnum]
+
+
+export const OrderNumberSequenceScalarFieldEnum = {
+  tenantId: 'tenantId',
+  period: 'period',
+  lastValue: 'lastValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrderNumberSequenceScalarFieldEnum = (typeof OrderNumberSequenceScalarFieldEnum)[keyof typeof OrderNumberSequenceScalarFieldEnum]
 
 
 export const OrderLineScalarFieldEnum = {

@@ -77,7 +77,6 @@ export interface OrderCreatedPayload {
   orderLines: Array<{
     productId: string;
     quantity: number;
-    unitPrice: number;
   }>;
 }
 
@@ -103,14 +102,26 @@ export interface OrderPendingStockPayload {
 
 // ─── Inventory Events ───────────────────────────────────────────────────────
 
-export interface StockReceivedPayload {
-  receiptId: string;
+/**
+ * Payload written by inventory-service for every stock movement outbox event.
+ * Quantities are decimal strings with 3 fractional digits to avoid float loss.
+ */
+export interface StockMovementPayload {
+  movementId: string;
   warehouseId: string;
-  items: Array<{
-    productId: string;
-    quantity: number;
-  }>;
+  productId: string;
+  movementType: string;
+  quantityDelta: string;
+  beforeOnHand: string;
+  afterOnHand: string;
+  reservedQuantity: string;
+  referenceType: string;
+  referenceId: string;
+  reason: string | null;
+  actorId: string;
 }
+
+export type StockReceivedPayload = StockMovementPayload;
 
 export interface InventoryReservedPayload {
   reservationGroupId: string;
@@ -122,14 +133,7 @@ export interface InventoryReservedPayload {
   }>;
 }
 
-export interface InventoryAdjustedPayload {
-  movementId: string;
-  warehouseId: string;
-  productId: string;
-  adjustmentType: string;
-  quantity: number;
-  reason: string;
-}
+export type InventoryAdjustedPayload = StockMovementPayload;
 
 // ─── Fulfillment Events ─────────────────────────────────────────────────────
 
