@@ -3,12 +3,16 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from logix_agent.config import settings
 from logix_agent.db.session import create_engine, create_session_factory
+from logix_agent.modules.agui.router import build_agui_runtime
+from logix_agent.modules.agui.router import router as agui_router
 from logix_agent.modules.ai.factory import create_model_gateway
 from logix_agent.modules.ai.ports import ModelGateway
 
@@ -39,7 +43,7 @@ def get_model_gateway() -> ModelGateway:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     global app_engine, app_session_factory, app_model_gateway
     try:
         session_factory = get_session_factory()
@@ -50,10 +54,16 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
 
     try:
         app_model_gateway = create_model_gateway(settings)
+        app.state.agui_runtime = build_agui_runtime(
+            app_model_gateway,
+            prompt_policy_version=settings.prompt_policy_version,
+        )
     except Exception as exc:
         print(f"[{settings.service_name}] Model gateway initialization warning: {exc}")
 
     yield
+
+    app.state.agui_runtime = None
 
     if app_engine is not None:
         await app_engine.dispose()
@@ -68,6 +78,31 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+app.include_router(agui_router)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(
+    _: Request, exc: StarletteHTTPException
+) -> JSONResponse:
+    """Same error body shape as the NestJS services."""
+    status_phrase = {
+        400: "Bad Request",
+        401: "Unauthorized",
+        403: "Forbidden",
+        404: "Not Found",
+        422: "Unprocessable Entity",
+        503: "Service Unavailable",
+    }.get(exc.status_code, "Error")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "statusCode": exc.status_code,
+            "message": exc.detail,
+            "error": status_phrase,
+        },
+        headers=getattr(exc, "headers", None),
+    )
 
 
 @app.get("/", tags=["Info"])
