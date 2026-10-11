@@ -134,6 +134,27 @@ class FakeModelGateway:
         return cls(responses=[cls.simple_text_response(text)])
 
     @classmethod
+    def echo(cls) -> FakeModelGateway:
+        """Create a gateway that echoes the last user message (local dev without an LLM key)."""
+
+        def _echo(
+            request: ModelRequest, _tools: Sequence[ToolDefinition]
+        ) -> ModelResponse:
+            last_user = next(
+                (
+                    str(m.get("content", ""))
+                    for m in reversed(request.messages)
+                    if m.get("role") == "user"
+                ),
+                "",
+            )
+            return cls.simple_text_response(
+                f"[fake] {last_user}", model_profile=request.model_profile
+            )
+
+        return cls(response_factory=_echo)
+
+    @classmethod
     def with_error(cls, error: ModelGatewayError) -> FakeModelGateway:
         """Create a gateway that always raises the given error."""
         return cls(error=error)

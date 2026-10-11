@@ -10,6 +10,10 @@ class AgentSettings(BaseSettings):
     database_url: str | None = None
     log_level: str = "INFO"
 
+    # ── Auth ─────────────────────────────────────────────────────
+    # Must equal identity-service JWT_SECRET; requests are rejected while unset.
+    jwt_secret: str | None = None
+
     # ── LLM Gateway ──────────────────────────────────────────────
     llm_gateway_backend: str = "gemini"  # "gemini" | "litellm_sdk" | "fake"
     gemini_api_key: str | None = None

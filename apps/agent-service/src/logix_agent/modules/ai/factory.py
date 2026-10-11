@@ -56,7 +56,7 @@ def create_model_gateway(
     adapter: ModelGateway
     if backend == "fake":
         logger.info("Using FakeModelGateway (offline test mode)")
-        adapter = FakeModelGateway()
+        adapter = FakeModelGateway.echo()
     elif backend == "gemini":
         logger.info(
             "Using GeminiModelGateway with default model '%s'",
