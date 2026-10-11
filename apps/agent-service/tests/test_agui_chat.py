@@ -69,7 +69,7 @@ async def _run(
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post("/api/v1/agent/run", json=body, headers=headers)
+        response = await client.post("/api/v1/agent/runs", json=body, headers=headers)
     if response.headers.get("content-type", "").startswith("text/event-stream"):
         return response.status_code, _events(response.text), {}
     return response.status_code, [], response.json()

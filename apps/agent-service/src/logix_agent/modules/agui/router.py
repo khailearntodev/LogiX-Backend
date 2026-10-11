@@ -75,7 +75,7 @@ def _sanitize(event: object) -> object:
     )
 
 
-@router.post("/run")
+@router.post("/runs")
 async def run_agent(
     input_data: RunAgentInput,
     request: Request,

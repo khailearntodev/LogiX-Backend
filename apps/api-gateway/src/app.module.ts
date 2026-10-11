@@ -7,6 +7,7 @@ import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
+import { AgentProxyMiddleware } from './proxy/agent-proxy.middleware.js';
 import { InventoryProxyMiddleware } from './proxy/inventory-proxy.middleware.js';
 import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.js';
 
@@ -67,6 +68,14 @@ export class AppModule implements NestModule {
         { path: 'api/v1/warehouses/*', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles/*', method: RequestMethod.ALL },
+      );
+
+    // Chuyển hướng các request /api/v1/agent sang agent-service (AG-UI qua SSE)
+    consumer
+      .apply(AgentProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/agent', method: RequestMethod.ALL },
+        { path: 'api/v1/agent/*', method: RequestMethod.ALL },
       );
   }
 }
