@@ -9,6 +9,7 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/SalesOrder.js'
+export type * from './models/OrderNumberSequence.js'
 export type * from './models/OrderLine.js'
 export type * from './models/OrderStatusHistory.js'
 export type * from './models/OrderShortage.js'

@@ -16,7 +16,19 @@ async function bootstrap() {
     origin: process.env.FRONTEND_URL || 'http://localhost:3009',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'x-tenant-id',
+      'X-Tenant-Id',
+      'x-correlation-id',
+      'X-Correlation-Id',
+      'x-request-id',
+      'X-Request-Id',
+    ],
   });
 
   // Enable graceful shutdown hooks (important for K8s SIGTERM)
@@ -24,6 +36,7 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
+  // Gateway ready on port 3000
   console.log(`[LogiX API Gateway] đang chạy tại port ${port}`);
 }
 await bootstrap();

@@ -86,3 +86,8 @@ export type Session = Prisma.SessionModel
  * 
  */
 export type PasswordResetToken = Prisma.PasswordResetTokenModel
+/**
+ * Model TenantInvitation
+ * 
+ */
+export type TenantInvitation = Prisma.TenantInvitationModel

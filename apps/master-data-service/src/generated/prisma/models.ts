@@ -10,6 +10,7 @@
  */
 export type * from './models/Customer.js'
 export type * from './models/CustomerAddress.js'
+export type * from './models/Supplier.js'
 export type * from './models/Product.js'
 export type * from './models/Warehouse.js'
 export type * from './models/Vehicle.js'

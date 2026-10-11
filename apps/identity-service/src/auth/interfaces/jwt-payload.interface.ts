@@ -2,7 +2,9 @@ export interface JwtPayload {
   sub: string;
   email: string;
   tenantId: string;
+  isSuperAdmin?: boolean;
   tokenVersion?: number;
+  jti?: string;
   iat?: number;
   exp?: number;
 }
@@ -18,4 +20,6 @@ export interface AuthenticatedUser {
   tenantLogoUrl?: string | null;
   role?: string;
   status: string;
+  isSuperAdmin?: boolean;
+  permissions?: string[];
 }

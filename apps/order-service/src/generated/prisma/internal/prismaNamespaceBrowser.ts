@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   SalesOrder: 'SalesOrder',
+  OrderNumberSequence: 'OrderNumberSequence',
   OrderLine: 'OrderLine',
   OrderStatusHistory: 'OrderStatusHistory',
   OrderShortage: 'OrderShortage',
@@ -82,15 +83,21 @@ export const SalesOrderScalarFieldEnum = {
   customerId: 'customerId',
   deliveryAddressId: 'deliveryAddressId',
   warehouseId: 'warehouseId',
+  customerSnapshot: 'customerSnapshot',
+  deliveryAddressSnapshot: 'deliveryAddressSnapshot',
+  warehouseSnapshot: 'warehouseSnapshot',
+  billingAddressSnapshot: 'billingAddressSnapshot',
   currency: 'currency',
   status: 'status',
   orderSource: 'orderSource',
   externalChannel: 'externalChannel',
   externalOrderId: 'externalOrderId',
   idempotencyKey: 'idempotencyKey',
+  idempotencyRequestHash: 'idempotencyRequestHash',
   totalQuantity: 'totalQuantity',
   totalWeight: 'totalWeight',
   totalVolume: 'totalVolume',
+  pendingSince: 'pendingSince',
   confirmedAt: 'confirmedAt',
   canceledAt: 'canceledAt',
   completedAt: 'completedAt',
@@ -102,6 +109,16 @@ export const SalesOrderScalarFieldEnum = {
 } as const
 
 export type SalesOrderScalarFieldEnum = (typeof SalesOrderScalarFieldEnum)[keyof typeof SalesOrderScalarFieldEnum]
+
+
+export const OrderNumberSequenceScalarFieldEnum = {
+  tenantId: 'tenantId',
+  period: 'period',
+  lastValue: 'lastValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrderNumberSequenceScalarFieldEnum = (typeof OrderNumberSequenceScalarFieldEnum)[keyof typeof OrderNumberSequenceScalarFieldEnum]
 
 
 export const OrderLineScalarFieldEnum = {
@@ -225,20 +242,20 @@ export const JsonNullValueInput = {
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
-
-
-export const NullsOrder = {
-  first: 'first',
-  last: 'last'
-} as const
-
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 export const JsonNullValueFilter = {
@@ -248,4 +265,12 @@ export const JsonNullValueFilter = {
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

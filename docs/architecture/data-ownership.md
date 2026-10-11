@@ -13,7 +13,7 @@ Recommended logical ownership:
 | Service | Primary data |
 |---|---|
 | Identity | Tenant, User, Role, identity/session metadata |
-| Master Data | Customer, CustomerAddress, Product, Warehouse, Vehicle, Driver |
+| Master Data | Customer, CustomerAddress (SHIPPING/BILLING), Product, Warehouse, Vehicle, Driver, Supplier |
 | Order | SalesOrder, OrderLine, order state/history |
 | Inventory | InventoryBalance, InventoryReservation, StockMovement |
 | Fulfillment | Shipment, shipment state/history |
@@ -28,11 +28,23 @@ Recommended logical ownership:
 
 ### Tenant
 
-Identity is the authority for tenant identity and tenant lifecycle. Every business record references one tenant context.
+Identity is the authority for tenant identity and tenant lifecycle. Every business record references one tenant context. The optional tenant legal profile (`legal_name`, `tax_code`, legal address) also lives in Identity; other services obtain it through an API/event contract when printing issuer details.
 
-### Customer / Address / Product / Warehouse / Vehicle / Driver
+### Customer / Address / Product / Warehouse / Vehicle / Driver / Supplier
 
 Master Data is authoritative. Business services store only identifiers and bounded snapshots where justified by read-model or audit needs.
+
+Address rules:
+
+- `CustomerAddress.addressType` is `SHIPPING` (ship-to) or `BILLING` (bill-to), immutable after creation; each type has at most one active default per customer.
+- An order delivery address must be a `SHIPPING` address. Billing addresses and suppliers are schema-only extensions outside the MVP (invoicing and procurement are out of scope).
+
+Snapshot rules:
+
+- A consumer copies the master record into an immutable JSON snapshot column at a defined business moment (see `database-design.md` §16.1) and never refreshes it from Master Data afterwards.
+- Order captures customer, delivery address, and warehouse snapshots at creation; they are locked from `CONFIRMED`.
+- Fulfillment copies customer/address snapshots from the `OrderConfirmed` payload; Transport copies the stop address from the `ShipmentReady` payload, captures the depot at trip creation, and vehicle/driver at route approval.
+- Snapshots travel in event payloads or API responses (`AddressSnapshot`, `CustomerSnapshot`, `WarehouseSnapshot`, `IssuerSnapshot` in `@logix/messaging`); no service reads another service's database to build one.
 
 ### SalesOrder
 

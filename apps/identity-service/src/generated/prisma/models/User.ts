@@ -44,6 +44,7 @@ export type UserMinAggregateOutputType = {
   phoneNumber: string | null
   avatarUrl: string | null
   status: string | null
+  isSuperAdmin: boolean | null
   tokenVersion: bigint | null
   lastLoginAt: Date | null
   createdAt: Date | null
@@ -60,6 +61,7 @@ export type UserMaxAggregateOutputType = {
   phoneNumber: string | null
   avatarUrl: string | null
   status: string | null
+  isSuperAdmin: boolean | null
   tokenVersion: bigint | null
   lastLoginAt: Date | null
   createdAt: Date | null
@@ -76,6 +78,7 @@ export type UserCountAggregateOutputType = {
   phoneNumber: number
   avatarUrl: number
   status: number
+  isSuperAdmin: number
   tokenVersion: number
   lastLoginAt: number
   createdAt: number
@@ -104,6 +107,7 @@ export type UserMinAggregateInputType = {
   phoneNumber?: true
   avatarUrl?: true
   status?: true
+  isSuperAdmin?: true
   tokenVersion?: true
   lastLoginAt?: true
   createdAt?: true
@@ -120,6 +124,7 @@ export type UserMaxAggregateInputType = {
   phoneNumber?: true
   avatarUrl?: true
   status?: true
+  isSuperAdmin?: true
   tokenVersion?: true
   lastLoginAt?: true
   createdAt?: true
@@ -136,6 +141,7 @@ export type UserCountAggregateInputType = {
   phoneNumber?: true
   avatarUrl?: true
   status?: true
+  isSuperAdmin?: true
   tokenVersion?: true
   lastLoginAt?: true
   createdAt?: true
@@ -239,6 +245,7 @@ export type UserGroupByOutputType = {
   phoneNumber: string | null
   avatarUrl: string | null
   status: string
+  isSuperAdmin: boolean
   tokenVersion: bigint
   lastLoginAt: Date | null
   createdAt: Date
@@ -278,6 +285,7 @@ export type UserWhereInput = {
   phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
+  isSuperAdmin?: Prisma.BoolFilter<"User"> | boolean
   tokenVersion?: Prisma.BigIntFilter<"User"> | bigint | number
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -290,6 +298,7 @@ export type UserWhereInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
   rolePermissionsGranted?: Prisma.RolePermissionListRelationFilter
   userRolesGranted?: Prisma.UserRoleListRelationFilter
+  invitationsSent?: Prisma.TenantInvitationListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -300,6 +309,7 @@ export type UserOrderByWithRelationInput = {
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  isSuperAdmin?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -312,6 +322,7 @@ export type UserOrderByWithRelationInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenOrderByRelationAggregateInput
   rolePermissionsGranted?: Prisma.RolePermissionOrderByRelationAggregateInput
   userRolesGranted?: Prisma.UserRoleOrderByRelationAggregateInput
+  invitationsSent?: Prisma.TenantInvitationOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -325,6 +336,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   phoneNumber?: Prisma.StringNullableFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableFilter<"User"> | string | null
   status?: Prisma.StringFilter<"User"> | string
+  isSuperAdmin?: Prisma.BoolFilter<"User"> | boolean
   tokenVersion?: Prisma.BigIntFilter<"User"> | bigint | number
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
@@ -337,6 +349,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
   rolePermissionsGranted?: Prisma.RolePermissionListRelationFilter
   userRolesGranted?: Prisma.UserRoleListRelationFilter
+  invitationsSent?: Prisma.TenantInvitationListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -347,6 +360,7 @@ export type UserOrderByWithAggregationInput = {
   phoneNumber?: Prisma.SortOrderInput | Prisma.SortOrder
   avatarUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
+  isSuperAdmin?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -371,6 +385,7 @@ export type UserScalarWhereWithAggregatesInput = {
   phoneNumber?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   avatarUrl?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"User"> | string
+  isSuperAdmin?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   tokenVersion?: Prisma.BigIntWithAggregatesFilter<"User"> | bigint | number
   lastLoginAt?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
@@ -387,6 +402,7 @@ export type UserCreateInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -399,6 +415,7 @@ export type UserCreateInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -409,6 +426,7 @@ export type UserUncheckedCreateInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -421,6 +439,7 @@ export type UserUncheckedCreateInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserUpdateInput = {
@@ -431,6 +450,7 @@ export type UserUpdateInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -443,6 +463,7 @@ export type UserUpdateInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -453,6 +474,7 @@ export type UserUncheckedUpdateInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -465,6 +487,7 @@ export type UserUncheckedUpdateInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -475,6 +498,7 @@ export type UserCreateManyInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -491,6 +515,7 @@ export type UserUpdateManyMutationInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -507,6 +532,7 @@ export type UserUncheckedUpdateManyInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -523,6 +549,7 @@ export type UserCountOrderByAggregateInput = {
   phoneNumber?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  isSuperAdmin?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -544,6 +571,7 @@ export type UserMaxOrderByAggregateInput = {
   phoneNumber?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  isSuperAdmin?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -560,6 +588,7 @@ export type UserMinOrderByAggregateInput = {
   phoneNumber?: Prisma.SortOrder
   avatarUrl?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  isSuperAdmin?: Prisma.SortOrder
   tokenVersion?: Prisma.SortOrder
   lastLoginAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -581,6 +610,10 @@ export type UserScalarRelationFilter = {
 export type UserNullableScalarRelationFilter = {
   is?: Prisma.UserWhereInput | null
   isNot?: Prisma.UserWhereInput | null
+}
+
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
 }
 
 export type UserCreateNestedOneWithoutUserTenantsInput = {
@@ -671,6 +704,20 @@ export type UserUpdateOneRequiredWithoutPasswordResetTokensNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutPasswordResetTokensInput, Prisma.UserUpdateWithoutPasswordResetTokensInput>, Prisma.UserUncheckedUpdateWithoutPasswordResetTokensInput>
 }
 
+export type UserCreateNestedOneWithoutInvitationsSentInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitationsSentInput, Prisma.UserUncheckedCreateWithoutInvitationsSentInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitationsSentInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutInvitationsSentNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutInvitationsSentInput, Prisma.UserUncheckedCreateWithoutInvitationsSentInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutInvitationsSentInput
+  upsert?: Prisma.UserUpsertWithoutInvitationsSentInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutInvitationsSentInput, Prisma.UserUpdateWithoutInvitationsSentInput>, Prisma.UserUncheckedUpdateWithoutInvitationsSentInput>
+}
+
 export type UserCreateWithoutUserTenantsInput = {
   id?: string
   email: string
@@ -679,6 +726,7 @@ export type UserCreateWithoutUserTenantsInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -690,6 +738,7 @@ export type UserCreateWithoutUserTenantsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutUserTenantsInput = {
@@ -700,6 +749,7 @@ export type UserUncheckedCreateWithoutUserTenantsInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -711,6 +761,7 @@ export type UserUncheckedCreateWithoutUserTenantsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutUserTenantsInput = {
@@ -737,6 +788,7 @@ export type UserUpdateWithoutUserTenantsInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -748,6 +800,7 @@ export type UserUpdateWithoutUserTenantsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserTenantsInput = {
@@ -758,6 +811,7 @@ export type UserUncheckedUpdateWithoutUserTenantsInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -769,6 +823,7 @@ export type UserUncheckedUpdateWithoutUserTenantsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutRolePermissionsGrantedInput = {
@@ -779,6 +834,7 @@ export type UserCreateWithoutRolePermissionsGrantedInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -790,6 +846,7 @@ export type UserCreateWithoutRolePermissionsGrantedInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
@@ -800,6 +857,7 @@ export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -811,6 +869,7 @@ export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutRolePermissionsGrantedInput = {
@@ -837,6 +896,7 @@ export type UserUpdateWithoutRolePermissionsGrantedInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -848,6 +908,7 @@ export type UserUpdateWithoutRolePermissionsGrantedInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
@@ -858,6 +919,7 @@ export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -869,6 +931,7 @@ export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutUserRolesInput = {
@@ -879,6 +942,7 @@ export type UserCreateWithoutUserRolesInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -890,6 +954,7 @@ export type UserCreateWithoutUserRolesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutUserRolesInput = {
@@ -900,6 +965,7 @@ export type UserUncheckedCreateWithoutUserRolesInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -911,6 +977,7 @@ export type UserUncheckedCreateWithoutUserRolesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutUserRolesInput = {
@@ -926,6 +993,7 @@ export type UserCreateWithoutUserRolesGrantedInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -937,6 +1005,7 @@ export type UserCreateWithoutUserRolesGrantedInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
@@ -947,6 +1016,7 @@ export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -958,6 +1028,7 @@ export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutUserRolesGrantedInput = {
@@ -984,6 +1055,7 @@ export type UserUpdateWithoutUserRolesInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -995,6 +1067,7 @@ export type UserUpdateWithoutUserRolesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserRolesInput = {
@@ -1005,6 +1078,7 @@ export type UserUncheckedUpdateWithoutUserRolesInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1016,6 +1090,7 @@ export type UserUncheckedUpdateWithoutUserRolesInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUpsertWithoutUserRolesGrantedInput = {
@@ -1037,6 +1112,7 @@ export type UserUpdateWithoutUserRolesGrantedInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1048,6 +1124,7 @@ export type UserUpdateWithoutUserRolesGrantedInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
@@ -1058,6 +1135,7 @@ export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1069,6 +1147,7 @@ export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1079,6 +1158,7 @@ export type UserCreateWithoutSessionsInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -1090,6 +1170,7 @@ export type UserCreateWithoutSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1100,6 +1181,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -1111,6 +1193,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1137,6 +1220,7 @@ export type UserUpdateWithoutSessionsInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1148,6 +1232,7 @@ export type UserUpdateWithoutSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1158,6 +1243,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1169,6 +1255,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
 }
 
 export type UserCreateWithoutPasswordResetTokensInput = {
@@ -1179,6 +1266,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -1190,6 +1278,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -1200,6 +1289,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   phoneNumber?: string | null
   avatarUrl?: string | null
   status: string
+  isSuperAdmin?: boolean
   tokenVersion?: bigint | number
   lastLoginAt?: Date | string | null
   createdAt?: Date | string
@@ -1211,6 +1301,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -1237,6 +1328,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1248,6 +1340,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -1258,6 +1351,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
   tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -1267,6 +1361,115 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
+}
+
+export type UserCreateWithoutInvitationsSentInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
+  status: string
+  isSuperAdmin?: boolean
+  tokenVersion?: bigint | number
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
+  userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
+  userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+}
+
+export type UserUncheckedCreateWithoutInvitationsSentInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
+  status: string
+  isSuperAdmin?: boolean
+  tokenVersion?: bigint | number
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
+  userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
+  userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+}
+
+export type UserCreateOrConnectWithoutInvitationsSentInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutInvitationsSentInput, Prisma.UserUncheckedCreateWithoutInvitationsSentInput>
+}
+
+export type UserUpsertWithoutInvitationsSentInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutInvitationsSentInput, Prisma.UserUncheckedUpdateWithoutInvitationsSentInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutInvitationsSentInput, Prisma.UserUncheckedCreateWithoutInvitationsSentInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutInvitationsSentInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutInvitationsSentInput, Prisma.UserUncheckedUpdateWithoutInvitationsSentInput>
+}
+
+export type UserUpdateWithoutInvitationsSentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
+  userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
+  userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutInvitationsSentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
+  userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
 }
@@ -1283,6 +1486,7 @@ export type UserCountOutputType = {
   passwordResetTokens: number
   rolePermissionsGranted: number
   userRolesGranted: number
+  invitationsSent: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1292,6 +1496,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   passwordResetTokens?: boolean | UserCountOutputTypeCountPasswordResetTokensArgs
   rolePermissionsGranted?: boolean | UserCountOutputTypeCountRolePermissionsGrantedArgs
   userRolesGranted?: boolean | UserCountOutputTypeCountUserRolesGrantedArgs
+  invitationsSent?: boolean | UserCountOutputTypeCountInvitationsSentArgs
 }
 
 /**
@@ -1346,6 +1551,13 @@ export type UserCountOutputTypeCountUserRolesGrantedArgs<ExtArgs extends runtime
   where?: Prisma.UserRoleWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountInvitationsSentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantInvitationWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1355,6 +1567,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   phoneNumber?: boolean
   avatarUrl?: boolean
   status?: boolean
+  isSuperAdmin?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -1367,6 +1580,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
   rolePermissionsGranted?: boolean | Prisma.User$rolePermissionsGrantedArgs<ExtArgs>
   userRolesGranted?: boolean | Prisma.User$userRolesGrantedArgs<ExtArgs>
+  invitationsSent?: boolean | Prisma.User$invitationsSentArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1378,6 +1592,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phoneNumber?: boolean
   avatarUrl?: boolean
   status?: boolean
+  isSuperAdmin?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -1394,6 +1609,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   phoneNumber?: boolean
   avatarUrl?: boolean
   status?: boolean
+  isSuperAdmin?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -1410,6 +1626,7 @@ export type UserSelectScalar = {
   phoneNumber?: boolean
   avatarUrl?: boolean
   status?: boolean
+  isSuperAdmin?: boolean
   tokenVersion?: boolean
   lastLoginAt?: boolean
   createdAt?: boolean
@@ -1418,7 +1635,7 @@ export type UserSelectScalar = {
   deletedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "displayName" | "phoneNumber" | "avatarUrl" | "status" | "tokenVersion" | "lastLoginAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "email" | "passwordHash" | "displayName" | "phoneNumber" | "avatarUrl" | "status" | "isSuperAdmin" | "tokenVersion" | "lastLoginAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   userTenants?: boolean | Prisma.User$userTenantsArgs<ExtArgs>
   userRoles?: boolean | Prisma.User$userRolesArgs<ExtArgs>
@@ -1426,6 +1643,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   passwordResetTokens?: boolean | Prisma.User$passwordResetTokensArgs<ExtArgs>
   rolePermissionsGranted?: boolean | Prisma.User$rolePermissionsGrantedArgs<ExtArgs>
   userRolesGranted?: boolean | Prisma.User$userRolesGrantedArgs<ExtArgs>
+  invitationsSent?: boolean | Prisma.User$invitationsSentArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1440,6 +1658,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     passwordResetTokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
     rolePermissionsGranted: Prisma.$RolePermissionPayload<ExtArgs>[]
     userRolesGranted: Prisma.$UserRolePayload<ExtArgs>[]
+    invitationsSent: Prisma.$TenantInvitationPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1449,6 +1668,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     phoneNumber: string | null
     avatarUrl: string | null
     status: string
+    isSuperAdmin: boolean
     tokenVersion: bigint
     lastLoginAt: Date | null
     createdAt: Date
@@ -1855,6 +2075,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   passwordResetTokens<T extends Prisma.User$passwordResetTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$passwordResetTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   rolePermissionsGranted<T extends Prisma.User$rolePermissionsGrantedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$rolePermissionsGrantedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   userRolesGranted<T extends Prisma.User$userRolesGrantedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userRolesGrantedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  invitationsSent<T extends Prisma.User$invitationsSentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitationsSentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantInvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1891,6 +2112,7 @@ export interface UserFieldRefs {
   readonly phoneNumber: Prisma.FieldRef<"User", 'String'>
   readonly avatarUrl: Prisma.FieldRef<"User", 'String'>
   readonly status: Prisma.FieldRef<"User", 'String'>
+  readonly isSuperAdmin: Prisma.FieldRef<"User", 'Boolean'>
   readonly tokenVersion: Prisma.FieldRef<"User", 'BigInt'>
   readonly lastLoginAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
@@ -2431,6 +2653,30 @@ export type User$userRolesGrantedArgs<ExtArgs extends runtime.Types.Extensions.I
   take?: number
   skip?: number
   distinct?: Prisma.UserRoleScalarFieldEnum | Prisma.UserRoleScalarFieldEnum[]
+}
+
+/**
+ * User.invitationsSent
+ */
+export type User$invitationsSentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TenantInvitation
+   */
+  select?: Prisma.TenantInvitationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TenantInvitation
+   */
+  omit?: Prisma.TenantInvitationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantInvitationInclude<ExtArgs> | null
+  where?: Prisma.TenantInvitationWhereInput
+  orderBy?: Prisma.TenantInvitationOrderByWithRelationInput | Prisma.TenantInvitationOrderByWithRelationInput[]
+  cursor?: Prisma.TenantInvitationWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantInvitationScalarFieldEnum | Prisma.TenantInvitationScalarFieldEnum[]
 }
 
 /**

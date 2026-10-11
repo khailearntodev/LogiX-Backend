@@ -497,10 +497,6 @@ export type UserTenantUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.UserTenantScalarWhereInput | Prisma.UserTenantScalarWhereInput[]
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
-}
-
 export type UserTenantCreateWithoutTenantInput = {
   id?: string
   role?: string

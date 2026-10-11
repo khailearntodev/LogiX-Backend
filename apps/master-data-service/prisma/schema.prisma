@@ -36,6 +36,8 @@ model CustomerAddress {
   id            String    @id @default(uuid()) @db.Uuid
   tenantId      String    @map("tenant_id") @db.Uuid
   customerId    String    @map("customer_id") @db.Uuid
+  /// SHIPPING (ship-to) or BILLING (bill-to). Defaults are unique per type.
+  addressType   String    @default("SHIPPING") @map("address_type") @db.VarChar(20)
   label         String?   @db.VarChar(100)
   recipientName String    @map("recipient_name") @db.VarChar(200)
   phone         String?   @db.VarChar(30)
@@ -46,6 +48,7 @@ model CustomerAddress {
   postalCode    String?   @map("postal_code") @db.VarChar(20)
   latitude      Decimal?  @db.Decimal(9, 6)
   longitude     Decimal?  @db.Decimal(9, 6)
+  deliveryNote  String?   @map("delivery_note") @db.Text
   isDefault     Boolean   @default(false) @map("is_default")
   status        String    @db.VarChar(20)
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -55,7 +58,38 @@ model CustomerAddress {
   customer      Customer  @relation(fields: [customerId], references: [id])
 
   @@index([tenantId, customerId, status], map: "ix_customer_addresses_customer")
+  @@index([tenantId, customerId, addressType, status], map: "ix_customer_addresses_type")
   @@map("customer_addresses")
+  @@schema("master_data")
+}
+
+/// Supplier master data. Inventory receipts reference it by ID and keep a
+/// bounded snapshot; procurement workflows stay outside the MVP scope.
+model Supplier {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  code        String    @db.VarChar(50)
+  name        String    @db.VarChar(200)
+  taxCode     String?   @map("tax_code") @db.VarChar(50)
+  contactName String?   @map("contact_name") @db.VarChar(200)
+  phone       String?   @db.VarChar(30)
+  email       String?   @db.VarChar(320)
+  addressLine String    @map("address_line") @db.Text
+  ward        String?   @db.VarChar(100)
+  district    String?   @db.VarChar(100)
+  province    String    @db.VarChar(100)
+  postalCode  String?   @map("postal_code") @db.VarChar(20)
+  latitude    Decimal?  @db.Decimal(9, 6)
+  longitude   Decimal?  @db.Decimal(9, 6)
+  status      String    @db.VarChar(20)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version     BigInt    @default(1)
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, code], map: "ux_suppliers_tenant_code")
+  @@index([tenantId, status, name], map: "ix_suppliers_tenant_status_name")
+  @@map("suppliers")
   @@schema("master_data")
 }
 

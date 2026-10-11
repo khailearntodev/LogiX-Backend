@@ -122,6 +122,7 @@ export function toCustomerView(row: {
 export function toCustomerAddressView(row: {
   id: string;
   customerId: string;
+  addressType: string;
   label: string | null;
   recipientName: string;
   phone: string | null;
@@ -132,6 +133,7 @@ export function toCustomerAddressView(row: {
   postalCode: string | null;
   latitude: Decimal | null;
   longitude: Decimal | null;
+  deliveryNote: string | null;
   isDefault: boolean;
   status: string;
   createdAt: Date;
@@ -140,6 +142,7 @@ export function toCustomerAddressView(row: {
   return {
     id: row.id,
     customerId: row.customerId,
+    addressType: row.addressType,
     label: row.label,
     recipientName: row.recipientName,
     phone: row.phone,
@@ -150,6 +153,7 @@ export function toCustomerAddressView(row: {
     postalCode: row.postalCode,
     latitude: coord(row.latitude),
     longitude: coord(row.longitude),
+    deliveryNote: row.deliveryNote,
     isDefault: row.isDefault,
     status: row.status,
     createdAt: row.createdAt,

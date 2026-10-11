@@ -81,6 +81,9 @@ export const ShipmentScalarFieldEnum = {
   orderId: 'orderId',
   warehouseId: 'warehouseId',
   deliveryAddressId: 'deliveryAddressId',
+  customerSnapshot: 'customerSnapshot',
+  deliveryAddressSnapshot: 'deliveryAddressSnapshot',
+  issuerSnapshot: 'issuerSnapshot',
   status: 'status',
   totalWeight: 'totalWeight',
   totalVolume: 'totalVolume',
@@ -107,6 +110,8 @@ export const ShipmentItemScalarFieldEnum = {
   orderLineId: 'orderLineId',
   productId: 'productId',
   skuSnapshot: 'skuSnapshot',
+  productNameSnapshot: 'productNameSnapshot',
+  unitSnapshot: 'unitSnapshot',
   quantity: 'quantity',
   weight: 'weight',
   volume: 'volume',
@@ -199,20 +204,20 @@ export const JsonNullValueInput = {
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
-
-
-export const NullsOrder = {
-  first: 'first',
-  last: 'last'
-} as const
-
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 export const JsonNullValueFilter = {
@@ -222,4 +227,12 @@ export const JsonNullValueFilter = {
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 

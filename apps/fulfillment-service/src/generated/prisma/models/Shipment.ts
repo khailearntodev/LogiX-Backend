@@ -91,6 +91,9 @@ export type ShipmentCountAggregateOutputType = {
   orderId: number
   warehouseId: number
   deliveryAddressId: number
+  customerSnapshot: number
+  deliveryAddressSnapshot: number
+  issuerSnapshot: number
   status: number
   totalWeight: number
   totalVolume: number
@@ -174,6 +177,9 @@ export type ShipmentCountAggregateInputType = {
   orderId?: true
   warehouseId?: true
   deliveryAddressId?: true
+  customerSnapshot?: true
+  deliveryAddressSnapshot?: true
+  issuerSnapshot?: true
   status?: true
   totalWeight?: true
   totalVolume?: true
@@ -284,6 +290,9 @@ export type ShipmentGroupByOutputType = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: runtime.JsonValue
+  deliveryAddressSnapshot: runtime.JsonValue
+  issuerSnapshot: runtime.JsonValue | null
   status: string
   totalWeight: runtime.Decimal
   totalVolume: runtime.Decimal
@@ -330,6 +339,9 @@ export type ShipmentWhereInput = {
   orderId?: Prisma.UuidFilter<"Shipment"> | string
   warehouseId?: Prisma.UuidFilter<"Shipment"> | string
   deliveryAddressId?: Prisma.UuidFilter<"Shipment"> | string
+  customerSnapshot?: Prisma.JsonFilter<"Shipment">
+  deliveryAddressSnapshot?: Prisma.JsonFilter<"Shipment">
+  issuerSnapshot?: Prisma.JsonNullableFilter<"Shipment">
   status?: Prisma.StringFilter<"Shipment"> | string
   totalWeight?: Prisma.DecimalFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -355,6 +367,9 @@ export type ShipmentOrderByWithRelationInput = {
   orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
   deliveryAddressId?: Prisma.SortOrder
+  customerSnapshot?: Prisma.SortOrder
+  deliveryAddressSnapshot?: Prisma.SortOrder
+  issuerSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
@@ -385,6 +400,9 @@ export type ShipmentWhereUniqueInput = Prisma.AtLeast<{
   orderId?: Prisma.UuidFilter<"Shipment"> | string
   warehouseId?: Prisma.UuidFilter<"Shipment"> | string
   deliveryAddressId?: Prisma.UuidFilter<"Shipment"> | string
+  customerSnapshot?: Prisma.JsonFilter<"Shipment">
+  deliveryAddressSnapshot?: Prisma.JsonFilter<"Shipment">
+  issuerSnapshot?: Prisma.JsonNullableFilter<"Shipment">
   status?: Prisma.StringFilter<"Shipment"> | string
   totalWeight?: Prisma.DecimalFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -410,6 +428,9 @@ export type ShipmentOrderByWithAggregationInput = {
   orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
   deliveryAddressId?: Prisma.SortOrder
+  customerSnapshot?: Prisma.SortOrder
+  deliveryAddressSnapshot?: Prisma.SortOrder
+  issuerSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
@@ -441,6 +462,9 @@ export type ShipmentScalarWhereWithAggregatesInput = {
   orderId?: Prisma.UuidWithAggregatesFilter<"Shipment"> | string
   warehouseId?: Prisma.UuidWithAggregatesFilter<"Shipment"> | string
   deliveryAddressId?: Prisma.UuidWithAggregatesFilter<"Shipment"> | string
+  customerSnapshot?: Prisma.JsonWithAggregatesFilter<"Shipment">
+  deliveryAddressSnapshot?: Prisma.JsonWithAggregatesFilter<"Shipment">
+  issuerSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"Shipment">
   status?: Prisma.StringWithAggregatesFilter<"Shipment"> | string
   totalWeight?: Prisma.DecimalWithAggregatesFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalWithAggregatesFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -464,6 +488,9 @@ export type ShipmentCreateInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -489,6 +516,9 @@ export type ShipmentUncheckedCreateInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -514,6 +544,9 @@ export type ShipmentUpdateInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -539,6 +572,9 @@ export type ShipmentUncheckedUpdateInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -564,6 +600,9 @@ export type ShipmentCreateManyInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -587,6 +626,9 @@ export type ShipmentUpdateManyMutationInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -610,6 +652,9 @@ export type ShipmentUncheckedUpdateManyInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -643,6 +688,9 @@ export type ShipmentCountOrderByAggregateInput = {
   orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
   deliveryAddressId?: Prisma.SortOrder
+  customerSnapshot?: Prisma.SortOrder
+  deliveryAddressSnapshot?: Prisma.SortOrder
+  issuerSnapshot?: Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
@@ -789,6 +837,9 @@ export type ShipmentCreateWithoutItemsInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -813,6 +864,9 @@ export type ShipmentUncheckedCreateWithoutItemsInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -853,6 +907,9 @@ export type ShipmentUpdateWithoutItemsInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -877,6 +934,9 @@ export type ShipmentUncheckedUpdateWithoutItemsInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -901,6 +961,9 @@ export type ShipmentCreateWithoutStatusHistoryInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -925,6 +988,9 @@ export type ShipmentUncheckedCreateWithoutStatusHistoryInput = {
   orderId: string
   warehouseId: string
   deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -965,6 +1031,9 @@ export type ShipmentUpdateWithoutStatusHistoryInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -989,6 +1058,9 @@ export type ShipmentUncheckedUpdateWithoutStatusHistoryInput = {
   orderId?: Prisma.StringFieldUpdateOperationsInput | string
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1053,6 +1125,9 @@ export type ShipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   orderId?: boolean
   warehouseId?: boolean
   deliveryAddressId?: boolean
+  customerSnapshot?: boolean
+  deliveryAddressSnapshot?: boolean
+  issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
@@ -1079,6 +1154,9 @@ export type ShipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   orderId?: boolean
   warehouseId?: boolean
   deliveryAddressId?: boolean
+  customerSnapshot?: boolean
+  deliveryAddressSnapshot?: boolean
+  issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
@@ -1102,6 +1180,9 @@ export type ShipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   orderId?: boolean
   warehouseId?: boolean
   deliveryAddressId?: boolean
+  customerSnapshot?: boolean
+  deliveryAddressSnapshot?: boolean
+  issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
@@ -1125,6 +1206,9 @@ export type ShipmentSelectScalar = {
   orderId?: boolean
   warehouseId?: boolean
   deliveryAddressId?: boolean
+  customerSnapshot?: boolean
+  deliveryAddressSnapshot?: boolean
+  issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
   totalVolume?: boolean
@@ -1141,7 +1225,7 @@ export type ShipmentSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ShipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentNumber" | "orderId" | "warehouseId" | "deliveryAddressId" | "status" | "totalWeight" | "totalVolume" | "reservationGroupId" | "assignedTripId" | "dispatchIssuedAt" | "readyAt" | "deliveredAt" | "failedAt" | "failureReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["shipment"]>
+export type ShipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentNumber" | "orderId" | "warehouseId" | "deliveryAddressId" | "customerSnapshot" | "deliveryAddressSnapshot" | "issuerSnapshot" | "status" | "totalWeight" | "totalVolume" | "reservationGroupId" | "assignedTripId" | "dispatchIssuedAt" | "readyAt" | "deliveredAt" | "failedAt" | "failureReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["shipment"]>
 export type ShipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   items?: boolean | Prisma.Shipment$itemsArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Shipment$statusHistoryArgs<ExtArgs>
@@ -1163,6 +1247,15 @@ export type $ShipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     orderId: string
     warehouseId: string
     deliveryAddressId: string
+    /**
+     * Copied from the OrderConfirmed event; never re-read from Order or Master Data.
+     */
+    customerSnapshot: runtime.JsonValue
+    deliveryAddressSnapshot: runtime.JsonValue
+    /**
+     * Tenant legal profile printed on dispatch documents (optional).
+     */
+    issuerSnapshot: runtime.JsonValue | null
     status: string
     totalWeight: runtime.Decimal
     totalVolume: runtime.Decimal
@@ -1608,6 +1701,9 @@ export interface ShipmentFieldRefs {
   readonly orderId: Prisma.FieldRef<"Shipment", 'String'>
   readonly warehouseId: Prisma.FieldRef<"Shipment", 'String'>
   readonly deliveryAddressId: Prisma.FieldRef<"Shipment", 'String'>
+  readonly customerSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
+  readonly deliveryAddressSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
+  readonly issuerSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
   readonly status: Prisma.FieldRef<"Shipment", 'String'>
   readonly totalWeight: Prisma.FieldRef<"Shipment", 'Decimal'>
   readonly totalVolume: Prisma.FieldRef<"Shipment", 'Decimal'>

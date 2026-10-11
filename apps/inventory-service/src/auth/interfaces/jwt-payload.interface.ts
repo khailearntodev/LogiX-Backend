@@ -2,6 +2,9 @@ export interface JwtPayload {
   sub: string;
   email: string;
   tenantId: string;
+  role?: string;
+  isSuperAdmin?: boolean;
+  permissions?: string[];
   tokenVersion?: number;
   iat?: number;
   exp?: number;
@@ -13,4 +16,6 @@ export interface AuthenticatedUser {
   email: string;
   tenantId: string;
   role?: string;
+  isSuperAdmin?: boolean;
+  permissions?: string[];
 }

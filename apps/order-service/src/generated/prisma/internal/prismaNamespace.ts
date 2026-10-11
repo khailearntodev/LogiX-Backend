@@ -398,6 +398,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   SalesOrder: 'SalesOrder',
+  OrderNumberSequence: 'OrderNumberSequence',
   OrderLine: 'OrderLine',
   OrderStatusHistory: 'OrderStatusHistory',
   OrderShortage: 'OrderShortage',
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "salesOrder" | "orderLine" | "orderStatusHistory" | "orderShortage" | "outboxEvent" | "inboxEvent"
+    modelProps: "salesOrder" | "orderNumberSequence" | "orderLine" | "orderStatusHistory" | "orderShortage" | "outboxEvent" | "inboxEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -493,6 +494,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.SalesOrderCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.SalesOrderCountAggregateOutputType> | number
+        }
+      }
+    }
+    OrderNumberSequence: {
+      payload: Prisma.$OrderNumberSequencePayload<ExtArgs>
+      fields: Prisma.OrderNumberSequenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrderNumberSequenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrderNumberSequenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>
+        }
+        findFirst: {
+          args: Prisma.OrderNumberSequenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrderNumberSequenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>
+        }
+        findMany: {
+          args: Prisma.OrderNumberSequenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>[]
+        }
+        create: {
+          args: Prisma.OrderNumberSequenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>
+        }
+        createMany: {
+          args: Prisma.OrderNumberSequenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrderNumberSequenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>[]
+        }
+        delete: {
+          args: Prisma.OrderNumberSequenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>
+        }
+        update: {
+          args: Prisma.OrderNumberSequenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>
+        }
+        deleteMany: {
+          args: Prisma.OrderNumberSequenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrderNumberSequenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrderNumberSequenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>[]
+        }
+        upsert: {
+          args: Prisma.OrderNumberSequenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderNumberSequencePayload>
+        }
+        aggregate: {
+          args: Prisma.OrderNumberSequenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrderNumberSequence>
+        }
+        groupBy: {
+          args: Prisma.OrderNumberSequenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderNumberSequenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrderNumberSequenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderNumberSequenceCountAggregateOutputType> | number
         }
       }
     }
@@ -912,15 +987,21 @@ export const SalesOrderScalarFieldEnum = {
   customerId: 'customerId',
   deliveryAddressId: 'deliveryAddressId',
   warehouseId: 'warehouseId',
+  customerSnapshot: 'customerSnapshot',
+  deliveryAddressSnapshot: 'deliveryAddressSnapshot',
+  warehouseSnapshot: 'warehouseSnapshot',
+  billingAddressSnapshot: 'billingAddressSnapshot',
   currency: 'currency',
   status: 'status',
   orderSource: 'orderSource',
   externalChannel: 'externalChannel',
   externalOrderId: 'externalOrderId',
   idempotencyKey: 'idempotencyKey',
+  idempotencyRequestHash: 'idempotencyRequestHash',
   totalQuantity: 'totalQuantity',
   totalWeight: 'totalWeight',
   totalVolume: 'totalVolume',
+  pendingSince: 'pendingSince',
   confirmedAt: 'confirmedAt',
   canceledAt: 'canceledAt',
   completedAt: 'completedAt',
@@ -932,6 +1013,16 @@ export const SalesOrderScalarFieldEnum = {
 } as const
 
 export type SalesOrderScalarFieldEnum = (typeof SalesOrderScalarFieldEnum)[keyof typeof SalesOrderScalarFieldEnum]
+
+
+export const OrderNumberSequenceScalarFieldEnum = {
+  tenantId: 'tenantId',
+  period: 'period',
+  lastValue: 'lastValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type OrderNumberSequenceScalarFieldEnum = (typeof OrderNumberSequenceScalarFieldEnum)[keyof typeof OrderNumberSequenceScalarFieldEnum]
 
 
 export const OrderLineScalarFieldEnum = {
@@ -1055,20 +1146,20 @@ export const JsonNullValueInput = {
 export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
 
 
+export const NullableJsonNullValueInput = {
+  DbNull: DbNull,
+  JsonNull: JsonNull
+} as const
+
+export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
+
+
 export const QueryMode = {
   default: 'default',
   insensitive: 'insensitive'
 } as const
 
 export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
-
-
-export const NullsOrder = {
-  first: 'first',
-  last: 'last'
-} as const
-
-export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 export const JsonNullValueFilter = {
@@ -1078,6 +1169,14 @@ export const JsonNullValueFilter = {
 } as const
 
 export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+export const NullsOrder = {
+  first: 'first',
+  last: 'last'
+} as const
+
+export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
 
@@ -1097,6 +1196,20 @@ export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'String[]'
  */
 export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Json'
+ */
+export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+/**
+ * Reference to a field of type 'QueryMode'
+ */
+export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1153,20 +1266,6 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
-    
-
-
-/**
- * Reference to a field of type 'Json'
- */
-export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
-    
-
-
-/**
- * Reference to a field of type 'QueryMode'
- */
-export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
     
 
 
@@ -1335,6 +1434,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   salesOrder?: Prisma.SalesOrderOmit
+  orderNumberSequence?: Prisma.OrderNumberSequenceOmit
   orderLine?: Prisma.OrderLineOmit
   orderStatusHistory?: Prisma.OrderStatusHistoryOmit
   orderShortage?: Prisma.OrderShortageOmit

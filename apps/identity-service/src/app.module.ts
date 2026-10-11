@@ -8,12 +8,15 @@ import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
 import { AuthModule } from './auth/auth.module.js';
 import { OrganizationsModule } from './organizations/organizations.module.js';
+import { IamModule } from './iam/iam.module.js';
+import { MailModule } from './mail/mail.module.js';
 
 @Module({
   imports: [
     // Configuration with Zod validation — fails fast if env vars missing
     LogixConfigModule.forRoot({
       schema: databaseConfigSchema,
+      envFilePath: ['apps/identity-service/.env', '.env'],
     }),
 
     // Structured Pino logging with correlation ID propagation
@@ -23,8 +26,10 @@ import { OrganizationsModule } from './organizations/organizations.module.js';
 
     // Service-owned database
     DatabaseModule,
+    MailModule,
     AuthModule,
     OrganizationsModule,
+    IamModule,
   ],
   controllers: [AppController],
   providers: [

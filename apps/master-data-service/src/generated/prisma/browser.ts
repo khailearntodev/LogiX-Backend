@@ -28,6 +28,12 @@ export type Customer = Prisma.CustomerModel
  */
 export type CustomerAddress = Prisma.CustomerAddressModel
 /**
+ * Model Supplier
+ * Supplier master data. Inventory receipts reference it by ID and keep a
+ * bounded snapshot; procurement workflows stay outside the MVP scope.
+ */
+export type Supplier = Prisma.SupplierModel
+/**
  * Model Product
  * 
  */

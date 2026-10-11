@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsIn,
   IsLatitude,
   IsLongitude,
   IsNotEmpty,
@@ -7,8 +8,16 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { CustomerAddressType } from '../../common/master-data.constants.js';
 
 export class CreateCustomerAddressDto {
+  /** Immutable after creation; defaults to SHIPPING. */
+  @IsOptional()
+  @IsIn(Object.values(CustomerAddressType), {
+    message: 'addressType phải là SHIPPING hoặc BILLING',
+  })
+  addressType?: CustomerAddressType;
+
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -57,6 +66,11 @@ export class CreateCustomerAddressDto {
   @IsString()
   @IsLongitude({ message: 'longitude phải nằm trong khoảng -180 đến 180' })
   longitude?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  deliveryNote?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -115,4 +129,9 @@ export class UpdateCustomerAddressDto {
   @IsString()
   @IsLongitude({ message: 'longitude phải nằm trong khoảng -180 đến 180' })
   longitude?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  deliveryNote?: string;
 }

@@ -10,10 +10,14 @@ import { AuthProxyMiddleware } from './proxy/auth-proxy.middleware.js';
 import { AgentProxyMiddleware } from './proxy/agent-proxy.middleware.js';
 import { InventoryProxyMiddleware } from './proxy/inventory-proxy.middleware.js';
 import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.js';
+import { OrderProxyMiddleware } from './proxy/order-proxy.middleware.js';
+import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 
 @Module({
   imports: [
-    LogixConfigModule.forRoot(),
+    LogixConfigModule.forRoot({
+      schema: gatewayConfigSchema,
+    }),
 
     LogixLoggerModule.forRoot({
       serviceName: 'api-gateway',
@@ -42,12 +46,14 @@ import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    // Chuyển hướng các request /api/v1/auth sang identity-service
+    // Chuyển hướng các request /api/v1/auth và /api/v1/iam sang identity-service
     consumer
       .apply(AuthProxyMiddleware)
       .forRoutes(
         { path: 'api/v1/auth', method: RequestMethod.ALL },
         { path: 'api/v1/auth/*', method: RequestMethod.ALL },
+        { path: 'api/v1/iam', method: RequestMethod.ALL },
+        { path: 'api/v1/iam/*', method: RequestMethod.ALL },
       );
 
     // Chuyển hướng các request /api/v1/inventory sang inventory-service
@@ -70,12 +76,16 @@ export class AppModule implements NestModule {
         { path: 'api/v1/vehicles/*', method: RequestMethod.ALL },
       );
 
-    // Chuyển hướng các request /api/v1/agent sang agent-service (AG-UI qua SSE)
     consumer
       .apply(AgentProxyMiddleware)
       .forRoutes(
         { path: 'api/v1/agent', method: RequestMethod.ALL },
         { path: 'api/v1/agent/*', method: RequestMethod.ALL },
+    consumer
+      .apply(OrderProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/orders', method: RequestMethod.ALL },
+        { path: 'api/v1/orders/*', method: RequestMethod.ALL },
       );
   }
 }

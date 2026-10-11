@@ -14,7 +14,7 @@ export class AuthProxyMiddleware implements NestMiddleware {
       changeOrigin: true,
       secure: false,
       ws: true,
-      pathFilter: (path: string) => path.startsWith('/api/v1/auth'),
+      pathFilter: (path: string) => path.startsWith('/api/v1/auth') || path.startsWith('/api/v1/iam'),
       on: {
         proxyReq: (proxyReq, req: any) => {
           // Preserve client IP and headers

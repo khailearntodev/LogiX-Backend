@@ -23,6 +23,11 @@ export * from './enums.js';
  */
 export type SalesOrder = Prisma.SalesOrderModel
 /**
+ * Model OrderNumberSequence
+ * Per-tenant daily counter for order numbers (SO-YYYYMMDD-000001); incremented with UPDATE ... RETURNING.
+ */
+export type OrderNumberSequence = Prisma.OrderNumberSequenceModel
+/**
  * Model OrderLine
  * 
  */

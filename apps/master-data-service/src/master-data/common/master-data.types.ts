@@ -65,6 +65,7 @@ export interface CustomerView {
 export interface CustomerAddressView extends GeoPoint {
   id: string;
   customerId: string;
+  addressType: string;
   label: string | null;
   recipientName: string;
   phone: string | null;
@@ -73,6 +74,7 @@ export interface CustomerAddressView extends GeoPoint {
   district: string | null;
   province: string;
   postalCode: string | null;
+  deliveryNote: string | null;
   isDefault: boolean;
   status: string;
   createdAt: Date;

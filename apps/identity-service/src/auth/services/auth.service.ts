@@ -16,12 +16,16 @@ import { ResetPasswordDto } from '../dto/reset-password.dto.js';
 import { SwitchTenantDto } from '../dto/switch-tenant.dto.js';
 import { UpdateProfileDto } from '../dto/update-profile.dto.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
+import { RolesService } from '../../iam/services/roles.service.js';
+import { MailService } from '../../mail/services/mail.service.js';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
+    private readonly rolesService: RolesService,
+    private readonly mailService: MailService,
   ) { }
 
   async login(dto: LoginDto, meta?: { userAgent?: string; ipAddress?: string }) {
@@ -57,6 +61,73 @@ export class AuthService {
     }
 
     if (!user.userTenants || user.userTenants.length === 0) {
+      if (user.isSuperAdmin) {
+        const firstTenant = await this.prisma.tenant.findFirst({
+          where: { status: 'ACTIVE', deletedAt: null },
+          orderBy: { createdAt: 'asc' },
+        });
+
+        const tenantId = dto.tenantId || firstTenant?.id || '';
+        const payload = {
+          sub: user.id,
+          email: user.email,
+          tenantId,
+          role: 'OWNER',
+          isSuperAdmin: true,
+          permissions: ['*'],
+        };
+
+        const accessToken = this.tokenService.generateAccessToken(payload);
+        const refreshToken = this.tokenService.generateRefreshToken(payload);
+
+        await this.tokenService.createSession({
+          userId: user.id,
+          tenantId,
+          refreshToken,
+          userAgent: meta?.userAgent,
+          ipAddress: meta?.ipAddress,
+        });
+
+        await this.prisma.user.update({
+          where: { id: user.id },
+          data: { lastLoginAt: new Date() },
+        });
+
+        const allTenants = await this.prisma.tenant.findMany({
+          where: { status: 'ACTIVE', deletedAt: null },
+          orderBy: { name: 'asc' },
+        });
+
+        return {
+          accessToken,
+          refreshToken,
+          user: {
+            id: user.id,
+            email: user.email,
+            displayName: user.displayName,
+            phoneNumber: user.phoneNumber,
+            avatarUrl: user.avatarUrl,
+            isSuperAdmin: true,
+          },
+          activeTenant: firstTenant
+            ? {
+                id: firstTenant.id,
+                code: firstTenant.code,
+                name: firstTenant.name,
+                logoUrl: firstTenant.logoUrl,
+                role: 'OWNER',
+              }
+            : null,
+          tenants: allTenants.map((t) => ({
+            id: t.id,
+            code: t.code,
+            name: t.name,
+            logoUrl: t.logoUrl,
+            role: 'SUPER_ADMIN',
+            isDefault: t.id === tenantId,
+          })),
+        };
+      }
       throw new UnauthorizedException('Bạn chưa tham gia tổ chức nào hoặc tài khoản tại tổ chức đã bị ngưng hoạt động');
     }
 
@@ -88,10 +159,46 @@ export class AuthService {
       }),
     ]);
 
+    let permissions: string[] = [];
+    if (user.isSuperAdmin || selectedUserTenant.role === 'OWNER') {
+      permissions = ['*'];
+    } else {
+      const userRoles = await this.prisma.userRole.findMany({
+        where: {
+          userId: user.id,
+          tenantId: selectedUserTenant.tenantId,
+          deletedAt: null,
+        },
+        include: {
+          role: {
+            include: {
+              rolePermissions: {
+                where: { deletedAt: null },
+                include: { permission: true },
+              },
+            },
+          },
+        },
+      });
+
+      const permSet = new Set<string>();
+      for (const ur of userRoles) {
+        for (const rp of ur.role.rolePermissions) {
+          if (rp.permission && !rp.permission.deletedAt) {
+            permSet.add(rp.permission.code);
+          }
+        }
+      }
+      permissions = Array.from(permSet);
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,
       tenantId: selectedUserTenant.tenantId,
+      role: selectedUserTenant.role,
+      isSuperAdmin: Boolean(user.isSuperAdmin),
+      permissions,
     };
 
     const accessToken = this.tokenService.generateAccessToken(payload);
@@ -123,6 +230,7 @@ export class AuthService {
         displayName: user.displayName,
         phoneNumber: user.phoneNumber,
         avatarUrl: user.avatarUrl,
+        isSuperAdmin: Boolean(user.isSuperAdmin),
       },
       activeTenant: {
         id: selectedUserTenant.tenant.id,
@@ -226,6 +334,23 @@ export class AuthService {
       },
     });
 
+    if (isNewTenantCreated) {
+      await this.rolesService.initializeTenantRoles(tenant.id, user.id);
+    } else {
+      const memberRole = await this.prisma.role.findFirst({
+        where: { tenantId: tenant.id, code: 'MEMBER', deletedAt: null },
+      });
+      if (memberRole) {
+        await this.prisma.userRole.create({
+          data: {
+            tenantId: tenant.id,
+            userId: user.id,
+            roleId: memberRole.id,
+          },
+        });
+      }
+    }
+
     return {
       id: user.id,
       email: user.email,
@@ -240,7 +365,7 @@ export class AuthService {
   }
 
   async switchTenant(userId: string, dto: SwitchTenantDto, meta?: { userAgent?: string; ipAddress?: string }) {
-    const userTenant = await this.prisma.userTenant.findFirst({
+    let userTenant = await this.prisma.userTenant.findFirst({
       where: {
         userId,
         tenantId: dto.tenantId,
@@ -261,6 +386,33 @@ export class AuthService {
       },
     });
 
+    if (!userTenant) {
+      const user = await this.prisma.user.findFirst({
+        where: { id: userId, status: 'ACTIVE', deletedAt: null },
+      });
+      if (user?.isSuperAdmin) {
+        const tenant = await this.prisma.tenant.findFirst({
+          where: { id: dto.tenantId, status: 'ACTIVE', deletedAt: null },
+        });
+        if (tenant) {
+          userTenant = {
+            id: `sa_switch_${tenant.id}`,
+            userId: user.id,
+            tenantId: tenant.id,
+            role: 'OWNER',
+            status: 'ACTIVE',
+            isDefault: false,
+            joinedAt: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            deletedAt: null,
+            user,
+            tenant,
+          } as any;
+        }
+      }
+    }
+
     if (
       !userTenant ||
       !userTenant.user ||
@@ -273,16 +425,54 @@ export class AuthService {
       throw new UnauthorizedException('Bạn không có quyền chuyển sang tổ chức này hoặc tổ chức đã bị ngưng hoạt động');
     }
 
-    // Cập nhật thời điểm vừa tương tác/làm việc tại Tenant này
-    await this.prisma.userTenant.update({
-      where: { id: userTenant.id },
-      data: { updatedAt: new Date() },
-    });
+    // Cập nhật thời điểm vừa tương tác/làm việc tại Tenant này nếu có bản ghi thực tế
+    if (!userTenant.id.startsWith('sa_switch_')) {
+      await this.prisma.userTenant.update({
+        where: { id: userTenant.id },
+        data: { updatedAt: new Date() },
+      });
+    }
+
+    let permissions: string[] = [];
+    if (userTenant.user.isSuperAdmin || userTenant.role === 'OWNER') {
+      permissions = ['*'];
+    } else {
+      const userRoles = await this.prisma.userRole.findMany({
+        where: {
+          userId: userTenant.userId,
+          tenantId: userTenant.tenantId,
+          deletedAt: null,
+        },
+        include: {
+          role: {
+            include: {
+              rolePermissions: {
+                where: { deletedAt: null },
+                include: { permission: true },
+              },
+            },
+          },
+        },
+      });
+
+      const permSet = new Set<string>();
+      for (const ur of userRoles) {
+        for (const rp of ur.role.rolePermissions) {
+          if (rp.permission && !rp.permission.deletedAt) {
+            permSet.add(rp.permission.code);
+          }
+        }
+      }
+      permissions = Array.from(permSet);
+    }
 
     const payload = {
       sub: userTenant.userId,
       email: userTenant.user.email,
       tenantId: userTenant.tenantId,
+      role: userTenant.role,
+      isSuperAdmin: Boolean(userTenant.user.isSuperAdmin),
+      permissions,
     };
 
     const accessToken = this.tokenService.generateAccessToken(payload);
@@ -299,6 +489,14 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      user: {
+        id: userTenant.user.id,
+        email: userTenant.user.email,
+        displayName: userTenant.user.displayName,
+        phoneNumber: userTenant.user.phoneNumber,
+        avatarUrl: userTenant.user.avatarUrl,
+        isSuperAdmin: Boolean(userTenant.user.isSuperAdmin),
+      },
       activeTenant: {
         id: userTenant.tenant.id,
         code: userTenant.tenant.code,
@@ -336,9 +534,19 @@ export class AuthService {
       },
     });
 
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3009';
+    const resetLink = `${frontendUrl}/reset-password?token=${rawToken}&email=${encodeURIComponent(user.email)}`;
+
+    // Gửi email khôi phục mật khẩu qua Gmail SMTP
+    await this.mailService.sendResetPasswordEmail({
+      toEmail: user.email,
+      displayName: user.displayName || user.email.split('@')[0],
+      resetLink,
+      expiresAt,
+    });
+
     return {
       message: 'Hướng dẫn khôi phục mật khẩu đã được gửi đến email của bạn.',
-      devToken: process.env.NODE_ENV !== 'production' ? rawToken : undefined,
     };
   }
 
@@ -481,7 +689,7 @@ export class AuthService {
       ? user.userTenants.find((ut) => ut.tenantId === currentTenantId) || user.userTenants[0]
       : user.userTenants[0];
 
-    const tenantsList = user.userTenants.map((ut) => ({
+    let tenantsList = user.userTenants.map((ut) => ({
       id: ut.tenant.id,
       code: ut.tenant.code,
       name: ut.tenant.name,
@@ -490,6 +698,48 @@ export class AuthService {
       isDefault: ut.isDefault,
     }));
 
+    let activeTenantData = activeUserTenant
+      ? {
+          id: activeUserTenant.tenant.id,
+          code: activeUserTenant.tenant.code,
+          name: activeUserTenant.tenant.name,
+          logoUrl: activeUserTenant.tenant.logoUrl,
+          role: activeUserTenant.role,
+        }
+      : null;
+
+    if (user.isSuperAdmin) {
+      if (tenantsList.length === 0) {
+        const allTenants = await this.prisma.tenant.findMany({
+          where: { status: 'ACTIVE', deletedAt: null },
+          orderBy: { name: 'asc' },
+        });
+        tenantsList = allTenants.map((t) => ({
+          id: t.id,
+          code: t.code,
+          name: t.name,
+          logoUrl: t.logoUrl,
+          role: 'SUPER_ADMIN',
+          isDefault: t.id === currentTenantId,
+        }));
+      }
+
+      if (!activeTenantData && currentTenantId) {
+        const tenant = await this.prisma.tenant.findFirst({
+          where: { id: currentTenantId, status: 'ACTIVE', deletedAt: null },
+        });
+        if (tenant) {
+          activeTenantData = {
+            id: tenant.id,
+            code: tenant.code,
+            name: tenant.name,
+            logoUrl: tenant.logoUrl,
+            role: 'OWNER',
+          };
+        }
+      }
+    }
+
     return {
       id: user.id,
       email: user.email,
@@ -497,16 +747,9 @@ export class AuthService {
       phoneNumber: user.phoneNumber,
       avatarUrl: user.avatarUrl,
       status: user.status,
+      isSuperAdmin: Boolean(user.isSuperAdmin),
       lastLoginAt: user.lastLoginAt,
-      activeTenant: activeUserTenant
-        ? {
-          id: activeUserTenant.tenant.id,
-          code: activeUserTenant.tenant.code,
-          name: activeUserTenant.tenant.name,
-          logoUrl: activeUserTenant.tenant.logoUrl,
-          role: activeUserTenant.role,
-        }
-        : null,
+      activeTenant: activeTenantData,
       tenants: tenantsList,
     };
   }
