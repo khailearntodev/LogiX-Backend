@@ -81,6 +81,7 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: 'api/v1/agent', method: RequestMethod.ALL },
         { path: 'api/v1/agent/*', method: RequestMethod.ALL },
+      );
     consumer
       .apply(OrderProxyMiddleware)
       .forRoutes(
