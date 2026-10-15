@@ -14,6 +14,14 @@ class AgentSettings(BaseSettings):
     # Must equal identity-service JWT_SECRET; requests are rejected while unset.
     jwt_secret: str | None = None
 
+    # ── Downstream services (tool calls) ─────────────────────────
+    identity_service_url: str = "http://localhost:3001"
+    order_service_url: str = "http://localhost:3002"
+    master_data_service_url: str = "http://localhost:3003"
+    inventory_service_url: str = "http://localhost:3004"
+    tool_http_timeout_seconds: float = 10.0
+    tool_http_max_attempts: int = 2
+
     # ── LLM Gateway ──────────────────────────────────────────────
     llm_gateway_backend: str = "gemini"  # "gemini" | "litellm_sdk" | "fake"
     gemini_api_key: str | None = None

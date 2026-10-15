@@ -6,7 +6,7 @@ from the verified JWT (payload: ``sub``, ``tenantId``).
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import jwt
 from fastapi import Depends, HTTPException, status
@@ -21,6 +21,10 @@ _bearer = HTTPBearer(auto_error=False)
 class Actor:
     user_id: str
     tenant_id: str
+    role: str | None = None
+    permissions: frozenset[str] = frozenset()
+    # Forwarded to downstream services; kept out of repr so it never reaches logs.
+    access_token: str | None = field(default=None, repr=False)
 
 
 def _unauthorized() -> HTTPException:
@@ -58,4 +62,19 @@ def get_current_actor(
         raise _unauthorized()
     if not isinstance(tenant_id, str) or not tenant_id:
         raise _unauthorized()
-    return Actor(user_id=user_id, tenant_id=tenant_id)
+
+    # Optional claims: identity-service does not issue them yet; downstream services stay authoritative.
+    role = payload.get("role")
+    raw_permissions = payload.get("permissions")
+    permissions = (
+        frozenset(p for p in raw_permissions if isinstance(p, str))
+        if isinstance(raw_permissions, list)
+        else frozenset()
+    )
+    return Actor(
+        user_id=user_id,
+        tenant_id=tenant_id,
+        role=role if isinstance(role, str) else None,
+        permissions=permissions,
+        access_token=credentials.credentials,
+    )
