@@ -25,7 +25,7 @@ class AgentSettings(BaseSettings):
     # ── LLM Gateway ──────────────────────────────────────────────
     llm_gateway_backend: str = "gemini"  # "gemini" | "litellm_sdk" | "fake"
     gemini_api_key: str | None = None
-    planner_default_model: str = "gemini-2.5-flash"
+    planner_default_model: str = "gemini-2.5-flash-lite"
     planner_fallback_model: str | None = None
     llm_timeout_seconds: int = 30
     llm_max_attempts: int = 2
