@@ -22,10 +22,14 @@ class AgentSettings(BaseSettings):
     tool_http_timeout_seconds: float = 10.0
     tool_http_max_attempts: int = 2
 
+    # ── Agent built on LangChain's create_agent (modules/agent) ──
+    # "provider:model" string; the Gemini key below is the only one wired so far.
+    agent_model: str = "google_genai:gemini-3.5-flash-lite"
+
     # ── LLM Gateway ──────────────────────────────────────────────
     llm_gateway_backend: str = "gemini"  # "gemini" | "litellm_sdk" | "fake"
     gemini_api_key: str | None = None
-    planner_default_model: str = "gemini-2.5-flash"
+    planner_default_model: str = "gemini-3.5-flash-lite"
     planner_fallback_model: str | None = None
     llm_timeout_seconds: int = 30
     llm_max_attempts: int = 2

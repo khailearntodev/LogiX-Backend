@@ -11,6 +11,7 @@ from collections.abc import Mapping
 
 import httpx
 
+from logix_agent.config import AgentSettings
 from logix_agent.modules.registry import ToolContext, ToolError
 
 TOOL_TIMEOUT = "TOOL_TIMEOUT"
@@ -122,3 +123,16 @@ class ServiceClient:
             raise ToolError(
                 TOOL_BAD_RESPONSE, "Dịch vụ nghiệp vụ trả về dữ liệu không hợp lệ."
             ) from None
+
+
+def create_service_client(settings: AgentSettings) -> ServiceClient:
+    return ServiceClient(
+        base_urls={
+            "identity": settings.identity_service_url,
+            "order": settings.order_service_url,
+            "master_data": settings.master_data_service_url,
+            "inventory": settings.inventory_service_url,
+        },
+        timeout_seconds=settings.tool_http_timeout_seconds,
+        max_attempts=settings.tool_http_max_attempts,
+    )
