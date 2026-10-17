@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ShipmentIssueService } from './services/shipment-issue.service.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { InventoryBalancesController } from './inventory-balances.controller.js';
 import { StockMovementsController } from './stock-movements.controller.js';
@@ -33,6 +34,13 @@ import { Kafka } from 'kafkajs';
     ReservationService,
     ReservationOrderEventsService,
     ReservationReconcilerService,
+    ShipmentIssueService,
+    {
+      provide: 'INVENTORY_SHIPMENT_CONSUMER', inject: [Kafka, ConfigService, ShipmentIssueService],
+      useFactory: (kafka: Kafka, config: ConfigService, events: ShipmentIssueService) =>
+        new KafkaEventConsumer(kafka, config.getOrThrow<string>('KAFKA_FULFILLMENT_TOPIC'),
+          `${config.getOrThrow<string>('KAFKA_GROUP_ID')}.shipments`, event => events.handle(event)),
+    },
     {
       provide: KafkaEventConsumer,
       inject: [Kafka, ConfigService, ReservationOrderEventsService],

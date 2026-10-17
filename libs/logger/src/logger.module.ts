@@ -57,6 +57,7 @@ export class LogixLoggerModule {
                   paths: [
                     'req.headers.authorization',
                     'req.headers.cookie',
+                    'req.headers["x-internal-service-token"]',
                     'req.body.password',
                     'req.body.token',
                     'req.body.secret',

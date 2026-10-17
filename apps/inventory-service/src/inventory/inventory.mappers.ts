@@ -29,6 +29,7 @@ export function toMovementView(row: StockMovement): StockMovementView {
     afterOnHand: row.afterOnHand.toFixed(3),
     referenceType: row.referenceType,
     referenceId: row.referenceId,
+    referenceNumber: null,
     reason: row.reason,
     actorId: row.actorId,
     occurredAt: row.occurredAt,

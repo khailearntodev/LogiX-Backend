@@ -769,10 +769,6 @@ export type StockMovementUncheckedUpdateManyWithoutBalanceNestedInput = {
   deleteMany?: Prisma.StockMovementScalarWhereInput | Prisma.StockMovementScalarWhereInput[]
 }
 
-export type NullableStringFieldUpdateOperationsInput = {
-  set?: string | null
-}
-
 export type StockMovementCreateNestedOneWithoutReceiptLineInput = {
   create?: Prisma.XOR<Prisma.StockMovementCreateWithoutReceiptLineInput, Prisma.StockMovementUncheckedCreateWithoutReceiptLineInput>
   connectOrCreate?: Prisma.StockMovementCreateOrConnectWithoutReceiptLineInput

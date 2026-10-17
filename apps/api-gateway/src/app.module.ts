@@ -12,6 +12,7 @@ import { InventoryProxyMiddleware } from './proxy/inventory-proxy.middleware.js'
 import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.js';
 import { OrderProxyMiddleware } from './proxy/order-proxy.middleware.js';
 import { gatewayConfigSchema } from './config/gateway-config.schema.js';
+import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware.js';
 
 @Module({
   imports: [
@@ -46,6 +47,10 @@ import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer.apply(FulfillmentProxyMiddleware).forRoutes(
+      { path: 'api/v1/shipments', method: RequestMethod.ALL },
+      { path: 'api/v1/shipments/*', method: RequestMethod.ALL },
+    );
     // Chuyển hướng các request /api/v1/auth và /api/v1/iam sang identity-service
     consumer
       .apply(AuthProxyMiddleware)

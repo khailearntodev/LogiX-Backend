@@ -51,6 +51,33 @@ intents. `cancellationRequestedAt` is exposed for the UI to display recovery.
 Repeated public cancel after completion returns 409; recovery workers tolerate
 already completed cancellation without another release.
 
+## Dispatch arbitration (phase 5A)
+
+`POST /internal/orders/:orderId/authorize-dispatch` accepts only an internal
+token issued by Fulfillment for Order. It is not proxied by Gateway and does
+not accept a user access token. Tenant comes from the verified internal claim,
+never the body. The body contains UUID `requestId`, `shipmentId`,
+`reservationGroupId`, `actorId` and positive safe-integer `orderVersion`.
+Success returns 201 with those fields, `orderId`, `grantedAt` and the original
+`correlationId`; exact retries return the same decision.
+
+Fulfillment must persist the exact request before calling. Only READY_TO_SHIP
+with the expected version and matching reservation can receive a new grant.
+Order locks the same row as cancellation and persists the grant plus a version
+increment, without changing business status. A pending cancellation blocks a
+grant; a grant blocks cancel and cancellation recovery before Inventory release.
+Cancellation is allowed in PICKING/READY_TO_SHIP only before a grant.
+
+The decision does not expire and is not proof of completed dispatch/stock issue.
+After a grant Fulfillment must recover forward, never infer rejection from a
+timeout. Different replay content or a request key used for another order
+returns 409. A database CHECK forbids partial decisions and simultaneous
+cancellation/dispatch. Deploy the additive migration before the new code.
+
+Fulfillment's dispatch-intent worker, shipment lifecycle events, Inventory ISSUE
+and the confirmation dialog are subsequent phase-5 work; this internal endpoint
+alone does not enable user dispatch.
+
 ## Events and reconciliation
 
 - Shared relay publishes Order outbox to `KAFKA_ORDER_TOPIC`, preserving

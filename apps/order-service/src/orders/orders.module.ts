@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { OrderShipmentEventsService } from './services/order-shipment-events.service.js';
+import { OrdersFulfillmentInternalController } from './orders-fulfillment.internal.controller.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { MasterDataClient } from './integrations/master-data.client.js';
 import { OrdersHealthController } from './orders-health.controller.js';
@@ -16,6 +18,8 @@ import { ConfigService } from '@nestjs/config';
 import { KafkaEventConsumer } from '@logix/messaging';
 import { Kafka } from 'kafkajs';
 import { OrdersInternalController } from './orders.internal.controller.js';
+import { OrdersDispatchInternalController } from './orders-dispatch.internal.controller.js';
+import { OrderDispatchService } from './services/order-dispatch.service.js';
 import {
   INTERNAL_SERVICE_AUTH_OPTIONS,
   InternalServiceGuard,
@@ -28,6 +32,8 @@ import {
     OrdersHealthController,
     OrdersController,
     OrdersInternalController,
+    OrdersDispatchInternalController,
+    OrdersFulfillmentInternalController,
   ],
   providers: [
     MasterDataClient,
@@ -35,6 +41,13 @@ import {
     OrderReservationService,
     OrderCancellationRecoveryService,
     OrderStockEventsService,
+    OrderShipmentEventsService,
+    {
+      provide: 'ORDER_SHIPMENT_CONSUMER', inject: [Kafka, ConfigService, OrderShipmentEventsService],
+      useFactory: (kafka: Kafka, config: ConfigService, events: OrderShipmentEventsService) =>
+        new KafkaEventConsumer(kafka, config.getOrThrow<string>('KAFKA_FULFILLMENT_TOPIC'),
+          `${config.getOrThrow<string>('KAFKA_GROUP_ID')}.shipments`, event => events.handle(event)),
+    },
     InternalServiceGuard,
     {
       provide: INTERNAL_SERVICE_AUTH_OPTIONS,
@@ -79,6 +92,7 @@ import {
     OrderOutboxWriter,
     OrderCommandService,
     OrderQueryService,
+    OrderDispatchService,
   ],
 })
 export class OrdersModule {}

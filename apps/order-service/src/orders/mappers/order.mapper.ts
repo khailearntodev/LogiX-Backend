@@ -137,6 +137,8 @@ export function toOrderSummaryView(order: SalesOrder): OrderSummaryView {
     updatedAt: order.updatedAt,
     pendingSince: order.pendingSince,
     cancellationRequestedAt: order.cancellationRequestedAt,
+    dispatchGrantedAt: order.dispatchGrantedAt,
+    dispatchShipmentId: order.dispatchShipmentId,
     version: toVersionNumber(order.version),
   };
 }

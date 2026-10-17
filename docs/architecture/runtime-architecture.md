@@ -130,6 +130,11 @@ Secrets such as API keys must come from secret/configuration mechanisms and must
 
 Every service must emit structured logs and metrics appropriate to its responsibility. Cross-service operations use correlation metadata.
 
+The shared `@logix/logger` redacts `Authorization`, cookies and
+`x-internal-service-token` request headers in both development and production.
+Correlation headers remain available; request bodies are not enabled for HTTP
+logging. Keep the logger credential-redaction regression when changing logging.
+
 The MVP must make it possible to observe at least:
 
 - API latency;

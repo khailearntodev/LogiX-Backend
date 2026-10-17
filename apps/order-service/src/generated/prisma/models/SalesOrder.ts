@@ -30,6 +30,7 @@ export type SalesOrderAvgAggregateOutputType = {
   totalQuantity: runtime.Decimal | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
+  dispatchOrderVersion: number | null
   version: number | null
 }
 
@@ -37,6 +38,7 @@ export type SalesOrderSumAggregateOutputType = {
   totalQuantity: runtime.Decimal | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
+  dispatchOrderVersion: bigint | null
   version: bigint | null
 }
 
@@ -64,6 +66,12 @@ export type SalesOrderMinAggregateOutputType = {
   cancellationReason: string | null
   cancellationActorId: string | null
   cancellationCorrelationId: string | null
+  dispatchRequestId: string | null
+  dispatchShipmentId: string | null
+  dispatchOrderVersion: bigint | null
+  dispatchGrantedAt: Date | null
+  dispatchActorId: string | null
+  dispatchCorrelationId: string | null
   canceledAt: Date | null
   completedAt: Date | null
   cancelReason: string | null
@@ -97,6 +105,12 @@ export type SalesOrderMaxAggregateOutputType = {
   cancellationReason: string | null
   cancellationActorId: string | null
   cancellationCorrelationId: string | null
+  dispatchRequestId: string | null
+  dispatchShipmentId: string | null
+  dispatchOrderVersion: bigint | null
+  dispatchGrantedAt: Date | null
+  dispatchActorId: string | null
+  dispatchCorrelationId: string | null
   canceledAt: Date | null
   completedAt: Date | null
   cancelReason: string | null
@@ -134,6 +148,12 @@ export type SalesOrderCountAggregateOutputType = {
   cancellationReason: number
   cancellationActorId: number
   cancellationCorrelationId: number
+  dispatchRequestId: number
+  dispatchShipmentId: number
+  dispatchOrderVersion: number
+  dispatchGrantedAt: number
+  dispatchActorId: number
+  dispatchCorrelationId: number
   canceledAt: number
   completedAt: number
   cancelReason: number
@@ -149,6 +169,7 @@ export type SalesOrderAvgAggregateInputType = {
   totalQuantity?: true
   totalWeight?: true
   totalVolume?: true
+  dispatchOrderVersion?: true
   version?: true
 }
 
@@ -156,6 +177,7 @@ export type SalesOrderSumAggregateInputType = {
   totalQuantity?: true
   totalWeight?: true
   totalVolume?: true
+  dispatchOrderVersion?: true
   version?: true
 }
 
@@ -183,6 +205,12 @@ export type SalesOrderMinAggregateInputType = {
   cancellationReason?: true
   cancellationActorId?: true
   cancellationCorrelationId?: true
+  dispatchRequestId?: true
+  dispatchShipmentId?: true
+  dispatchOrderVersion?: true
+  dispatchGrantedAt?: true
+  dispatchActorId?: true
+  dispatchCorrelationId?: true
   canceledAt?: true
   completedAt?: true
   cancelReason?: true
@@ -216,6 +244,12 @@ export type SalesOrderMaxAggregateInputType = {
   cancellationReason?: true
   cancellationActorId?: true
   cancellationCorrelationId?: true
+  dispatchRequestId?: true
+  dispatchShipmentId?: true
+  dispatchOrderVersion?: true
+  dispatchGrantedAt?: true
+  dispatchActorId?: true
+  dispatchCorrelationId?: true
   canceledAt?: true
   completedAt?: true
   cancelReason?: true
@@ -253,6 +287,12 @@ export type SalesOrderCountAggregateInputType = {
   cancellationReason?: true
   cancellationActorId?: true
   cancellationCorrelationId?: true
+  dispatchRequestId?: true
+  dispatchShipmentId?: true
+  dispatchOrderVersion?: true
+  dispatchGrantedAt?: true
+  dispatchActorId?: true
+  dispatchCorrelationId?: true
   canceledAt?: true
   completedAt?: true
   cancelReason?: true
@@ -377,6 +417,12 @@ export type SalesOrderGroupByOutputType = {
   cancellationReason: string | null
   cancellationActorId: string | null
   cancellationCorrelationId: string | null
+  dispatchRequestId: string | null
+  dispatchShipmentId: string | null
+  dispatchOrderVersion: bigint | null
+  dispatchGrantedAt: Date | null
+  dispatchActorId: string | null
+  dispatchCorrelationId: string | null
   canceledAt: Date | null
   completedAt: Date | null
   cancelReason: string | null
@@ -437,6 +483,12 @@ export type SalesOrderWhereInput = {
   cancellationReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   cancellationActorId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
   cancellationCorrelationId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchRequestId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchShipmentId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchOrderVersion?: Prisma.BigIntNullableFilter<"SalesOrder"> | bigint | number | null
+  dispatchGrantedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
+  dispatchActorId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchCorrelationId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
@@ -477,6 +529,12 @@ export type SalesOrderOrderByWithRelationInput = {
   cancellationReason?: Prisma.SortOrderInput | Prisma.SortOrder
   cancellationActorId?: Prisma.SortOrderInput | Prisma.SortOrder
   cancellationCorrelationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchShipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchGrantedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchActorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchCorrelationId?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -492,6 +550,7 @@ export type SalesOrderOrderByWithRelationInput = {
 export type SalesOrderWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   tenantId_orderNumber?: Prisma.SalesOrderTenantIdOrderNumberCompoundUniqueInput
+  tenantId_dispatchRequestId?: Prisma.SalesOrderTenantIdDispatchRequestIdCompoundUniqueInput
   AND?: Prisma.SalesOrderWhereInput | Prisma.SalesOrderWhereInput[]
   OR?: Prisma.SalesOrderWhereInput[]
   NOT?: Prisma.SalesOrderWhereInput | Prisma.SalesOrderWhereInput[]
@@ -521,6 +580,12 @@ export type SalesOrderWhereUniqueInput = Prisma.AtLeast<{
   cancellationReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
   cancellationActorId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
   cancellationCorrelationId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchRequestId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchShipmentId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchOrderVersion?: Prisma.BigIntNullableFilter<"SalesOrder"> | bigint | number | null
+  dispatchGrantedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
+  dispatchActorId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  dispatchCorrelationId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
@@ -531,7 +596,7 @@ export type SalesOrderWhereUniqueInput = Prisma.AtLeast<{
   lines?: Prisma.OrderLineListRelationFilter
   statusHistory?: Prisma.OrderStatusHistoryListRelationFilter
   shortages?: Prisma.OrderShortageListRelationFilter
-}, "id" | "tenantId_orderNumber">
+}, "id" | "tenantId_orderNumber" | "tenantId_dispatchRequestId">
 
 export type SalesOrderOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -561,6 +626,12 @@ export type SalesOrderOrderByWithAggregationInput = {
   cancellationReason?: Prisma.SortOrderInput | Prisma.SortOrder
   cancellationActorId?: Prisma.SortOrderInput | Prisma.SortOrder
   cancellationCorrelationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchShipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchGrantedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchActorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  dispatchCorrelationId?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -606,6 +677,12 @@ export type SalesOrderScalarWhereWithAggregatesInput = {
   cancellationReason?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
   cancellationActorId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
   cancellationCorrelationId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  dispatchRequestId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  dispatchShipmentId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  dispatchOrderVersion?: Prisma.BigIntNullableWithAggregatesFilter<"SalesOrder"> | bigint | number | null
+  dispatchGrantedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
+  dispatchActorId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  dispatchCorrelationId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
   canceledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   cancelReason?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
@@ -643,6 +720,12 @@ export type SalesOrderCreateInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -683,6 +766,12 @@ export type SalesOrderUncheckedCreateInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -723,6 +812,12 @@ export type SalesOrderUpdateInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -763,6 +858,12 @@ export type SalesOrderUncheckedUpdateInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -803,6 +904,12 @@ export type SalesOrderCreateManyInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -840,6 +947,12 @@ export type SalesOrderUpdateManyMutationInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -877,6 +990,12 @@ export type SalesOrderUncheckedUpdateManyInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -889,6 +1008,11 @@ export type SalesOrderUncheckedUpdateManyInput = {
 export type SalesOrderTenantIdOrderNumberCompoundUniqueInput = {
   tenantId: string
   orderNumber: string
+}
+
+export type SalesOrderTenantIdDispatchRequestIdCompoundUniqueInput = {
+  tenantId: string
+  dispatchRequestId: string
 }
 
 export type SalesOrderCountOrderByAggregateInput = {
@@ -919,6 +1043,12 @@ export type SalesOrderCountOrderByAggregateInput = {
   cancellationReason?: Prisma.SortOrder
   cancellationActorId?: Prisma.SortOrder
   cancellationCorrelationId?: Prisma.SortOrder
+  dispatchRequestId?: Prisma.SortOrder
+  dispatchShipmentId?: Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrder
+  dispatchGrantedAt?: Prisma.SortOrder
+  dispatchActorId?: Prisma.SortOrder
+  dispatchCorrelationId?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
@@ -932,6 +1062,7 @@ export type SalesOrderAvgOrderByAggregateInput = {
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -959,6 +1090,12 @@ export type SalesOrderMaxOrderByAggregateInput = {
   cancellationReason?: Prisma.SortOrder
   cancellationActorId?: Prisma.SortOrder
   cancellationCorrelationId?: Prisma.SortOrder
+  dispatchRequestId?: Prisma.SortOrder
+  dispatchShipmentId?: Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrder
+  dispatchGrantedAt?: Prisma.SortOrder
+  dispatchActorId?: Prisma.SortOrder
+  dispatchCorrelationId?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
@@ -992,6 +1129,12 @@ export type SalesOrderMinOrderByAggregateInput = {
   cancellationReason?: Prisma.SortOrder
   cancellationActorId?: Prisma.SortOrder
   cancellationCorrelationId?: Prisma.SortOrder
+  dispatchRequestId?: Prisma.SortOrder
+  dispatchShipmentId?: Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrder
+  dispatchGrantedAt?: Prisma.SortOrder
+  dispatchActorId?: Prisma.SortOrder
+  dispatchCorrelationId?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
@@ -1005,6 +1148,7 @@ export type SalesOrderSumOrderByAggregateInput = {
   totalQuantity?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
+  dispatchOrderVersion?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -1031,6 +1175,14 @@ export type DecimalFieldUpdateOperationsInput = {
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
   set?: Date | string | null
+}
+
+export type NullableBigIntFieldUpdateOperationsInput = {
+  set?: bigint | number | null
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -1115,6 +1267,12 @@ export type SalesOrderCreateWithoutLinesInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1154,6 +1312,12 @@ export type SalesOrderUncheckedCreateWithoutLinesInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1209,6 +1373,12 @@ export type SalesOrderUpdateWithoutLinesInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1248,6 +1418,12 @@ export type SalesOrderUncheckedUpdateWithoutLinesInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1287,6 +1463,12 @@ export type SalesOrderCreateWithoutStatusHistoryInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1326,6 +1508,12 @@ export type SalesOrderUncheckedCreateWithoutStatusHistoryInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1381,6 +1569,12 @@ export type SalesOrderUpdateWithoutStatusHistoryInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1420,6 +1614,12 @@ export type SalesOrderUncheckedUpdateWithoutStatusHistoryInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1459,6 +1659,12 @@ export type SalesOrderCreateWithoutShortagesInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1498,6 +1704,12 @@ export type SalesOrderUncheckedCreateWithoutShortagesInput = {
   cancellationReason?: string | null
   cancellationActorId?: string | null
   cancellationCorrelationId?: string | null
+  dispatchRequestId?: string | null
+  dispatchShipmentId?: string | null
+  dispatchOrderVersion?: bigint | number | null
+  dispatchGrantedAt?: Date | string | null
+  dispatchActorId?: string | null
+  dispatchCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1553,6 +1765,12 @@ export type SalesOrderUpdateWithoutShortagesInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1592,6 +1810,12 @@ export type SalesOrderUncheckedUpdateWithoutShortagesInput = {
   cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchOrderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  dispatchGrantedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  dispatchActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1680,6 +1904,12 @@ export type SalesOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   cancellationReason?: boolean
   cancellationActorId?: boolean
   cancellationCorrelationId?: boolean
+  dispatchRequestId?: boolean
+  dispatchShipmentId?: boolean
+  dispatchOrderVersion?: boolean
+  dispatchGrantedAt?: boolean
+  dispatchActorId?: boolean
+  dispatchCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1721,6 +1951,12 @@ export type SalesOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   cancellationReason?: boolean
   cancellationActorId?: boolean
   cancellationCorrelationId?: boolean
+  dispatchRequestId?: boolean
+  dispatchShipmentId?: boolean
+  dispatchOrderVersion?: boolean
+  dispatchGrantedAt?: boolean
+  dispatchActorId?: boolean
+  dispatchCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1758,6 +1994,12 @@ export type SalesOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   cancellationReason?: boolean
   cancellationActorId?: boolean
   cancellationCorrelationId?: boolean
+  dispatchRequestId?: boolean
+  dispatchShipmentId?: boolean
+  dispatchOrderVersion?: boolean
+  dispatchGrantedAt?: boolean
+  dispatchActorId?: boolean
+  dispatchCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1795,6 +2037,12 @@ export type SalesOrderSelectScalar = {
   cancellationReason?: boolean
   cancellationActorId?: boolean
   cancellationCorrelationId?: boolean
+  dispatchRequestId?: boolean
+  dispatchShipmentId?: boolean
+  dispatchOrderVersion?: boolean
+  dispatchGrantedAt?: boolean
+  dispatchActorId?: boolean
+  dispatchCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1804,7 +2052,7 @@ export type SalesOrderSelectScalar = {
   deletedAt?: boolean
 }
 
-export type SalesOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderNumber" | "customerId" | "deliveryAddressId" | "warehouseId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "billingAddressSnapshot" | "currency" | "status" | "orderSource" | "externalChannel" | "externalOrderId" | "idempotencyKey" | "idempotencyRequestHash" | "totalQuantity" | "totalWeight" | "totalVolume" | "pendingSince" | "confirmedAt" | "reservationGroupId" | "cancellationRequestedAt" | "cancellationReason" | "cancellationActorId" | "cancellationCorrelationId" | "canceledAt" | "completedAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["salesOrder"]>
+export type SalesOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderNumber" | "customerId" | "deliveryAddressId" | "warehouseId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "billingAddressSnapshot" | "currency" | "status" | "orderSource" | "externalChannel" | "externalOrderId" | "idempotencyKey" | "idempotencyRequestHash" | "totalQuantity" | "totalWeight" | "totalVolume" | "pendingSince" | "confirmedAt" | "reservationGroupId" | "cancellationRequestedAt" | "cancellationReason" | "cancellationActorId" | "cancellationCorrelationId" | "dispatchRequestId" | "dispatchShipmentId" | "dispatchOrderVersion" | "dispatchGrantedAt" | "dispatchActorId" | "dispatchCorrelationId" | "canceledAt" | "completedAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["salesOrder"]>
 export type SalesOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lines?: boolean | Prisma.SalesOrder$linesArgs<ExtArgs>
   statusHistory?: boolean | Prisma.SalesOrder$statusHistoryArgs<ExtArgs>
@@ -1858,6 +2106,15 @@ export type $SalesOrderPayload<ExtArgs extends runtime.Types.Extensions.Internal
     cancellationReason: string | null
     cancellationActorId: string | null
     cancellationCorrelationId: string | null
+    /**
+     * Irrevocable dispatch authorization; excludes cancellation even before lifecycle projection arrives.
+     */
+    dispatchRequestId: string | null
+    dispatchShipmentId: string | null
+    dispatchOrderVersion: bigint | null
+    dispatchGrantedAt: Date | null
+    dispatchActorId: string | null
+    dispatchCorrelationId: string | null
     canceledAt: Date | null
     completedAt: Date | null
     cancelReason: string | null
@@ -2318,6 +2575,12 @@ export interface SalesOrderFieldRefs {
   readonly cancellationReason: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly cancellationActorId: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly cancellationCorrelationId: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly dispatchRequestId: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly dispatchShipmentId: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly dispatchOrderVersion: Prisma.FieldRef<"SalesOrder", 'BigInt'>
+  readonly dispatchGrantedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
+  readonly dispatchActorId: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly dispatchCorrelationId: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly canceledAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly cancelReason: Prisma.FieldRef<"SalesOrder", 'String'>

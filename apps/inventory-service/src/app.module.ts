@@ -35,6 +35,7 @@ import { PrismaService } from './database/prisma.service.js';
           RESERVATION_RECONCILE_AGE_MS: z.coerce.number().int().positive(),
           RESERVATION_RECONCILE_INTERVAL_MS: z.coerce.number().int().positive(),
           KAFKA_GROUP_ID: z.string().min(1),
+          KAFKA_FULFILLMENT_TOPIC: z.string().min(1),
         }),
     }),
 

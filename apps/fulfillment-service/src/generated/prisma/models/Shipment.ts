@@ -27,12 +27,14 @@ export type AggregateShipment = {
 }
 
 export type ShipmentAvgAggregateOutputType = {
+  confirmedOrderVersion: number | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
   version: number | null
 }
 
 export type ShipmentSumAggregateOutputType = {
+  confirmedOrderVersion: bigint | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
   version: bigint | null
@@ -45,6 +47,8 @@ export type ShipmentMinAggregateOutputType = {
   orderId: string | null
   warehouseId: string | null
   deliveryAddressId: string | null
+  orderNumber: string | null
+  confirmedOrderVersion: bigint | null
   status: string | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
@@ -68,6 +72,8 @@ export type ShipmentMaxAggregateOutputType = {
   orderId: string | null
   warehouseId: string | null
   deliveryAddressId: string | null
+  orderNumber: string | null
+  confirmedOrderVersion: bigint | null
   status: string | null
   totalWeight: runtime.Decimal | null
   totalVolume: runtime.Decimal | null
@@ -93,6 +99,9 @@ export type ShipmentCountAggregateOutputType = {
   deliveryAddressId: number
   customerSnapshot: number
   deliveryAddressSnapshot: number
+  warehouseSnapshot: number
+  orderNumber: number
+  confirmedOrderVersion: number
   issuerSnapshot: number
   status: number
   totalWeight: number
@@ -113,12 +122,14 @@ export type ShipmentCountAggregateOutputType = {
 
 
 export type ShipmentAvgAggregateInputType = {
+  confirmedOrderVersion?: true
   totalWeight?: true
   totalVolume?: true
   version?: true
 }
 
 export type ShipmentSumAggregateInputType = {
+  confirmedOrderVersion?: true
   totalWeight?: true
   totalVolume?: true
   version?: true
@@ -131,6 +142,8 @@ export type ShipmentMinAggregateInputType = {
   orderId?: true
   warehouseId?: true
   deliveryAddressId?: true
+  orderNumber?: true
+  confirmedOrderVersion?: true
   status?: true
   totalWeight?: true
   totalVolume?: true
@@ -154,6 +167,8 @@ export type ShipmentMaxAggregateInputType = {
   orderId?: true
   warehouseId?: true
   deliveryAddressId?: true
+  orderNumber?: true
+  confirmedOrderVersion?: true
   status?: true
   totalWeight?: true
   totalVolume?: true
@@ -179,6 +194,9 @@ export type ShipmentCountAggregateInputType = {
   deliveryAddressId?: true
   customerSnapshot?: true
   deliveryAddressSnapshot?: true
+  warehouseSnapshot?: true
+  orderNumber?: true
+  confirmedOrderVersion?: true
   issuerSnapshot?: true
   status?: true
   totalWeight?: true
@@ -292,6 +310,9 @@ export type ShipmentGroupByOutputType = {
   deliveryAddressId: string
   customerSnapshot: runtime.JsonValue
   deliveryAddressSnapshot: runtime.JsonValue
+  warehouseSnapshot: runtime.JsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint
   issuerSnapshot: runtime.JsonValue | null
   status: string
   totalWeight: runtime.Decimal
@@ -341,6 +362,9 @@ export type ShipmentWhereInput = {
   deliveryAddressId?: Prisma.UuidFilter<"Shipment"> | string
   customerSnapshot?: Prisma.JsonFilter<"Shipment">
   deliveryAddressSnapshot?: Prisma.JsonFilter<"Shipment">
+  warehouseSnapshot?: Prisma.JsonFilter<"Shipment">
+  orderNumber?: Prisma.StringFilter<"Shipment"> | string
+  confirmedOrderVersion?: Prisma.BigIntFilter<"Shipment"> | bigint | number
   issuerSnapshot?: Prisma.JsonNullableFilter<"Shipment">
   status?: Prisma.StringFilter<"Shipment"> | string
   totalWeight?: Prisma.DecimalFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -358,6 +382,7 @@ export type ShipmentWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"Shipment"> | Date | string | null
   items?: Prisma.ShipmentItemListRelationFilter
   statusHistory?: Prisma.ShipmentStatusHistoryListRelationFilter
+  dispatchIntent?: Prisma.XOR<Prisma.ShipmentDispatchIntentNullableScalarRelationFilter, Prisma.ShipmentDispatchIntentWhereInput> | null
 }
 
 export type ShipmentOrderByWithRelationInput = {
@@ -369,6 +394,9 @@ export type ShipmentOrderByWithRelationInput = {
   deliveryAddressId?: Prisma.SortOrder
   customerSnapshot?: Prisma.SortOrder
   deliveryAddressSnapshot?: Prisma.SortOrder
+  warehouseSnapshot?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  confirmedOrderVersion?: Prisma.SortOrder
   issuerSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
@@ -386,6 +414,7 @@ export type ShipmentOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   items?: Prisma.ShipmentItemOrderByRelationAggregateInput
   statusHistory?: Prisma.ShipmentStatusHistoryOrderByRelationAggregateInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentOrderByWithRelationInput
 }
 
 export type ShipmentWhereUniqueInput = Prisma.AtLeast<{
@@ -402,6 +431,9 @@ export type ShipmentWhereUniqueInput = Prisma.AtLeast<{
   deliveryAddressId?: Prisma.UuidFilter<"Shipment"> | string
   customerSnapshot?: Prisma.JsonFilter<"Shipment">
   deliveryAddressSnapshot?: Prisma.JsonFilter<"Shipment">
+  warehouseSnapshot?: Prisma.JsonFilter<"Shipment">
+  orderNumber?: Prisma.StringFilter<"Shipment"> | string
+  confirmedOrderVersion?: Prisma.BigIntFilter<"Shipment"> | bigint | number
   issuerSnapshot?: Prisma.JsonNullableFilter<"Shipment">
   status?: Prisma.StringFilter<"Shipment"> | string
   totalWeight?: Prisma.DecimalFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -419,6 +451,7 @@ export type ShipmentWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"Shipment"> | Date | string | null
   items?: Prisma.ShipmentItemListRelationFilter
   statusHistory?: Prisma.ShipmentStatusHistoryListRelationFilter
+  dispatchIntent?: Prisma.XOR<Prisma.ShipmentDispatchIntentNullableScalarRelationFilter, Prisma.ShipmentDispatchIntentWhereInput> | null
 }, "id" | "tenantId_orderId" | "tenantId_shipmentNumber">
 
 export type ShipmentOrderByWithAggregationInput = {
@@ -430,6 +463,9 @@ export type ShipmentOrderByWithAggregationInput = {
   deliveryAddressId?: Prisma.SortOrder
   customerSnapshot?: Prisma.SortOrder
   deliveryAddressSnapshot?: Prisma.SortOrder
+  warehouseSnapshot?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  confirmedOrderVersion?: Prisma.SortOrder
   issuerSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
@@ -464,6 +500,9 @@ export type ShipmentScalarWhereWithAggregatesInput = {
   deliveryAddressId?: Prisma.UuidWithAggregatesFilter<"Shipment"> | string
   customerSnapshot?: Prisma.JsonWithAggregatesFilter<"Shipment">
   deliveryAddressSnapshot?: Prisma.JsonWithAggregatesFilter<"Shipment">
+  warehouseSnapshot?: Prisma.JsonWithAggregatesFilter<"Shipment">
+  orderNumber?: Prisma.StringWithAggregatesFilter<"Shipment"> | string
+  confirmedOrderVersion?: Prisma.BigIntWithAggregatesFilter<"Shipment"> | bigint | number
   issuerSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"Shipment">
   status?: Prisma.StringWithAggregatesFilter<"Shipment"> | string
   totalWeight?: Prisma.DecimalWithAggregatesFilter<"Shipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -490,6 +529,9 @@ export type ShipmentCreateInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -507,6 +549,7 @@ export type ShipmentCreateInput = {
   deletedAt?: Date | string | null
   items?: Prisma.ShipmentItemCreateNestedManyWithoutShipmentInput
   statusHistory?: Prisma.ShipmentStatusHistoryCreateNestedManyWithoutShipmentInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentCreateNestedOneWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateInput = {
@@ -518,6 +561,9 @@ export type ShipmentUncheckedCreateInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -535,6 +581,7 @@ export type ShipmentUncheckedCreateInput = {
   deletedAt?: Date | string | null
   items?: Prisma.ShipmentItemUncheckedCreateNestedManyWithoutShipmentInput
   statusHistory?: Prisma.ShipmentStatusHistoryUncheckedCreateNestedManyWithoutShipmentInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUncheckedCreateNestedOneWithoutShipmentInput
 }
 
 export type ShipmentUpdateInput = {
@@ -546,6 +593,9 @@ export type ShipmentUpdateInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -563,6 +613,7 @@ export type ShipmentUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.ShipmentItemUpdateManyWithoutShipmentNestedInput
   statusHistory?: Prisma.ShipmentStatusHistoryUpdateManyWithoutShipmentNestedInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUpdateOneWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateInput = {
@@ -574,6 +625,9 @@ export type ShipmentUncheckedUpdateInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -591,6 +645,7 @@ export type ShipmentUncheckedUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.ShipmentItemUncheckedUpdateManyWithoutShipmentNestedInput
   statusHistory?: Prisma.ShipmentStatusHistoryUncheckedUpdateManyWithoutShipmentNestedInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUncheckedUpdateOneWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateManyInput = {
@@ -602,6 +657,9 @@ export type ShipmentCreateManyInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -628,6 +686,9 @@ export type ShipmentUpdateManyMutationInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -654,6 +715,9 @@ export type ShipmentUncheckedUpdateManyInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -690,6 +754,9 @@ export type ShipmentCountOrderByAggregateInput = {
   deliveryAddressId?: Prisma.SortOrder
   customerSnapshot?: Prisma.SortOrder
   deliveryAddressSnapshot?: Prisma.SortOrder
+  warehouseSnapshot?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  confirmedOrderVersion?: Prisma.SortOrder
   issuerSnapshot?: Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
@@ -708,6 +775,7 @@ export type ShipmentCountOrderByAggregateInput = {
 }
 
 export type ShipmentAvgOrderByAggregateInput = {
+  confirmedOrderVersion?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -720,6 +788,8 @@ export type ShipmentMaxOrderByAggregateInput = {
   orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
   deliveryAddressId?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  confirmedOrderVersion?: Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
@@ -743,6 +813,8 @@ export type ShipmentMinOrderByAggregateInput = {
   orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
   deliveryAddressId?: Prisma.SortOrder
+  orderNumber?: Prisma.SortOrder
+  confirmedOrderVersion?: Prisma.SortOrder
   status?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
@@ -760,6 +832,7 @@ export type ShipmentMinOrderByAggregateInput = {
 }
 
 export type ShipmentSumOrderByAggregateInput = {
+  confirmedOrderVersion?: Prisma.SortOrder
   totalWeight?: Prisma.SortOrder
   totalVolume?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -772,6 +845,14 @@ export type ShipmentScalarRelationFilter = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type BigIntFieldUpdateOperationsInput = {
+  set?: bigint | number
+  increment?: bigint | number
+  decrement?: bigint | number
+  multiply?: bigint | number
+  divide?: bigint | number
 }
 
 export type DecimalFieldUpdateOperationsInput = {
@@ -794,12 +875,18 @@ export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
 
-export type BigIntFieldUpdateOperationsInput = {
-  set?: bigint | number
-  increment?: bigint | number
-  decrement?: bigint | number
-  multiply?: bigint | number
-  divide?: bigint | number
+export type ShipmentCreateNestedOneWithoutDispatchIntentInput = {
+  create?: Prisma.XOR<Prisma.ShipmentCreateWithoutDispatchIntentInput, Prisma.ShipmentUncheckedCreateWithoutDispatchIntentInput>
+  connectOrCreate?: Prisma.ShipmentCreateOrConnectWithoutDispatchIntentInput
+  connect?: Prisma.ShipmentWhereUniqueInput
+}
+
+export type ShipmentUpdateOneRequiredWithoutDispatchIntentNestedInput = {
+  create?: Prisma.XOR<Prisma.ShipmentCreateWithoutDispatchIntentInput, Prisma.ShipmentUncheckedCreateWithoutDispatchIntentInput>
+  connectOrCreate?: Prisma.ShipmentCreateOrConnectWithoutDispatchIntentInput
+  upsert?: Prisma.ShipmentUpsertWithoutDispatchIntentInput
+  connect?: Prisma.ShipmentWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ShipmentUpdateToOneWithWhereWithoutDispatchIntentInput, Prisma.ShipmentUpdateWithoutDispatchIntentInput>, Prisma.ShipmentUncheckedUpdateWithoutDispatchIntentInput>
 }
 
 export type ShipmentCreateNestedOneWithoutItemsInput = {
@@ -830,6 +917,146 @@ export type ShipmentUpdateOneRequiredWithoutStatusHistoryNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ShipmentUpdateToOneWithWhereWithoutStatusHistoryInput, Prisma.ShipmentUpdateWithoutStatusHistoryInput>, Prisma.ShipmentUncheckedUpdateWithoutStatusHistoryInput>
 }
 
+export type ShipmentCreateWithoutDispatchIntentInput = {
+  id?: string
+  tenantId: string
+  shipmentNumber: string
+  orderId: string
+  warehouseId: string
+  deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status: string
+  totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
+  totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  reservationGroupId: string
+  assignedTripId?: string | null
+  dispatchIssuedAt?: Date | string | null
+  readyAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  failedAt?: Date | string | null
+  failureReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  items?: Prisma.ShipmentItemCreateNestedManyWithoutShipmentInput
+  statusHistory?: Prisma.ShipmentStatusHistoryCreateNestedManyWithoutShipmentInput
+}
+
+export type ShipmentUncheckedCreateWithoutDispatchIntentInput = {
+  id?: string
+  tenantId: string
+  shipmentNumber: string
+  orderId: string
+  warehouseId: string
+  deliveryAddressId: string
+  customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status: string
+  totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
+  totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  reservationGroupId: string
+  assignedTripId?: string | null
+  dispatchIssuedAt?: Date | string | null
+  readyAt?: Date | string | null
+  deliveredAt?: Date | string | null
+  failedAt?: Date | string | null
+  failureReason?: string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  items?: Prisma.ShipmentItemUncheckedCreateNestedManyWithoutShipmentInput
+  statusHistory?: Prisma.ShipmentStatusHistoryUncheckedCreateNestedManyWithoutShipmentInput
+}
+
+export type ShipmentCreateOrConnectWithoutDispatchIntentInput = {
+  where: Prisma.ShipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.ShipmentCreateWithoutDispatchIntentInput, Prisma.ShipmentUncheckedCreateWithoutDispatchIntentInput>
+}
+
+export type ShipmentUpsertWithoutDispatchIntentInput = {
+  update: Prisma.XOR<Prisma.ShipmentUpdateWithoutDispatchIntentInput, Prisma.ShipmentUncheckedUpdateWithoutDispatchIntentInput>
+  create: Prisma.XOR<Prisma.ShipmentCreateWithoutDispatchIntentInput, Prisma.ShipmentUncheckedCreateWithoutDispatchIntentInput>
+  where?: Prisma.ShipmentWhereInput
+}
+
+export type ShipmentUpdateToOneWithWhereWithoutDispatchIntentInput = {
+  where?: Prisma.ShipmentWhereInput
+  data: Prisma.XOR<Prisma.ShipmentUpdateWithoutDispatchIntentInput, Prisma.ShipmentUncheckedUpdateWithoutDispatchIntentInput>
+}
+
+export type ShipmentUpdateWithoutDispatchIntentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  shipmentNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.StringFieldUpdateOperationsInput | string
+  warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  reservationGroupId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedTripId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  readyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  items?: Prisma.ShipmentItemUpdateManyWithoutShipmentNestedInput
+  statusHistory?: Prisma.ShipmentStatusHistoryUpdateManyWithoutShipmentNestedInput
+}
+
+export type ShipmentUncheckedUpdateWithoutDispatchIntentInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  shipmentNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.StringFieldUpdateOperationsInput | string
+  warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
+  customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  reservationGroupId?: Prisma.StringFieldUpdateOperationsInput | string
+  assignedTripId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  dispatchIssuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  readyAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  deliveredAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  failureReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  items?: Prisma.ShipmentItemUncheckedUpdateManyWithoutShipmentNestedInput
+  statusHistory?: Prisma.ShipmentStatusHistoryUncheckedUpdateManyWithoutShipmentNestedInput
+}
+
 export type ShipmentCreateWithoutItemsInput = {
   id?: string
   tenantId: string
@@ -839,6 +1066,9 @@ export type ShipmentCreateWithoutItemsInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -855,6 +1085,7 @@ export type ShipmentCreateWithoutItemsInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   statusHistory?: Prisma.ShipmentStatusHistoryCreateNestedManyWithoutShipmentInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentCreateNestedOneWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutItemsInput = {
@@ -866,6 +1097,9 @@ export type ShipmentUncheckedCreateWithoutItemsInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -882,6 +1116,7 @@ export type ShipmentUncheckedCreateWithoutItemsInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   statusHistory?: Prisma.ShipmentStatusHistoryUncheckedCreateNestedManyWithoutShipmentInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUncheckedCreateNestedOneWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutItemsInput = {
@@ -909,6 +1144,9 @@ export type ShipmentUpdateWithoutItemsInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -925,6 +1163,7 @@ export type ShipmentUpdateWithoutItemsInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   statusHistory?: Prisma.ShipmentStatusHistoryUpdateManyWithoutShipmentNestedInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUpdateOneWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutItemsInput = {
@@ -936,6 +1175,9 @@ export type ShipmentUncheckedUpdateWithoutItemsInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -952,6 +1194,7 @@ export type ShipmentUncheckedUpdateWithoutItemsInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   statusHistory?: Prisma.ShipmentStatusHistoryUncheckedUpdateManyWithoutShipmentNestedInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUncheckedUpdateOneWithoutShipmentNestedInput
 }
 
 export type ShipmentCreateWithoutStatusHistoryInput = {
@@ -963,6 +1206,9 @@ export type ShipmentCreateWithoutStatusHistoryInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -979,6 +1225,7 @@ export type ShipmentCreateWithoutStatusHistoryInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   items?: Prisma.ShipmentItemCreateNestedManyWithoutShipmentInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentCreateNestedOneWithoutShipmentInput
 }
 
 export type ShipmentUncheckedCreateWithoutStatusHistoryInput = {
@@ -990,6 +1237,9 @@ export type ShipmentUncheckedCreateWithoutStatusHistoryInput = {
   deliveryAddressId: string
   customerSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber: string
+  confirmedOrderVersion: bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status: string
   totalWeight: runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1006,6 +1256,7 @@ export type ShipmentUncheckedCreateWithoutStatusHistoryInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   items?: Prisma.ShipmentItemUncheckedCreateNestedManyWithoutShipmentInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUncheckedCreateNestedOneWithoutShipmentInput
 }
 
 export type ShipmentCreateOrConnectWithoutStatusHistoryInput = {
@@ -1033,6 +1284,9 @@ export type ShipmentUpdateWithoutStatusHistoryInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1049,6 +1303,7 @@ export type ShipmentUpdateWithoutStatusHistoryInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.ShipmentItemUpdateManyWithoutShipmentNestedInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUpdateOneWithoutShipmentNestedInput
 }
 
 export type ShipmentUncheckedUpdateWithoutStatusHistoryInput = {
@@ -1060,6 +1315,9 @@ export type ShipmentUncheckedUpdateWithoutStatusHistoryInput = {
   deliveryAddressId?: Prisma.StringFieldUpdateOperationsInput | string
   customerSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   deliveryAddressSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  warehouseSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  orderNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  confirmedOrderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   issuerSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   status?: Prisma.StringFieldUpdateOperationsInput | string
   totalWeight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
@@ -1076,6 +1334,7 @@ export type ShipmentUncheckedUpdateWithoutStatusHistoryInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   items?: Prisma.ShipmentItemUncheckedUpdateManyWithoutShipmentNestedInput
+  dispatchIntent?: Prisma.ShipmentDispatchIntentUncheckedUpdateOneWithoutShipmentNestedInput
 }
 
 
@@ -1127,6 +1386,9 @@ export type ShipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   deliveryAddressId?: boolean
   customerSnapshot?: boolean
   deliveryAddressSnapshot?: boolean
+  warehouseSnapshot?: boolean
+  orderNumber?: boolean
+  confirmedOrderVersion?: boolean
   issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
@@ -1144,6 +1406,7 @@ export type ShipmentSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   deletedAt?: boolean
   items?: boolean | Prisma.Shipment$itemsArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Shipment$statusHistoryArgs<ExtArgs>
+  dispatchIntent?: boolean | Prisma.Shipment$dispatchIntentArgs<ExtArgs>
   _count?: boolean | Prisma.ShipmentCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["shipment"]>
 
@@ -1156,6 +1419,9 @@ export type ShipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   deliveryAddressId?: boolean
   customerSnapshot?: boolean
   deliveryAddressSnapshot?: boolean
+  warehouseSnapshot?: boolean
+  orderNumber?: boolean
+  confirmedOrderVersion?: boolean
   issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
@@ -1182,6 +1448,9 @@ export type ShipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   deliveryAddressId?: boolean
   customerSnapshot?: boolean
   deliveryAddressSnapshot?: boolean
+  warehouseSnapshot?: boolean
+  orderNumber?: boolean
+  confirmedOrderVersion?: boolean
   issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
@@ -1208,6 +1477,9 @@ export type ShipmentSelectScalar = {
   deliveryAddressId?: boolean
   customerSnapshot?: boolean
   deliveryAddressSnapshot?: boolean
+  warehouseSnapshot?: boolean
+  orderNumber?: boolean
+  confirmedOrderVersion?: boolean
   issuerSnapshot?: boolean
   status?: boolean
   totalWeight?: boolean
@@ -1225,10 +1497,11 @@ export type ShipmentSelectScalar = {
   deletedAt?: boolean
 }
 
-export type ShipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentNumber" | "orderId" | "warehouseId" | "deliveryAddressId" | "customerSnapshot" | "deliveryAddressSnapshot" | "issuerSnapshot" | "status" | "totalWeight" | "totalVolume" | "reservationGroupId" | "assignedTripId" | "dispatchIssuedAt" | "readyAt" | "deliveredAt" | "failedAt" | "failureReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["shipment"]>
+export type ShipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentNumber" | "orderId" | "warehouseId" | "deliveryAddressId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "orderNumber" | "confirmedOrderVersion" | "issuerSnapshot" | "status" | "totalWeight" | "totalVolume" | "reservationGroupId" | "assignedTripId" | "dispatchIssuedAt" | "readyAt" | "deliveredAt" | "failedAt" | "failureReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["shipment"]>
 export type ShipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   items?: boolean | Prisma.Shipment$itemsArgs<ExtArgs>
   statusHistory?: boolean | Prisma.Shipment$statusHistoryArgs<ExtArgs>
+  dispatchIntent?: boolean | Prisma.Shipment$dispatchIntentArgs<ExtArgs>
   _count?: boolean | Prisma.ShipmentCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type ShipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1239,6 +1512,7 @@ export type $ShipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     items: Prisma.$ShipmentItemPayload<ExtArgs>[]
     statusHistory: Prisma.$ShipmentStatusHistoryPayload<ExtArgs>[]
+    dispatchIntent: Prisma.$ShipmentDispatchIntentPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1252,6 +1526,9 @@ export type $ShipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
      */
     customerSnapshot: runtime.JsonValue
     deliveryAddressSnapshot: runtime.JsonValue
+    warehouseSnapshot: runtime.JsonValue
+    orderNumber: string
+    confirmedOrderVersion: bigint
     /**
      * Tenant legal profile printed on dispatch documents (optional).
      */
@@ -1666,6 +1943,7 @@ export interface Prisma__ShipmentClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   items<T extends Prisma.Shipment$itemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShipmentItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   statusHistory<T extends Prisma.Shipment$statusHistoryArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$statusHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ShipmentStatusHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  dispatchIntent<T extends Prisma.Shipment$dispatchIntentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Shipment$dispatchIntentArgs<ExtArgs>>): Prisma.Prisma__ShipmentDispatchIntentClient<runtime.Types.Result.GetResult<Prisma.$ShipmentDispatchIntentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1703,6 +1981,9 @@ export interface ShipmentFieldRefs {
   readonly deliveryAddressId: Prisma.FieldRef<"Shipment", 'String'>
   readonly customerSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
   readonly deliveryAddressSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
+  readonly warehouseSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
+  readonly orderNumber: Prisma.FieldRef<"Shipment", 'String'>
+  readonly confirmedOrderVersion: Prisma.FieldRef<"Shipment", 'BigInt'>
   readonly issuerSnapshot: Prisma.FieldRef<"Shipment", 'Json'>
   readonly status: Prisma.FieldRef<"Shipment", 'String'>
   readonly totalWeight: Prisma.FieldRef<"Shipment", 'Decimal'>
@@ -2156,6 +2437,25 @@ export type Shipment$statusHistoryArgs<ExtArgs extends runtime.Types.Extensions.
   take?: number
   skip?: number
   distinct?: Prisma.ShipmentStatusHistoryScalarFieldEnum | Prisma.ShipmentStatusHistoryScalarFieldEnum[]
+}
+
+/**
+ * Shipment.dispatchIntent
+ */
+export type Shipment$dispatchIntentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the ShipmentDispatchIntent
+   */
+  select?: Prisma.ShipmentDispatchIntentSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the ShipmentDispatchIntent
+   */
+  omit?: Prisma.ShipmentDispatchIntentOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ShipmentDispatchIntentInclude<ExtArgs> | null
+  where?: Prisma.ShipmentDispatchIntentWhereInput
 }
 
 /**

@@ -43,6 +43,8 @@ model ReservationGroup {
   acknowledgedAt DateTime?              @map("acknowledged_at") @db.Timestamptz(6)
   releasedAt     DateTime?              @map("released_at") @db.Timestamptz(6)
   issuedAt       DateTime?              @map("issued_at") @db.Timestamptz(6)
+  issueShipmentId String?               @map("issue_shipment_id") @db.Uuid
+  issueRequestId  String?               @map("issue_request_id") @db.Uuid
   createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   version        BigInt                 @default(1)
@@ -50,6 +52,7 @@ model ReservationGroup {
   reservations   InventoryReservation[]
 
   @@unique([tenantId, idempotencyKey], map: "ux_reservation_idempotency")
+  @@unique([tenantId, issueShipmentId], map: "ux_reservation_issue_shipment")
   @@index([tenantId, status, reservedAt], map: "ix_reservation_status_age")
   @@map("reservation_groups")
   @@schema("inventory")

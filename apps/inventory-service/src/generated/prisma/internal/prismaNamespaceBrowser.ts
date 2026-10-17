@@ -106,6 +106,8 @@ export const ReservationGroupScalarFieldEnum = {
   acknowledgedAt: 'acknowledgedAt',
   releasedAt: 'releasedAt',
   issuedAt: 'issuedAt',
+  issueShipmentId: 'issueShipmentId',
+  issueRequestId: 'issueRequestId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   version: 'version',

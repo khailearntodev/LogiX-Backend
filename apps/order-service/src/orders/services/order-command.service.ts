@@ -40,6 +40,7 @@ import {
 import { calculateOrderTotals } from './order-totals.js';
 import { InventoryClient } from '../integrations/inventory.client.js';
 import { ORDER_RESERVATION_TRANSACTION_TIMEOUT_MS } from './order-reservation.service.js';
+import { lockOrder } from './order-lock.js';
 
 const UNIQUE_VIOLATION = 'P2002';
 const ORDER_ACTION = {
@@ -274,7 +275,7 @@ export class OrderCommandService {
 
     const updated = await this.prisma.$transaction(
       async (tx) => {
-        await this.lockOrder(tx, ctx.tenantId, orderId);
+        await lockOrder(tx, ctx.tenantId, orderId);
         const locked = await this.loadOrder(tx, ctx.tenantId, orderId);
         this.assertWritable(
           locked,
@@ -354,7 +355,7 @@ export class OrderCommandService {
     ctx: OrderCommandContext,
   ): Promise<OrderDetailView> {
     await this.prisma.$transaction(async (tx) => {
-      await this.lockOrder(tx, ctx.tenantId, orderId);
+      await lockOrder(tx, ctx.tenantId, orderId);
       const current = await this.loadOrder(tx, ctx.tenantId, orderId);
       this.assertWritable(
         current,
@@ -381,6 +382,7 @@ export class OrderCommandService {
     orderId: string,
   ): Promise<OrderDetailView> {
     const intent = await this.loadOrder(this.prisma, tenantId, orderId);
+    if (intent.dispatchGrantedAt) throw OrderErrors.dispatchCommitted(orderId);
     if (intent.status === ORDER_STATUS.CANCELED)
       return toOrderDetailView(intent);
     if (
@@ -401,8 +403,9 @@ export class OrderCommandService {
     };
     await this.inventory.release(orderId, ctx);
     const canceled = await this.prisma.$transaction(async (tx) => {
-      await this.lockOrder(tx, tenantId, orderId);
+      await lockOrder(tx, tenantId, orderId);
       const current = await this.loadOrder(tx, tenantId, orderId);
+      if (current.dispatchGrantedAt) throw OrderErrors.dispatchCommitted(orderId);
       if (current.status === ORDER_STATUS.CANCELED) return current;
       if (!current.cancellationRequestedAt || !current.cancellationReason) {
         throw OrderErrors.invalidTransition(
@@ -505,6 +508,9 @@ export class OrderCommandService {
     action: OrderAction,
     allowedStatuses: readonly OrderStatus[],
   ): void {
+    if (order.dispatchGrantedAt) {
+      throw OrderErrors.dispatchCommitted(order.id);
+    }
     if (order.cancellationRequestedAt) {
       throw OrderErrors.invalidTransition(
         order.id,
@@ -578,15 +584,4 @@ export class OrderCommandService {
     };
   }
 
-  private async lockOrder(
-    tx: Tx,
-    tenantId: string,
-    orderId: string,
-  ): Promise<void> {
-    await tx.$queryRaw(Prisma.sql`
-      SELECT id FROM orders.sales_orders
-      WHERE id = ${orderId}::uuid AND tenant_id = ${tenantId}::uuid
-        AND deleted_at IS NULL FOR UPDATE
-    `);
-  }
 }

@@ -21,6 +21,70 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+## Shipment Pool (phase 5B)
+
+This service owns one shipment per Order and immutable shipment snapshots.
+The approved lifecycle is PENDING_PICK -> PICKING -> READY_TO_SHIP ->
+DISPATCHED -> DELIVERED/FAILED; cancellation is driven by Order events.
+Trip/route/POD/redelivery are not part of this API.
+
+Configure every key in [.env.example](.env.example). JWT_SECRET must match
+Identity; INTERNAL_SERVICE_JWT_SECRET must match Order/Inventory. All three
+business services must share KAFKA_FULFILLMENT_TOPIC; Gateway additionally
+requires FULFILLMENT_SERVICE_URL. There are no default secrets or downstream
+URLs. Restart all affected services after configuring them.
+
+From the repository root:
+
+```sh
+pnpm install
+pnpm --filter @logix/messaging build
+pnpm --filter fulfillment-service db:migrate:dev
+pnpm --filter fulfillment-service db:generate
+pnpm --filter fulfillment-service test
+pnpm --filter fulfillment-service build
+pnpm --filter fulfillment-service start
+```
+
+The lifecycle migration requires an empty legacy shipment pool and deliberately
+fails otherwise; obtain verified Order snapshots and an approved state backfill
+before migrating a deployment with legacy rows. Never reset a business DB.
+Consumers read historical Order events; this can create pool entries for
+previously confirmed orders but does not change stock.
+
+Public endpoints through Gateway (`/api/v1` prefix):
+
+| Method/path | Permission | Body |
+| --- | --- | --- |
+| GET /shipments | fulfillment:shipment:read | Query: page/pageSize, warehouseId, orderId, status, createdFrom/createdTo |
+| GET /shipments/:id | fulfillment:shipment:read | None |
+| POST /shipments/:id/start-picking | fulfillment:shipment:update | version |
+| POST /shipments/:id/mark-ready | fulfillment:shipment:update | version |
+| GET /shipments/:id/dispatch-preview | fulfillment:shipment:read | None |
+| POST /shipments/:id/dispatch | fulfillment:shipment:dispatch | version, orderVersion, requestId (UUID), confirmed: true |
+| POST /shipments/:id/mark-delivered | fulfillment:shipment:complete | version, confirmed: true |
+| POST /shipments/:id/mark-failed | fulfillment:shipment:complete | version, confirmed: true, nonblank reason |
+
+The four permissions are seeded as catalogue entries only, without assigning
+custom roles. Existing OWNER/SuperAdmin authorization policy is unchanged.
+
+Dispatch preview returns the shipment and Order versions. Wait for Order's
+READY projection before preview. Submit a stable requestId and retain the exact
+body for retries. A timeout/503 can mean Order has already granted dispatch:
+the pending intent remains visible in list/detail and the recovery worker
+retries it with bounded persisted backoff, including after restart. Do not
+create a replacement request while an intent is PENDING. No transaction spans
+the grant HTTP request. A successful dispatch does not mean Inventory has
+already consumed ISSUE; Inventory and Order converge through Kafka.
+
+Frontend pool/detail, themed confirmations and pending-state UX are implemented
+in phase 5C under `LogiX-Frontend/src/features/shipments`. Order list/detail now
+also expose nullable `dispatchGrantedAt`/`dispatchShipmentId`; deploy the updated
+Order API with the frontend so cancellation remains blocked during projection
+lag. Local ignored env files were synchronized in 5C; restart affected services
+to load the new values. No browser acceptance or phase-5D load acceptance is
+claimed (browser checks were explicitly excluded by the user for this batch).
+
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.

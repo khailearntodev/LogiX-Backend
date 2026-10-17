@@ -24,6 +24,19 @@ const containsUnsafeValue = (value: unknown): boolean => {
 };
 
 describe('order mapper', () => {
+  it('exposes an irrevocable dispatch grant before lifecycle projection catches up', () => {
+    const dispatchGrantedAt = new Date('2026-10-17T08:00:00.000Z');
+    const dispatchShipmentId = '8f10eec7-99cb-42d5-953e-e770ea6b2ea7';
+    const view = toOrderDetailView(salesOrderFixture({
+      status: 'READY_TO_SHIP', dispatchGrantedAt, dispatchShipmentId,
+    }));
+    expect(view.status).toBe('READY_TO_SHIP');
+    expect(view.dispatchGrantedAt).toEqual(dispatchGrantedAt);
+    expect(view.dispatchShipmentId).toBe(dispatchShipmentId);
+    const pending = toOrderDetailView(salesOrderFixture());
+    expect(pending.dispatchGrantedAt).toBeNull();
+    expect(pending.dispatchShipmentId).toBeNull();
+  });
   it('exposes decimals as fixed-scale strings and version as number', () => {
     const view = toOrderDetailView(salesOrderFixture());
 

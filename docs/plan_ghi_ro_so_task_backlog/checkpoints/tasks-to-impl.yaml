@@ -1,0 +1,263 @@
+metadata:
+  generated: "2026-10-17"
+  last_updated: "2026-10-17"
+  source_tasks: ../ke-hoach-trien-khai-quan-ly-don-hang.md
+  scope: G5-A/G5-B/G5-C code complete; G5-D functional checks/reporting done, long-outage and load acceptance blocked; UI unverified
+  post_batch_repair:
+    date: "2026-10-17"
+    trace: "G5-C01/G5-C02/G5-C03/G5-C04 and G5-D01; main plan section 7.4 follow-up"
+    evidence: 14 exact QA Inbox tombstones; 36 legitimate shipments; six partitions at zero lag; 96 Fulfillment tests; 924 locale assertions; 10 Gateway probes; 4 Kafka setup cases; frontend build/typecheck/lint PASS
+    cleanup: Temporary scripts and bounded verification hosts removed; permanent regression tests retained
+    unchanged_blockers: [G5-D02, G5-D03, UI_visual_acceptance]
+  human_readable_labels:
+    date: "2026-10-17"
+    trace: "G5-C02/G5-C04/G5-D01; main plan section 7.4 actor and friendly-label follow-up"
+    requirements: [REQ-015, REQ-019, REQ-020]
+    actor_policy: current-directory
+    implementation: ActorDirectory for Shipment/Order/Inventory, EntityLabel for names/business codes and expandable IDs, own Inventory receipt enrichment and permission-gated public Shipment lookup
+    verification:
+      inventory: { passed: 53, failed: 0, new_regressions: 5, pre_fix_failures: 5, build: PASS, lint: PASS, typecheck: PASS }
+      frontend: { source_behavior_checks: 59, lint: PASS, typecheck: PASS, production_build: PASS, vi_en_parity: PASS }
+      runtime: { gateway_probes: 8, receipt_rows_matched: 100, active_directory_members_checked: 1, shipment_actors_resolved: 2, denied_unrelated_tenant: 403, denied_inventory_permission: 403 }
+    safety: No business data, roles, schema or identity history changed; tenant/session guards and server authorization preserved
+    cleanup: Temporary QA scripts removed; permanent Inventory regressions retained
+    unchanged_blockers: [G5-D02, G5-D03, UI_visual_acceptance]
+summary:
+  total_tasks: 15
+  completed_tasks: 13
+  blocked_tasks: 2
+  in_progress_tasks: 0
+  pending_tasks: 0
+tasks:
+  - task_id: G5-D01
+    description: Verify source regressions and real API journeys; fix internal service token log redaction
+    status: completed
+    implementation:
+      files:
+        - libs/logger/src/logger.module.ts
+        - libs/logger/src/logger.module.spec.ts
+        - docs/architecture/runtime-architecture.md
+    verification:
+      build_passed: true
+      test_results: { exit_code: 0, unique_source_tests: 449, failed: 0, skipped: 0 }
+      runtime: { command: node qa5d-runtime.mjs --functional-only, exit_code: 0, assertions: 72 }
+      notes: Three logger regressions include pre-fix negative proof and post-fix runtime scan with zero raw JWTs. Functional pass does not waive failed extended outage/load tests.
+    upstream_trace:
+      plan_item: "7.5"
+      requirements: [REQ-015, REQ-016, REQ-019]
+  - task_id: G5-D02
+    description: Complete cancel-dispatch arbitration, replay and durable long-outage recovery acceptance
+    status: blocked
+    implementation:
+      files:
+        - docs/plan_ghi_ro_so_task_backlog/runtime-validation-report.md
+    verification:
+      test_results: { exit_code: 1, assertions_before_failure: 97 }
+      notes: Simultaneous and scheduled race, replay, consumer restart, lost grant response and atomic ISSUE retry passed assertions; persisted relay failure timed out after 75 seconds. Producer retry exceeded transaction lifetime; no waiver.
+    upstream_trace:
+      plan_item: "7.5"
+      requirements: [REQ-015, REQ-019]
+  - task_id: G5-D03
+    description: Measure and meet SC-012 with an isolated 100-VU ten-minute workload
+    status: blocked
+    implementation:
+      files:
+        - docs/plan_ghi_ro_so_task_backlog/runtime-validation-report.md
+    verification:
+      benchmark: { exit_code: null, intended_exit_code: 1, result: FAIL, connections: 100, duration_seconds: 600.97, rate_cap_rps: 100, requests: 44465, non_2xx: 69, api_p95_ms: 2837.45 }
+      notes: Independent run wrote FAIL but needed caller termination after cleanup because observer kept retrying. Transaction-start errors and Kafka coordinator histogram exception remain. Incomplete event samples do not establish acceptance. Benchmarks predate logger fix; no passing post-fix benchmark.
+    upstream_trace:
+      plan_item: "7.5"
+      requirements: [REQ-019]
+  - task_id: G5-D04
+    description: Publish SC evidence and actual failures, clean only owned QA resources and temporary scripts
+    status: completed
+    implementation:
+      files:
+        - docs/plan_ghi_ro_so_task_backlog/runtime-validation-report.md
+        - docs/plan_ghi_ro_so_task_backlog/batch-report.yaml
+        - docs/plan_ghi_ro_so_task_backlog/ke-hoach-trien-khai-quan-ly-don-hang.md
+    verification:
+      notes: QA DB/container/process metadata verified removed; scripts, load dependencies and logs deleted. Demo data, local env, shared broker/database and existing frontend preserved. No commit. Overall remains FAIL and browser unverified.
+    upstream_trace:
+      plan_item: "7.5-7.7"
+      requirements: [REQ-019, REQ-020]
+  - task_id: G5-A01
+    description: Persist an exclusive, replayable Order dispatch decision
+    status: completed
+    implementation:
+      files:
+        - apps/order-service/prisma/schema.prisma
+        - apps/order-service/prisma/migrations/20261017054805_order_dispatch_arbitration/migration.sql
+        - libs/messaging/src/interfaces/dispatch.interface.ts
+    verification:
+      build_passed: true
+      notes: Migration applied without reset; real CHECK and unique constraint negative tests passed.
+    upstream_trace:
+      plan_item: "7.0.1"
+      requirements: [REQ-014, REQ-019]
+  - task_id: G5-A02
+    description: Arbitrate dispatch and cancellation under the same Order row lock
+    status: completed
+    implementation:
+      files:
+        - apps/order-service/src/orders/services/order-dispatch.service.ts
+        - apps/order-service/src/orders/services/order-command.service.ts
+        - apps/order-service/src/orders/services/order-lock.ts
+        - apps/order-service/src/orders/orders-dispatch.internal.controller.ts
+    verification:
+      build_passed: true
+      notes: 20 scheduled concurrent pairs and real Inventory release; one winner per pair.
+    upstream_trace:
+      plan_item: "7.0.1"
+      requirements: [REQ-014, REQ-016, REQ-019]
+  - task_id: G5-A03
+    description: Verify guards, tenant isolation, exact replay, outage recovery and restart persistence
+    status: completed
+    implementation:
+      files:
+        - apps/order-service/src/orders/services/order-dispatch.service.spec.ts
+        - apps/order-service/src/orders/orders-dispatch.internal.controller.spec.ts
+        - apps/order-service/src/orders/services/order-command.service.spec.ts
+    verification:
+      build_passed: true
+      test_results:
+        command: pnpm --filter @logix/auth --filter @logix/messaging --filter order-service --filter inventory-service test
+        exit_code: 0
+        passed: 324
+        failed: 0
+        skipped: 0
+      runtime_http_checks: 81
+    upstream_trace:
+      plan_item: "7.0.1"
+      requirements: [REQ-014, REQ-016, REQ-019]
+  - task_id: G5-B01
+    description: Create a tenant-scoped unique shipment pool from rich and historical Order snapshots
+    status: completed
+    implementation:
+      files:
+        - libs/messaging/src/interfaces/shipment.contract.ts
+        - apps/fulfillment-service/prisma/schema.prisma
+        - apps/fulfillment-service/src/shipments/shipment-order-events.service.ts
+        - apps/order-service/src/orders/orders-fulfillment.internal.controller.ts
+    verification:
+      build_passed: true
+      notes: Historical Kafka event resolved line snapshots by guarded HTTP; cancellation-before-confirmation did not resurrect shipment.
+    upstream_trace:
+      plan_item: "7.0.2"
+      requirements: [REQ-014, REQ-016, REQ-019]
+  - task_id: G5-B02
+    description: Implement versioned shipment APIs, confirmed completion and durable dispatch recovery
+    status: completed
+    implementation:
+      files:
+        - apps/fulfillment-service/src/shipments/shipments.controller.ts
+        - apps/fulfillment-service/src/shipments/shipment-command.service.ts
+        - apps/fulfillment-service/src/shipments/shipment-dispatch.service.ts
+        - apps/fulfillment-service/src/shipments/shipment-recovery.service.ts
+    verification:
+      build_passed: true
+      notes: Lost response after real grant, owned Fulfillment restart, automatic exact recovery and no duplicate dispatch.
+    upstream_trace:
+      plan_item: "7.0.2"
+      requirements: [REQ-014, REQ-015, REQ-016, REQ-019]
+  - task_id: G5-B03
+    description: Issue reserved stock atomically and project shipment lifecycle onto Orders
+    status: completed
+    implementation:
+      files:
+        - apps/inventory-service/src/inventory/services/shipment-issue.service.ts
+        - apps/inventory-service/src/inventory/services/stock-movement.service.ts
+        - apps/order-service/src/orders/services/order-shipment-events.service.ts
+    verification:
+      build_passed: true
+      notes: QA-only second-product movement trigger forced rollback; Kafka automatically retried after trigger removal. New event IDs did not duplicate ISSUE or regress completed Order.
+    upstream_trace:
+      plan_item: "7.0.2"
+      requirements: [REQ-014, REQ-015, REQ-019]
+  - task_id: G5-B04
+    description: Wire backend Gateway and approved permission catalogue, verify and clean isolated runtime resources
+    status: completed
+    implementation:
+      files:
+        - apps/api-gateway/src/proxy/fulfillment-proxy.middleware.ts
+        - apps/identity-service/prisma/seed.js
+        - apps/fulfillment-service/src/config/fulfillment-config.schema.ts
+    verification:
+      build_passed: true
+      test_results: { exit_code: 0, passed: 435, failed: 0, skipped: 0 }
+      runtime_http_checks: 73
+      notes: Source-only unique test counts; no custom role grants or user seed; owned QA resources and temporary scripts removed.
+    upstream_trace:
+      plan_item: "7.0.2"
+      requirements: [REQ-016, REQ-019]
+  - task_id: G5-C01
+    description: Synchronize ignored local env and add typed Shipment contract, routes and navigation permissions
+    status: completed
+    implementation:
+      files:
+        - ../LogiX-Frontend/src/features/shipments/api/shipments.api.ts
+        - ../LogiX-Frontend/src/features/shipments/schemas/shipment.schema.ts
+        - ../LogiX-Frontend/src/components/shared/workspace-guard.tsx
+        - ../LogiX-Frontend/src/components/shared/app-sidebar.tsx
+    verification:
+      build_passed: true
+      notes: Four actual local env schemas and JWT consistency passed; env files git-ignored, database URLs preserved.
+    upstream_trace:
+      plan_item: "7.4"
+      requirements: [REQ-019, REQ-020]
+  - task_id: G5-C02
+    description: Implement Shipment pool filters, pagination and immutable snapshot detail
+    status: completed
+    implementation:
+      files:
+        - ../LogiX-Frontend/src/features/shipments/components/shipment-pool-screen.tsx
+        - ../LogiX-Frontend/src/features/shipments/components/shipment-detail-screen.tsx
+        - ../LogiX-Frontend/src/features/shipments/hooks/use-shipment-list-query.ts
+    verification:
+      build_passed: true
+      notes: Production routes built; schema/API assertions passed. Browser/visual verification excluded by user.
+    upstream_trace:
+      plan_item: "7.4"
+      requirements: [REQ-015, REQ-020]
+  - task_id: G5-C03
+    description: Implement permission/state-aware confirmed commands with exact dispatch retry and pending/conflict UX
+    status: completed
+    implementation:
+      files:
+        - ../LogiX-Frontend/src/features/shipments/components/shipment-action-dialog.tsx
+        - ../LogiX-Frontend/src/features/shipments/utils/shipment-actions.ts
+    verification:
+      build_passed: true
+      notes: 336 action-matrix combinations; non-DOM handler assertions cover exact retries/reopen, double submit, required trimmed reason and 409 reload.
+    upstream_trace:
+      plan_item: "7.4"
+      requirements: [REQ-015, REQ-019, REQ-020]
+  - task_id: G5-C04
+    description: Connect real Order shipments, expose grant fields, synchronize cancellation and bounded refresh with VI/EN
+    status: completed
+    implementation:
+      files:
+        - apps/order-service/src/orders/mappers/order.mapper.ts
+        - apps/order-service/src/orders/mappers/order.mapper.spec.ts
+        - apps/order-service/src/orders/order.types.ts
+        - ../LogiX-Frontend/src/features/shipments/components/order-shipment-panel.tsx
+        - ../LogiX-Frontend/src/features/orders/utils/order-actions.ts
+        - ../LogiX-Frontend/src/lib/api/use-bounded-refresh.ts
+        - ../LogiX-Frontend/src/lib/config/live-refresh.ts
+    verification:
+      build_passed: true
+      test_results: { exit_code: 0, order_passed: 245, frontend_assertions_passed: 16, failed: 0, skipped: 0 }
+      notes: Frontend validate and Order test/build/tsc/lint passed; temporary script removed, regression retained. No QA data created.
+    upstream_trace:
+      plan_item: "7.4"
+      requirements: [REQ-015, REQ-019, REQ-020]
+pending_tasks: []
+untracked_changes: []
+validation:
+  passed: true
+  errors: []
+  warnings:
+    - Backend 5A/5B and frontend 5C code checks are complete. Full acceptance and benchmark in 5D remain pending.
+    - Browser/visual checks explicitly excluded by user; responsive/theme/locale behavior is implemented but not visually verified.
+    - Local ignored env is configured and schema-validated; restart affected services to load it. No runtime consumer/demo backfill started.

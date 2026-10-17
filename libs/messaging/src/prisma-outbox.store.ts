@@ -31,12 +31,12 @@ export interface OutboxDatabase {
 export class PrismaOutboxStore implements OutboxRelayStore {
   constructor(
     private readonly database: OutboxDatabase,
-    private readonly schema: 'orders' | 'inventory',
+    private readonly schema: 'orders' | 'inventory' | 'fulfillment',
     private readonly producer: ServiceId,
     private readonly transactionTimeoutMs: number,
   ) {
     if (
-      !['orders', 'inventory'].includes(schema) ||
+      !['orders', 'inventory', 'fulfillment'].includes(schema) ||
       !Number.isSafeInteger(transactionTimeoutMs) ||
       transactionTimeoutMs <= 0
     ) {

@@ -21,6 +21,9 @@ export const ORDER_ERROR_REASON = {
   IDEMPOTENCY_KEY_REUSED: 'IDEMPOTENCY_KEY_REUSED',
   UPSTREAM_UNAVAILABLE: 'UPSTREAM_UNAVAILABLE',
   UPSTREAM_REJECTED: 'UPSTREAM_REJECTED',
+  DISPATCH_COMMITTED: 'ORDER_DISPATCH_COMMITTED',
+  DISPATCH_REQUEST_CONFLICT: 'ORDER_DISPATCH_REQUEST_CONFLICT',
+  RESERVATION_MISMATCH: 'ORDER_RESERVATION_MISMATCH',
 } as const;
 
 export type OrderErrorReason =
@@ -41,6 +44,33 @@ export class OrderDomainError extends DomainError {
 const R = ORDER_ERROR_REASON;
 
 export const OrderErrors = {
+  dispatchCommitted: (orderId: string) =>
+    new OrderDomainError(
+      R.DISPATCH_COMMITTED,
+      ErrorCode.CONCURRENCY_CONFLICT,
+      HttpStatus.CONFLICT,
+      'Đơn hàng đã được chấp thuận xuất giao, không thể hủy',
+      { orderId },
+    ),
+
+  dispatchRequestConflict: (orderId: string) =>
+    new OrderDomainError(
+      R.DISPATCH_REQUEST_CONFLICT,
+      ErrorCode.CONCURRENCY_CONFLICT,
+      HttpStatus.CONFLICT,
+      'Yêu cầu xuất giao không khớp quyết định đã ghi nhận',
+      { orderId },
+    ),
+
+  reservationMismatch: (orderId: string) =>
+    new OrderDomainError(
+      R.RESERVATION_MISMATCH,
+      ErrorCode.BUSINESS_RULE_VIOLATION,
+      HttpStatus.CONFLICT,
+      'Yêu cầu xuất giao không khớp giữ hàng của đơn',
+      { orderId },
+    ),
+
   notFound: (orderId: string) =>
     new OrderDomainError(
       R.NOT_FOUND,

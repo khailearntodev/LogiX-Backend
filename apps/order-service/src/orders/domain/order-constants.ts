@@ -28,11 +28,13 @@ export const ORDER_EDITABLE_STATUSES: readonly OrderStatus[] = [
   ORDER_STATUS.PENDING_STOCK,
 ];
 
-/** Cancellation of later statuses is opened together with reservation/fulfillment phases. */
+/** A persisted dispatch grant locks cancellation before the lifecycle projection arrives. */
 export const ORDER_CANCELABLE_STATUSES: readonly OrderStatus[] = [
   ORDER_STATUS.DRAFT,
   ORDER_STATUS.PENDING_STOCK,
   ORDER_STATUS.CONFIRMED,
+  ORDER_STATUS.PICKING,
+  ORDER_STATUS.READY_TO_SHIP,
 ];
 
 export const MASTER_DATA_REQUEST_TIMEOUT_MS = 5_000;

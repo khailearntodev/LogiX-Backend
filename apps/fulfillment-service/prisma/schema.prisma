@@ -19,6 +19,9 @@ model Shipment {
   /// Copied from the OrderConfirmed event; never re-read from Order or Master Data.
   customerSnapshot        Json                    @map("customer_snapshot")
   deliveryAddressSnapshot Json                    @map("delivery_address_snapshot")
+  warehouseSnapshot       Json                    @map("warehouse_snapshot")
+  orderNumber             String                  @map("order_number") @db.VarChar(50)
+  confirmedOrderVersion   BigInt                  @map("confirmed_order_version")
   /// Tenant legal profile printed on dispatch documents (optional).
   issuerSnapshot          Json?                   @map("issuer_snapshot")
   status                  String                  @db.VarChar(20)
@@ -37,11 +40,44 @@ model Shipment {
   deletedAt               DateTime?               @map("deleted_at") @db.Timestamptz(6)
   items                   ShipmentItem[]
   statusHistory           ShipmentStatusHistory[]
+  dispatchIntent          ShipmentDispatchIntent?
 
   @@unique([tenantId, orderId], map: "ux_shipments_order")
   @@unique([tenantId, shipmentNumber], map: "ux_shipments_number")
   @@index([tenantId, orderId, status], map: "ix_shipments_order_status")
   @@map("shipments")
+  @@schema("fulfillment")
+}
+
+model ShipmentDispatchIntent {
+  id                 String   @id @default(uuid()) @db.Uuid
+  tenantId           String   @map("tenant_id") @db.Uuid
+  shipmentId         String   @unique @map("shipment_id") @db.Uuid
+  orderVersion       BigInt   @map("order_version")
+  shipmentVersion    BigInt   @map("shipment_version")
+  actorId            String   @map("actor_id") @db.Uuid
+  correlationId      String   @map("correlation_id") @db.Uuid
+  status             String   @db.VarChar(20)
+  rejectionReason    String?  @map("rejection_reason") @db.VarChar(100)
+  attemptCount       Int      @default(0) @map("attempt_count")
+  nextAttemptAt      DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  shipment           Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([status, updatedAt], map: "ix_dispatch_intent_recovery")
+  @@map("shipment_dispatch_intents")
+  @@schema("fulfillment")
+}
+
+model ShipmentOrderCursor {
+  tenantId       String @map("tenant_id") @db.Uuid
+  orderId        String @map("order_id") @db.Uuid
+  orderVersion   BigInt @map("order_version")
+  canceled       Boolean @default(false)
+
+  @@id([tenantId, orderId])
+  @@map("shipment_order_cursors")
   @@schema("fulfillment")
 }
 

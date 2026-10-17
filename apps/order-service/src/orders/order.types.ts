@@ -34,6 +34,8 @@ export interface OrderSummaryView extends OrderTotalsView {
   updatedAt: Date;
   pendingSince: Date | null;
   cancellationRequestedAt: Date | null;
+  dispatchGrantedAt: Date | null;
+  dispatchShipmentId: string | null;
   version: number;
 }
 

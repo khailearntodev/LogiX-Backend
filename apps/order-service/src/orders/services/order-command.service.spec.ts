@@ -587,4 +587,59 @@ describe('OrderCommandService.cancel', () => {
       httpStatus: 409,
     });
   });
+
+  it('rejects cancellation after a dispatch grant even before IN_DELIVERY projection', async () => {
+    const { service, tx, inventory } = setup();
+    tx.salesOrder.findFirst.mockResolvedValue(salesOrderFixture({
+      status: 'READY_TO_SHIP', version: 8n, dispatchGrantedAt: new Date(),
+    }));
+    await expect(service.cancel(
+      ORDER_ID, { version: 8, reason: 'Cancel after grant' }, commandContext,
+    )).rejects.toMatchObject({
+      reason: ORDER_ERROR_REASON.DISPATCH_COMMITTED, httpStatus: 409,
+    });
+    expect(tx.salesOrder.update).not.toHaveBeenCalled();
+    expect(inventory.release).not.toHaveBeenCalled();
+  });
+
+  it('never releases stock if cancellation recovery encounters a dispatch grant', async () => {
+    const { service, prisma, inventory } = setup();
+    prisma.salesOrder.findFirst.mockResolvedValue(salesOrderFixture({
+      status: 'READY_TO_SHIP',
+      dispatchGrantedAt: new Date(),
+      cancellationRequestedAt: new Date(),
+      cancellationReason: 'Inconsistent persisted intent',
+      cancellationCorrelationId: commandContext.correlationId,
+    }));
+    await expect(service.completeCancellation(TENANT_ID, ORDER_ID)).rejects.toMatchObject({
+      reason: ORDER_ERROR_REASON.DISPATCH_COMMITTED,
+    });
+    expect(inventory.release).not.toHaveBeenCalled();
+  });
+
+  it.each(['PICKING', 'READY_TO_SHIP'])('allows cancellation before a dispatch grant in %s', async (status) => {
+    const { service, prisma, tx, inventory } = setup();
+    const current = salesOrderFixture({ status });
+    const intent = salesOrderFixture({
+      status, version: 2n, cancellationRequestedAt: new Date(),
+      cancellationReason: 'QA cancel', cancellationActorId: commandContext.actorId,
+      cancellationCorrelationId: commandContext.correlationId,
+    });
+    prisma.salesOrder.findFirst.mockResolvedValue(intent);
+    tx.salesOrder.findFirst.mockResolvedValueOnce(current).mockResolvedValueOnce(intent)
+      .mockResolvedValue(salesOrderFixture({ status: 'CANCELED', version: 3n }));
+    expect((await service.cancel(ORDER_ID, { version: 1, reason: 'QA cancel' }, commandContext)).status)
+      .toBe('CANCELED');
+    expect(inventory.release).toHaveBeenCalledOnce();
+  });
+
+  it.each(['IN_DELIVERY', 'DELIVERY_FAILED', 'COMPLETED'])('does not cancel %s', async (status) => {
+    const { service, tx, inventory } = setup();
+    tx.salesOrder.findFirst.mockResolvedValue(salesOrderFixture({ status }));
+    await expect(service.cancel(
+      ORDER_ID, { version: 1, reason: 'QA cancel' }, commandContext,
+    )).rejects.toMatchObject({ httpStatus: 409 });
+    expect(inventory.release).not.toHaveBeenCalled();
+    expect(tx.salesOrder.update).not.toHaveBeenCalled();
+  });
 });

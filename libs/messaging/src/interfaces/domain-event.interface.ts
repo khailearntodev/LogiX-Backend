@@ -9,6 +9,8 @@
  * @see docs/architecture/event-architecture.md §11
  */
 
+import type { ShipmentLifecyclePayload } from './shipment.contract.js';
+
 // ─── Shared Snapshots ───────────────────────────────────────────────────────
 // Immutable copies of Master Data / Identity records carried inside events so
 // consumers never read another service's database. Shapes mirror the JSON
@@ -115,7 +117,15 @@ export interface OrderConfirmedPayload {
   customerSnapshot: CustomerSnapshot;
   deliveryAddressSnapshot: AddressSnapshot;
   warehouseSnapshot: WarehouseSnapshot;
-  orderLines: Array<OrderLinePayload & { orderLineId: string }>;
+  orderLines: Array<OrderLinePayload & {
+    orderLineId: string;
+    /** Additive fields; legacy events resolve locked line snapshots through Order's internal API. */
+    skuSnapshot?: string;
+    productNameSnapshot?: string;
+    unitSnapshot?: string;
+    unitWeight?: string;
+    unitVolume?: string;
+  }>;
   totalQuantity: string;
   totalWeight: string;
   totalVolume: string;
@@ -273,6 +283,15 @@ export interface DomainEventMap {
   StockReleased: StockReservationPayload;
   InventoryReserved: InventoryReservedPayload;
   InventoryAdjusted: InventoryAdjustedPayload;
+  StockIssued: StockMovementPayload;
+  ShipmentCreated: ShipmentLifecyclePayload;
+  ShipmentPicking: ShipmentLifecyclePayload;
+  ShipmentReadyToShip: ShipmentLifecyclePayload;
+  ShipmentDispatched: ShipmentLifecyclePayload;
+  ShipmentDelivered: ShipmentLifecyclePayload;
+  ShipmentDeliveryFailed: ShipmentLifecyclePayload;
+  ShipmentCanceled: ShipmentLifecyclePayload;
+  ShipmentCancelRejected: ShipmentLifecyclePayload;
   ShipmentReady: ShipmentReadyPayload;
   TripPlanned: TripPlannedPayload;
   RouteOptimized: RouteOptimizedPayload;

@@ -166,8 +166,16 @@ is permitted.
 Cancellation first commits an intent and increments the Order version, locking
 editing/confirmation while preserving its business status. After Inventory
 release succeeds, Order commits CANCELED/history/outbox and increments version
-again. A background worker retries persisted intents. Shipment cancellation
-and dispatch races remain phase-5 responsibilities.
+again. A background worker retries persisted intents.
+
+Phase 5A adds an irrevocable Order dispatch grant under the same row lock used
+by cancellation. Pending cancellation rejects dispatch; a grant rejects cancel
+before any release, even before IN_DELIVERY projection. Only Fulfillment's
+internal token can request a grant; exact retries replay the persisted decision.
+This is a synchronous internal contract, not a shipment event or proof of stock
+issue. Fulfillment must persist its request and recover forward after a grant.
+Phase 5B adds Shipment creation/cancellation, dispatch-intent recovery,
+lifecycle projection and Inventory ISSUE after this gate.
 
 The relay holds service-local row locks through publish/marking and selects only
 the earliest unpublished event per tenant/aggregate. Failure after broker
@@ -187,3 +195,41 @@ advancing the failed offset. Permanent invalid events currently require
 operator repair and may block their partition; automatic dead-letter routing
 is not implemented. Broker-restart rehearsal and load benchmarks are not
 claimed by the phase-4 API/unit evidence.
+
+## 13. Fulfillment lifecycle (phase 5B)
+
+`OrderConfirmed` keeps event version 1 with additive line fields:
+`skuSnapshot`, `productNameSnapshot`, `unitSnapshot`, `unitWeight`, `unitVolume`.
+Legacy events lacking all five fields use Fulfillment-only
+`GET /internal/orders/:orderId/fulfillment-snapshot`; malformed rich events are
+rejected, not silently repaired. Customer/address/warehouse JSON stays copied
+from the original event. Creating a pool entry has no stock side effect.
+
+Shipment events share `ShipmentLifecyclePayload` in `@logix/messaging`:
+shipment/order/warehouse/reservation IDs, optional dispatch request and reason.
+The relay publishes to required `KAFKA_FULFILLMENT_TOPIC`, keyed by aggregate,
+using a separate durable group in Order and Inventory.
+
+| Event | Order projection | Inventory effect |
+| --- | --- | --- |
+| ShipmentCreated | None | None |
+| ShipmentPicking | PICKING | None |
+| ShipmentReadyToShip | READY_TO_SHIP | None |
+| ShipmentDispatched | IN_DELIVERY, matching persisted grant required | ISSUE |
+| ShipmentDelivered | COMPLETED + completedAt | None |
+| ShipmentDeliveryFailed | DELIVERY_FAILED | None |
+| ShipmentCanceled / ShipmentCancelRejected | None | None |
+
+Envelope producer, tenant, IDs, event version and aggregate identity are checked.
+Order locks its own row, enforces existing forward transitions, and records
+invalid/stale events as `IGNORED_STALE`. Redelivery is not enabled. A producer's
+outbox preserves same-aggregate ordering; arbitrary reordering of future events
+is not a supported transport contract. Inbox and aggregate versions prevent
+replay from moving lifecycle backward.
+
+Inventory serializes ISSUE with reservation/release using the tenant/order
+advisory lock, then locks product balances in sorted order. Replay with a new
+event ID checks the persisted shipment/request receipt, not only Inbox.
+Stock movements emit `StockIssued`, never `InventoryAdjusted` for ISSUE.
+Permanent malformed events retain the existing observable retry/blocking
+behavior; automatic DLQ and full phase-5 benchmark remain separate work.

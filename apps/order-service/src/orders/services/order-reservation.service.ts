@@ -18,6 +18,7 @@ import {
 import type { OrderCommandContext, OrderDetailView } from '../order.types.js';
 import { OrderOutboxWriter } from '../outbox/order-outbox.writer.js';
 import type { ReconcileReservationDto } from '../dto/reconcile-reservation.dto.js';
+import { lockOrder } from './order-lock.js';
 
 export const ORDER_RESERVATION_TRANSACTION_TIMEOUT_MS = 15_000;
 type ReservationContext = Pick<
@@ -112,11 +113,7 @@ export class OrderReservationService {
   ): Promise<OrderDetailView> {
     const order = await this.prisma.$transaction(
       async (tx) => {
-        await tx.$queryRaw(Prisma.sql`
-        SELECT id FROM orders.sales_orders
-        WHERE id = ${orderId}::uuid AND tenant_id = ${ctx.tenantId}::uuid
-          AND deleted_at IS NULL FOR UPDATE
-      `);
+        await lockOrder(tx, ctx.tenantId, orderId);
         const current = await this.load(tx, ctx.tenantId, orderId);
         const consumerName = `order-reservation:${orderId}`;
         if (ctx.eventId) {
@@ -196,6 +193,11 @@ export class OrderReservationService {
                 lineNumber: line.lineNumber,
                 productId: line.productId,
                 quantity: line.quantity,
+                skuSnapshot: line.skuSnapshot,
+                productNameSnapshot: line.productNameSnapshot,
+                unitSnapshot: line.unitSnapshot,
+                unitWeight: line.unitWeight,
+                unitVolume: line.unitVolume,
               })),
             },
           });

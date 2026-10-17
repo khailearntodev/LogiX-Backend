@@ -55,3 +55,8 @@ export {
   parseEventEnvelope,
 } from "./kafka-event-consumer.js";
 export type { OutboxDatabase } from "./prisma-outbox.store.js";
+export * from "./interfaces/shipment.contract.js";
+export type {
+  AuthorizeOrderDispatchRequest,
+  OrderDispatchGrant,
+} from "./interfaces/dispatch.interface.js";

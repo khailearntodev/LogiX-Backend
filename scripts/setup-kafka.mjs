@@ -18,7 +18,11 @@ function positiveInteger(key) {
   return value;
 }
 
-const topics = [required('KAFKA_ORDER_TOPIC'), required('KAFKA_INVENTORY_TOPIC')];
+const topics = [
+  required('KAFKA_ORDER_TOPIC'),
+  required('KAFKA_INVENTORY_TOPIC'),
+  required('KAFKA_FULFILLMENT_TOPIC'),
+];
 if (new Set(topics).size !== topics.length) throw new Error('Domain topics must be distinct');
 const numPartitions = positiveInteger('KAFKA_TOPIC_PARTITIONS');
 const replicationFactor = positiveInteger('KAFKA_TOPIC_REPLICATION_FACTOR');

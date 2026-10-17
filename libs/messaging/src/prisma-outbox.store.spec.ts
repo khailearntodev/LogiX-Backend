@@ -7,6 +7,10 @@ import {
 import type { OutboxRelayRecord } from './outbox-relay.js';
 
 describe('PrismaOutboxStore', () => {
+  it('accepts the Fulfillment schema without widening the schema whitelist', () => {
+    const database: OutboxDatabase = { $transaction: vi.fn() };
+    expect(() => new PrismaOutboxStore(database, 'fulfillment', ServiceId.FULFILLMENT_SERVICE, 1000)).not.toThrow();
+  });
   it('holds a SKIP LOCKED batch transaction through publishing and parameterizes writes', async () => {
     const tx = {
       $queryRawUnsafe: vi.fn().mockResolvedValue([

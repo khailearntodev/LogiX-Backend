@@ -21,6 +21,7 @@ export const orderConfigSchema = databaseConfigSchema
     INVENTORY_SERVICE_URL: z.string().url(),
     ORDER_MAX_LINES: z.coerce.number().int().positive(),
     KAFKA_GROUP_ID: z.string().min(1),
+    KAFKA_FULFILLMENT_TOPIC: z.string().min(1),
   });
 
 export type OrderConfig = z.infer<typeof orderConfigSchema>;
