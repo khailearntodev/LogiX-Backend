@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 
@@ -11,14 +12,26 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from logix_agent.config import settings
 from logix_agent.db.session import create_engine, create_session_factory
+from logix_agent.modules.agent.router import build_official_runtime
+from logix_agent.modules.agent.router import router as official_agent_router
 from logix_agent.modules.agui.router import build_agui_runtime
 from logix_agent.modules.agui.router import router as agui_router
 from logix_agent.modules.ai.factory import create_model_gateway
 from logix_agent.modules.ai.ports import ModelGateway
+from logix_agent.modules.tools.catalog import build_tool_registry
+from logix_agent.modules.tools.http_client import create_service_client
 
 app_engine: AsyncEngine | None = None
 app_session_factory: async_sessionmaker[AsyncSession] | None = None
 app_model_gateway: ModelGateway | None = None
+
+# Third-party libraries stay at WARNING; only our own loggers follow LOG_LEVEL.
+logging.basicConfig(
+    level=logging.WARNING,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logging.getLogger("logix_agent").setLevel(settings.log_level.upper())
+logger = logging.getLogger(__name__)
 
 
 def get_engine() -> AsyncEngine:
@@ -45,12 +58,23 @@ def get_model_gateway() -> ModelGateway:
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     global app_engine, app_session_factory, app_model_gateway
+    logger.info(
+        "%s starting (env=%s, agent_model=%s, inventory=%s, master_data=%s)",
+        settings.service_name,
+        settings.environment,
+        settings.agent_model,
+        settings.inventory_service_url,
+        settings.master_data_service_url,
+    )
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:
             await session.execute(text("SELECT 1"))
     except Exception as exc:
         print(f"[{settings.service_name}] Database connection warning on startup: {exc}")
+
+    service_client = create_service_client(settings)
+    app.state.tool_registry = build_tool_registry(service_client)
 
     try:
         app_model_gateway = create_model_gateway(settings)
@@ -61,10 +85,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as exc:
         print(f"[{settings.service_name}] Model gateway initialization warning: {exc}")
 
+    try:
+        app.state.official_runtime = build_official_runtime()
+        logger.info("create_agent flow ready at /api/v1/agent/official/runs")
+    except Exception:
+        logger.exception("create_agent flow failed to initialize")
+
     yield
 
     app.state.agui_runtime = None
-
+    app.state.official_runtime = None
+    app.state.tool_registry = None
+    await service_client.aclose()
     if app_engine is not None:
         await app_engine.dispose()
         app_engine = None
@@ -79,6 +111,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(agui_router)
+app.include_router(official_agent_router)
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -34,7 +34,8 @@ class ToolSpec:
     output_model: type[BaseModel]
     handler: ToolHandler
     # Format `module:resource:action`, same as @RequirePermissions in the Nest services.
-    required_permission: str
+    # None means the downstream endpoint only requires an authenticated user.
+    required_permission: str | None
     risk_level: RiskLevel = RiskLevel.READ
     target_service: str | None = None
     version: str = "1"

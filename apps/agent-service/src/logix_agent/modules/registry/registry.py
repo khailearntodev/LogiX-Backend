@@ -18,9 +18,10 @@ WILDCARD = "*"
 RESERVED_ARGUMENT_NAMES = frozenset({"config", "runtime"})
 
 
-def has_permission(actor: Actor, permission: str) -> bool:
+def has_permission(actor: Actor, permission: str | None) -> bool:
     return (
-        actor.role == "OWNER"
+        permission is None
+        or actor.role == "OWNER"
         or WILDCARD in actor.permissions
         or permission in actor.permissions
     )
