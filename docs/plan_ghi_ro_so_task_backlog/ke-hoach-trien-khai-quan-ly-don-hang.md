@@ -103,7 +103,7 @@ Các quyết định chỉ ghi trong bảng dưới đây, không tạo tài li�
 | QĐ-1 | Confirm gọi Inventory theo cách nào? | **Command đồng bộ** Order → Inventory qua endpoint nội bộ `POST /internal/reservations` với idempotency key `order:{orderId}:v{orderVersion}`. Inventory giữ hàng all-or-nothing trong một transaction và trả `RESERVED` hoặc `INSUFFICIENT` kèm danh sách thiếu. Phần **bất đồng bộ** dùng cho: `StockReceived` → retry FIFO, `OrderConfirmed`/`OrderCanceled` → Fulfillment. Lý do: state machine không có trạng thái trung gian "CONFIRMING". Cách này cho UI kết quả xác định và tránh "thành công giả". |
 | QĐ-2 | Xác thực service-to-service | Endpoint `/internal/*` **không** được Gateway proxy (pathFilter chỉ `/api/v1/...`). Endpoint được bảo vệ bằng `InternalServiceGuard`, xác thực token ký bằng `INTERNAL_SERVICE_JWT_SECRET`. Biến này bắt buộc trong config schema, **không có default**. Tenant truyền trong claim của token nội bộ, không lấy từ body. |
 | QĐ-3 | Kiểm tra Master Data khi tạo/sửa đơn | Order gọi Master Data REST hiện có qua `MASTER_DATA_SERVICE_URL` (bắt buộc) và **forward Authorization của user**. Như vậy tenant và quyền đọc master data được kiểm tra ở chính service sở hữu. Gọi song song từng product (giới hạn số dòng, ví dụ ≤ 100 dòng/đơn, để trong config). Nếu sau này cần batch lookup thì thêm `GET /products?ids=` ở Master Data trong một task riêng. |
-| QĐ-4 | FIFO dựa vào mốc nào; sửa đơn PENDING_STOCK có giữ vị trí không | Dùng `pendingSince` (mốc lần **đầu** vào PENDING_STOCK). Sửa line/kho của đơn PENDING_STOCK thì **mất vị trí** (reset `pendingSince`) và đơn vẫn ở PENDING_STOCK. Cần migration thêm cột `pending_since` cùng index `(tenant_id, warehouse_id, status, pending_since)`. |
+| QĐ-4 | FIFO dựa vào mốc nào; sửa đơn PENDING_STOCK có giữ vị trí không | Dùng `pendingSince` (mốc lần **đầu** vào PENDING_STOCK). Sửa line/kho của đơn PENDING_STOCK thì **mất vị trí** (reset `pendingSince`) và đơn vẫn ở PENDING_STOCK. FIFO là thứ tự xét; đơn vẫn thiếu không chặn xét đơn sau. Cần migration thêm cột `pending_since` cùng index `(tenant_id, warehouse_id, status, pending_since)`. |
 | QĐ-5 | Race giữa hủy đơn và dispatch | Hủy đơn chỉ hợp lệ khi `status ∈ {DRAFT, PENDING_STOCK, CONFIRMED, PICKING, READY_TO_SHIP}`, kiểm tra bằng optimistic version. Dispatch (GĐ5) chuyển đơn sang IN_DELIVERY cũng bằng version. Bên nào commit sau sẽ nhận 409. Fulfillment khi nhận `OrderCanceled` mà shipment đã dispatched thì phát `ShipmentCancelRejected` để báo; trạng thái không được lùi. |
 | QĐ-6 | Mã quyền cho confirm | Dùng mã đã seed `order:sales-order:approve` cho confirm và retry. **Không** tạo mã `confirm` mới, để tránh lệch với seed và RBAC plan. |
 | QĐ-7 | Sinh mã đơn | Thêm bảng `order_number_sequences (tenant_id, period, last_value)`. Mỗi lần tạo đơn, khóa dòng bằng `UPDATE … RETURNING` trong transaction tạo đơn. Định dạng mã đơn: `SO-YYYYMMDD-000001`. Prefix lấy từ hằng số domain, không lấy từ input. |
@@ -165,6 +165,22 @@ Không viết endpoint nghiệp vụ trước khi các QĐ được duyệt. Kh�
 ---
 
 ## 4. Giai đoạn 2 — Backend Order Draft
+
+> **Trạng thái: ✅ Hoàn thành.** Đã có 6 endpoint ở mục 4.2 và đi được qua Gateway. 136 unit test pass. Build, lint, typecheck của order-service, master-data-service, api-gateway và libs/messaging đều xanh. Đã chạy 43 kiểm tra API thật cho đủ 10 case ở mục 4.6, cộng thêm case 2 request đồng thời cùng `Idempotency-Key`: kết quả trả cùng `id` và chỉ tạo 1 bản ghi. Dữ liệu QA và script tạm đã được xóa.
+
+**Quyết định chốt khi triển khai GĐ2:**
+
+| # | Nội dung |
+|---|---|
+| D2-1 | Master Data trả `version` dạng number. Snapshot lưu `customerVersion`, `addressVersion`, `warehouseVersion`. |
+| D2-2 | Đơn tạo tay có `orderSource = MANUAL`. |
+| D2-3 | Chuyển trạng thái sai (sửa đơn không ở DRAFT, hủy đơn đã CANCELED) trả 409 với code `INVALID_STATE_TRANSITION` và `details.reason = ORDER_INVALID_TRANSITION`. Các mã `ORDER_*` khác cũng nằm trong `details.reason`. |
+| D2-4 | PATCH có `lines` thì thay toàn bộ dòng: xóa dòng cũ rồi tạo lại, sau đó tính lại totals. |
+| D2-5 | Sửa đơn DRAFT chỉ ghi outbox `OrderUpdated`, không ghi `OrderStatusHistory`, vì trạng thái không đổi. |
+| D2-6 | Timeout khi gọi Master Data là hằng số domain 5000 ms, gọi đồng thời tối đa 10 request. 404 được hiểu là không có dữ liệu (trả 422). 5xx, timeout hoặc body sai trả 503. 400/401/403 trả 502. |
+| D2-7 | Mã đơn tính theo ngày ở múi giờ `Asia/Ho_Chi_Minh`, định dạng `SO-YYYYMMDD-000001`. |
+| D2-8 | Địa chỉ giao phải thuộc customer, có loại `SHIPPING` và đang `ACTIVE`. |
+| D2-9 | Totals làm tròn half-up: quantity 3 chữ số thập phân, weight 3, volume 6. Response trả chuỗi; không lộ BigInt/Decimal. |
 
 ### 4.1. Mục tiêu
 
@@ -272,6 +288,12 @@ REQ-001 đến REQ-010, REQ-014 (phần DRAFT), REQ-016, REQ-018. SC-001 đến 
 
 ## 5. Giai đoạn 3 — Frontend Order Draft
 
+> **Trạng thái: ✅ Code hoàn thành, chờ người dùng tự kiểm tra UI.** Đã có 4 trang `/orders`, `/orders/new`, `/orders/[orderId]`, `/orders/[orderId]/edit` và mục sidebar. `pnpm lint`, `pnpm typecheck` và `pnpm build` đều xanh. Script quét i18n cho 119 key tĩnh, 9 status và 15 mã lỗi Backend: 0 key thiếu ở cả 4 file locale; key VI/EN khớp nhau; không file nào có BOM; script đã xóa. Một số điểm khác so với 5.2:
+> - status/tone nằm trong `constants/order.constants.ts` + `components/order-status-badge.tsx`, không sửa `status-badge.tsx` dùng chung;
+> - trang chi tiết là `order-detail-screen.tsx`;
+> - có thêm `version-conflict-dialog.tsx`, `customer-picker.tsx`, `utils/{idempotency,order-errors,load-preview,order-form}.ts`;
+> - FE gửi currency cố định `VND`, không hiện trường này (QĐ của người dùng).
+
 ### 5.1. Mục tiêu
 
 Người dùng thao tác được toàn bộ luồng đơn nháp trên UI, dùng đúng theme và component hiện có, đủ VI/EN, không tự đặt ra rule nghiệp vụ.
@@ -348,6 +370,10 @@ REQ-017, REQ-018, REQ-020 (phần draft). SC-006, SC-007.
 
 ## 6. Giai đoạn 4 — Giữ hàng tự động (Reservation) và xử lý bất đồng bộ
 
+> **Trạng thái: Đã triển khai Backend/Frontend; API và integration đã kiểm chứng, chưa nghiệm thu tương tác UI trên trình duyệt.** Quyết định bổ sung của người dùng: dựng Kafka dùng chung cho hệ thống; reservation bị treo được đối soát qua API nội bộ của Order để hoàn tất confirm nếu còn hợp lệ. Chỉ release khi Order xác nhận rõ reservation không còn được sử dụng; thiếu event hoặc lỗi kết nối không cho phép tự release.
+
+> **Quyết định phục hồi hủy:** lưu yêu cầu hủy bền vững trước khi gọi Inventory. Khi release hoặc ghi CANCELED lỗi, giữ trạng thái nghiệp vụ cũ nhưng khóa sửa/xác nhận, hiển thị đang xử lý hủy và tự thử hoàn tất. Không để đơn CONFIRMED tiếp tục vận hành khi hàng có thể đã được release.
+
 ### 6.1. Mục tiêu
 
 Xác nhận đơn giữ đủ **toàn bộ** hàng hoặc không giữ gì. Thiếu hàng thì đơn vào PENDING_STOCK và có shortage. Nhập kho thì retry theo FIFO. Hủy đơn thì giải phóng phần đã giữ. Mọi bước idempotent.
@@ -394,8 +420,8 @@ apps/inventory-service/src/inventory/
 | POST | `/api/v1/orders/:id/confirm` | `…:approve` | `{ version }`. Gọi reserve. `RESERVED` → CONFIRMED (`confirmedAt`, snapshot đông cứng, outbox `OrderConfirmed`). `INSUFFICIENT` → PENDING_STOCK (`pendingSince` nếu chưa có, upsert `OrderShortage` theo `shortageHash`, outbox `OrderPendingStock`). Lỗi upstream → 503, **giữ nguyên DRAFT**. |
 | POST | `/api/v1/orders/:id/retry-reservation` | `…:approve` | Retry thủ công cho đơn PENDING_STOCK. |
 | GET | `/api/v1/orders/:id/shortages` | `…:read` | Danh sách thiếu chưa resolved. |
-| POST | `/api/v1/orders/:id/cancel` | `…:cancel` | Mở rộng sang PENDING_STOCK và CONFIRMED. Nếu đã reserve thì gọi release **trước**, release thành công mới chuyển CANCELED. Release lỗi thì 503 và trạng thái giữ nguyên. |
-| PATCH | `/api/v1/orders/:id` | `…:update` | Mở cho PENDING_STOCK (chưa có reservation). Reset `pending_since` theo QĐ-4. |
+| POST | `/api/v1/orders/:id/cancel` | `…:cancel` | DRAFT/PENDING_STOCK/CONFIRMED: lưu cancellation intent + tăng version trước; gọi release; chỉ chuyển CANCELED + tăng version lần nữa khi release thành công. Release lỗi thì 503, status cũ nhưng khóa thao tác; worker tự phục hồi. |
+| PATCH | `/api/v1/orders/:id` | `…:update` | Mở cho PENDING_STOCK chưa reservation/intent hủy. Kiểm tra active reservation dưới lock Order; chỉ reset `pending_since` khi gửi sửa line/kho. |
 
 **Tính nhất quán khi Inventory đã giữ hàng nhưng transaction phía Order lỗi:** nhờ idempotency key, gọi lại confirm sẽ nhận lại RESERVED. Thêm job đối soát `reservation-reconciler` ở Inventory: group ACTIVE quá N phút (cấu hình) mà không có `StockReserved` được Order xác nhận (Order phát `OrderConfirmed` có `reservationGroupId`) thì cảnh báo và release theo quy tắc đã chốt. **Không** tự release khi chưa có xác nhận rõ ràng.
 
@@ -434,6 +460,83 @@ REQ-009 (pending), REQ-011 đến REQ-014, REQ-019. SC-008, SC-009, SC-011 (ph�
 8. Gọi trực tiếp `/api/v1/internal/...` qua Gateway → 404. Gọi `/internal/reservations` không có token nội bộ → 401.
 
 **Dọn dẹp:** xóa dữ liệu QA ở `logix_orders` và `logix_inventory` (reservation, balance, movement, receipt, outbox, inbox của tenant QA) và master data/identity QA. Xóa topic test nếu đã tạo topic riêng. Xóa script.
+
+### 6.8. Bàn giao triển khai và bằng chứng
+
+**Đã nối đầy đủ:**
+- Kafka KRaft local dùng chung, script provision topic và cấu hình bắt buộc; relay Order/Inventory, retry/backoff, lock và thứ tự event cùng aggregate.
+- Inventory reserve/preview/active/release nội bộ: tenant từ token nội bộ, all-or-nothing, decimal string, key theo version, không đổi on-hand.
+- Order confirm-preview/confirm/retry/shortages; PENDING_STOCK editable khi chưa reservation; khóa thao tác trong thời gian phục hồi hủy.
+- FIFO và Inbox theo warehouse + từng Order; consumer Inventory acknowledge/release; job phục hồi hủy và đối soát reservation orphan.
+- Frontend preview xác nhận, bảng shortage/thời điểm chờ, retry thủ công, phân biệt 503 với thiếu hàng, khóa hủy đang phục hồi; đồng bộ VI/EN ở cả hai bộ locale.
+- Migration `track_order_reservation_group`, `persist_order_cancellation_intent`, `acknowledge_order_reservations` đã áp dụng.
+
+**Chi tiết phục hồi tránh mất tín hiệu:**
+- `OrderPendingStock` lần đầu và `OrderUpdated` khi còn pending tự đánh thức FIFO, tránh nhập kho tới trước commit pending.
+- Retry vẫn thiếu không phát thêm `OrderPendingStock`, tránh vòng lặp event vô hạn.
+- Khi Inventory đã reserve nhưng Order rollback, key không đổi giúp confirm/reconciler dùng lại group; version tăng và key mới không được chiếm một group active cũ.
+- Release đối soát chỉ nhắm group được quét, không giải phóng một group mới của Order. Các lý do release (Order không tồn tại/đã hủy, trạng thái hoặc version/nội dung không còn phù hợp) không cho phép tự nhận lại group cũ; đường confirm luôn kiểm tra version dưới lock và Inventory kiểm tra key/nội dung active.
+- Hủy API lặp sau CANCELED vẫn 409; worker gặp hủy đã hoàn tất trả kết quả hiện tại, không release thêm.
+
+**Bằng chứng kiểm thử (lệnh cuối thành công phải có exit code 0):**
+
+| Phạm vi | Bằng chứng đã chạy | Kết quả |
+|---|---|---|
+| Reserve/confirm/atomicity/recovery/relay thật | Suite integration tạm PostgreSQL + HTTP + Kafka; gồm 9 case, tenant/topic QA riêng ở lượt cuối | 9/9, exit 0 |
+| Consumer Kafka phục hồi | Event đầu làm handler lỗi tạm thời; consumer tự restart, nhận lại cùng eventId rồi xử lý event kế tiếp | 1/1, exit 0 |
+| Inventory HTTP + event hủy trùng | Internal token, reserve, acknowledge lặp, hai event cancel song song; on-hand không đổi, reserved giảm một lần, Inbox/StockReleased một lần | 1/1, exit 0 |
+| Gateway + AppModule thật | Order/Inventory/Gateway trên cổng ngẫu nhiên; relay tự chạy được vô hiệu hóa trong riêng test này để không quét outbox người dùng, event gửi vào Kafka topic QA; 401/403/tenant 404/internal 404, preview, FIFO, shortage, replay, cancel, retry sau release | 1/1, exit 0 |
+| Unit | `pnpm --filter order-service test`, `inventory-service test`, `@logix/messaging test`: command/version, FIFO/wakeup/Inbox, retry/backoff, fail-closed reconcile, recovery | Order 183/183, Inventory 37/37, messaging 30/30; tổng 250, exit 0 |
+| Backend compile/lint | Shared messaging build, Order/Inventory TypeScript đầy đủ, oxlint source/test và production `nest build` hai service | Exit 0 |
+| Frontend | Full lint, typecheck, production build; hai bộ locale đồng bộ | Exit 0 |
+
+**Dọn dẹp và giới hạn nghiệm thu:**
+- Các integration spec tạm đã xóa sau chạy; dữ liệu của đúng tenant QA được xóa, topic/group QA riêng được xóa, ứng dụng test đóng. Không dừng Kafka/PostgreSQL hay service người dùng. Giữ unit test regression lâu dài theo quy tắc dự án.
+- Lượt integration đầu trước khi cô lập topic đã publish một số event QA vào topic domain; dữ liệu QA đã xóa nhưng lịch sử Kafka có thể còn. Không xóa topic domain để tránh mất event người dùng; không coi đây là dữ liệu nghiệp vụ.
+- **Phục hồi spam log 2026-10-11:** đọc Kafka xác minh 14 `OrderConfirmed` có mã `QA-*` thuộc 5 tenant test; truy vấn Order và Inventory xác nhận không còn Order/reservation của các tenant đó. Người dùng đồng ý xử lý đúng event QA: đã ghi 14 Inbox `inventory-order-confirmation` với outcome `IGNORED_QA_CLEANUP`, giữ nguyên topic và không reset offset. Handler thật replay toàn bộ 22 event hiện có qua consumer group kiểm chứng riêng: 1/1 test qua, exit 0, không lỗi handler; group/test tạm đã xóa. Consumer group Inventory chính đang `Empty` tại lúc kiểm tra, cần khởi động lại service để nó tự xử lý tiếp và commit offset bình thường; chưa tuyên bố đã quan sát tiến độ group chính. Không thêm quy tắc bỏ qua reservation thiếu vào production code. Nguyên nhân QA lọt topic còn gồm relay service người dùng quét outbox QA: chỉ đổi topic của producer test hoặc vô hiệu hóa relay trong app test là chưa đủ; lần test tiếp phải cô lập database/outbox khỏi mọi relay đang chạy.
+- Chưa dùng trình duyệt: chưa nghiệm thu tương tác VI/EN, mobile/desktop, preview/error/cancel recovery bằng UI. UI hiện refetch thủ công, chưa tự polling lifecycle.
+- Chưa dừng broker dùng chung để thử restart hoặc đo tải; rehearsal restart và benchmark thuộc hardening GĐ5.
+- Permanent invalid Kafka event hiện giữ offset và retry/log; có thể chặn partition. DLQ/replay có kiểm soát chưa triển khai, không tuyên bố exactly-once hay tự bỏ event lỗi.
+- SC-008/009/011 mới có bằng chứng phần reservation; Shipment/issue/dispatch/lifecycle vẫn thuộc GĐ5. Không gọi toàn bộ Sales Order/Shipment hoàn chỉnh.
+- Công cụ test của editor không phát hiện Vitest, nên dùng lệnh test chuẩn của từng package; không bỏ qua test. Editor diagnostics phạm vi Order/Inventory/messaging/frontend orders không có lỗi. Next build còn cảnh báo convention middleware cũ; không đổi phần ngoài GĐ4.
+- `git diff --check` Backend qua; Frontend toàn worktree còn whitespace ở CSS header của thay đổi trước GĐ4. Không tự sửa thay đổi ngoài phạm vi; các file orders/locale GĐ4 được kiểm tra riêng.
+
+### 6.9. Dữ liệu mẫu lưu lâu dài trên console
+
+Theo yêu cầu và xác nhận của người dùng, đã tạo dữ liệu cho **Công ty Ahihi**
+qua các API public của Gateway, bằng quyền thực tế của OWNER hiện có. Không
+đổi tài khoản, mật khẩu hay phân quyền; không ghi trực tiếp trạng thái Order,
+balance/reservation hoặc giả Shipment/dispatch.
+
+| Dữ liệu | Số lượng |
+|---|---:|
+| Kho | 6 |
+| Sản phẩm | 40 |
+| Khách hàng / địa chỉ SHIPPING | 24 / 48 |
+| Phương tiện | 12 |
+| Phiếu nhập POSTED / stock movements | 24 / 240 |
+| Balance kho–sản phẩm | 240 |
+| Order / OrderLine | 80 / 256 |
+| DRAFT / CONFIRMED / PENDING_STOCK / CANCELED | 24 / 32 / 16 / 8 |
+| History / shortage chưa resolved | 140 / 16 |
+| ReservationGroup ACTIVE / RELEASED | 32 / 4 |
+
+Các mã Master Data dùng prefix `DEMO-`, tên kho/sản phẩm/khách hàng ghi `[Mẫu]`;
+biển số `DEMO-*`, email khách hàng dùng `example.com`. Đây là dữ liệu giả lập
+nghiệp vụ được lưu thật, không phải chứng nhận về địa chỉ, phương tiện hay
+doanh nghiệp ngoài đời. Order dùng mã do service sinh và key namespace
+`console-demo-v1`. Sản phẩm tồn thấp cho phép thao tác shortage/retry thực tế.
+
+Đã đọc lại qua Gateway đúng tenant: orders/products/warehouses/customers/
+vehicles/balances đều HTTP 200 và đúng tổng; shortage/history có dữ liệu.
+Đối chiếu SQL: không có tổng quantity/weight/volume sai, không balance âm hay
+reserved lệch tổng reservation ACTIVE; 32 group ACTIVE đều acknowledged.
+Outbox Order/Inventory đã publish hết tại thời điểm kiểm tra, Inventory
+không có lastError. Lệnh tạo và kiểm chứng đều exit 0.
+
+**Không dọn bộ này như QA:** dữ liệu được giữ để người dùng xem và vận hành
+trên console. Script thao tác tạm đã xóa; không tạo mock UI hoặc thay code
+nghiệp vụ. Shipment/lifecycle GĐ5 chưa có dữ liệu giả.
 
 ---
 

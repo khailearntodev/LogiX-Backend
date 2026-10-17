@@ -1,6 +1,14 @@
 import { InvalidStateTransitionError } from '@logix/errors';
-import { ORDER_STATUS, ORDER_STATUSES, type OrderStatus } from './order-status.js';
-import { assertTransition, canTransition, isTerminalStatus } from './order-state-machine.js';
+import {
+  ORDER_STATUS,
+  ORDER_STATUSES,
+  type OrderStatus,
+} from './order-status.js';
+import {
+  assertTransition,
+  canTransition,
+  isTerminalStatus,
+} from './order-state-machine.js';
 
 const S = ORDER_STATUS;
 
@@ -26,7 +34,9 @@ const validKeys = new Set(EXPECTED_VALID.map(([from, to]) => `${from}->${to}`));
 const allPairs = ORDER_STATUSES.flatMap((from) =>
   ORDER_STATUSES.map((to) => [from, to] as const),
 );
-const invalidPairs = allPairs.filter(([from, to]) => !validKeys.has(`${from}->${to}`));
+const invalidPairs = allPairs.filter(
+  ([from, to]) => !validKeys.has(`${from}->${to}`),
+);
 
 describe('order state machine', () => {
   it('covers all 9 statuses (81 pairs)', () => {
@@ -42,7 +52,9 @@ describe('order state machine', () => {
 
   it.each(invalidPairs)('rejects %s -> %s', (from, to) => {
     expect(canTransition(from, to)).toBe(false);
-    expect(() => assertTransition(from, to)).toThrow(InvalidStateTransitionError);
+    expect(() => assertTransition(from, to)).toThrow(
+      InvalidStateTransitionError,
+    );
   });
 
   it('marks only COMPLETED and CANCELED as terminal', () => {

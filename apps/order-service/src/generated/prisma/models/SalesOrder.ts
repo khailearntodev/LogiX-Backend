@@ -59,6 +59,11 @@ export type SalesOrderMinAggregateOutputType = {
   totalVolume: runtime.Decimal | null
   pendingSince: Date | null
   confirmedAt: Date | null
+  reservationGroupId: string | null
+  cancellationRequestedAt: Date | null
+  cancellationReason: string | null
+  cancellationActorId: string | null
+  cancellationCorrelationId: string | null
   canceledAt: Date | null
   completedAt: Date | null
   cancelReason: string | null
@@ -87,6 +92,11 @@ export type SalesOrderMaxAggregateOutputType = {
   totalVolume: runtime.Decimal | null
   pendingSince: Date | null
   confirmedAt: Date | null
+  reservationGroupId: string | null
+  cancellationRequestedAt: Date | null
+  cancellationReason: string | null
+  cancellationActorId: string | null
+  cancellationCorrelationId: string | null
   canceledAt: Date | null
   completedAt: Date | null
   cancelReason: string | null
@@ -119,6 +129,11 @@ export type SalesOrderCountAggregateOutputType = {
   totalVolume: number
   pendingSince: number
   confirmedAt: number
+  reservationGroupId: number
+  cancellationRequestedAt: number
+  cancellationReason: number
+  cancellationActorId: number
+  cancellationCorrelationId: number
   canceledAt: number
   completedAt: number
   cancelReason: number
@@ -163,6 +178,11 @@ export type SalesOrderMinAggregateInputType = {
   totalVolume?: true
   pendingSince?: true
   confirmedAt?: true
+  reservationGroupId?: true
+  cancellationRequestedAt?: true
+  cancellationReason?: true
+  cancellationActorId?: true
+  cancellationCorrelationId?: true
   canceledAt?: true
   completedAt?: true
   cancelReason?: true
@@ -191,6 +211,11 @@ export type SalesOrderMaxAggregateInputType = {
   totalVolume?: true
   pendingSince?: true
   confirmedAt?: true
+  reservationGroupId?: true
+  cancellationRequestedAt?: true
+  cancellationReason?: true
+  cancellationActorId?: true
+  cancellationCorrelationId?: true
   canceledAt?: true
   completedAt?: true
   cancelReason?: true
@@ -223,6 +248,11 @@ export type SalesOrderCountAggregateInputType = {
   totalVolume?: true
   pendingSince?: true
   confirmedAt?: true
+  reservationGroupId?: true
+  cancellationRequestedAt?: true
+  cancellationReason?: true
+  cancellationActorId?: true
+  cancellationCorrelationId?: true
   canceledAt?: true
   completedAt?: true
   cancelReason?: true
@@ -342,6 +372,11 @@ export type SalesOrderGroupByOutputType = {
   totalVolume: runtime.Decimal
   pendingSince: Date | null
   confirmedAt: Date | null
+  reservationGroupId: string | null
+  cancellationRequestedAt: Date | null
+  cancellationReason: string | null
+  cancellationActorId: string | null
+  cancellationCorrelationId: string | null
   canceledAt: Date | null
   completedAt: Date | null
   cancelReason: string | null
@@ -397,6 +432,11 @@ export type SalesOrderWhereInput = {
   totalVolume?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
+  reservationGroupId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  cancellationRequestedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
+  cancellationReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
+  cancellationActorId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  cancellationCorrelationId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
@@ -432,6 +472,11 @@ export type SalesOrderOrderByWithRelationInput = {
   totalVolume?: Prisma.SortOrder
   pendingSince?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  reservationGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationRequestedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationActorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationCorrelationId?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -471,6 +516,11 @@ export type SalesOrderWhereUniqueInput = Prisma.AtLeast<{
   totalVolume?: Prisma.DecimalFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
+  reservationGroupId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  cancellationRequestedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
+  cancellationReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
+  cancellationActorId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
+  cancellationCorrelationId?: Prisma.UuidNullableFilter<"SalesOrder"> | string | null
   canceledAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableFilter<"SalesOrder"> | Date | string | null
   cancelReason?: Prisma.StringNullableFilter<"SalesOrder"> | string | null
@@ -506,6 +556,11 @@ export type SalesOrderOrderByWithAggregationInput = {
   totalVolume?: Prisma.SortOrder
   pendingSince?: Prisma.SortOrderInput | Prisma.SortOrder
   confirmedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  reservationGroupId?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationRequestedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationActorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  cancellationCorrelationId?: Prisma.SortOrderInput | Prisma.SortOrder
   canceledAt?: Prisma.SortOrderInput | Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   cancelReason?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -546,6 +601,11 @@ export type SalesOrderScalarWhereWithAggregatesInput = {
   totalVolume?: Prisma.DecimalWithAggregatesFilter<"SalesOrder"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   confirmedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
+  reservationGroupId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  cancellationRequestedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
+  cancellationReason?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  cancellationActorId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
+  cancellationCorrelationId?: Prisma.UuidNullableWithAggregatesFilter<"SalesOrder"> | string | null
   canceledAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"SalesOrder"> | Date | string | null
   cancelReason?: Prisma.StringNullableWithAggregatesFilter<"SalesOrder"> | string | null
@@ -578,6 +638,11 @@ export type SalesOrderCreateInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -613,6 +678,11 @@ export type SalesOrderUncheckedCreateInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -648,6 +718,11 @@ export type SalesOrderUpdateInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -683,6 +758,11 @@ export type SalesOrderUncheckedUpdateInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -718,6 +798,11 @@ export type SalesOrderCreateManyInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -750,6 +835,11 @@ export type SalesOrderUpdateManyMutationInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -782,6 +872,11 @@ export type SalesOrderUncheckedUpdateManyInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -819,6 +914,11 @@ export type SalesOrderCountOrderByAggregateInput = {
   totalVolume?: Prisma.SortOrder
   pendingSince?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
+  reservationGroupId?: Prisma.SortOrder
+  cancellationRequestedAt?: Prisma.SortOrder
+  cancellationReason?: Prisma.SortOrder
+  cancellationActorId?: Prisma.SortOrder
+  cancellationCorrelationId?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
@@ -854,6 +954,11 @@ export type SalesOrderMaxOrderByAggregateInput = {
   totalVolume?: Prisma.SortOrder
   pendingSince?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
+  reservationGroupId?: Prisma.SortOrder
+  cancellationRequestedAt?: Prisma.SortOrder
+  cancellationReason?: Prisma.SortOrder
+  cancellationActorId?: Prisma.SortOrder
+  cancellationCorrelationId?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
@@ -882,6 +987,11 @@ export type SalesOrderMinOrderByAggregateInput = {
   totalVolume?: Prisma.SortOrder
   pendingSince?: Prisma.SortOrder
   confirmedAt?: Prisma.SortOrder
+  reservationGroupId?: Prisma.SortOrder
+  cancellationRequestedAt?: Prisma.SortOrder
+  cancellationReason?: Prisma.SortOrder
+  cancellationActorId?: Prisma.SortOrder
+  cancellationCorrelationId?: Prisma.SortOrder
   canceledAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   cancelReason?: Prisma.SortOrder
@@ -1000,6 +1110,11 @@ export type SalesOrderCreateWithoutLinesInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1034,6 +1149,11 @@ export type SalesOrderUncheckedCreateWithoutLinesInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1084,6 +1204,11 @@ export type SalesOrderUpdateWithoutLinesInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1118,6 +1243,11 @@ export type SalesOrderUncheckedUpdateWithoutLinesInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1152,6 +1282,11 @@ export type SalesOrderCreateWithoutStatusHistoryInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1186,6 +1321,11 @@ export type SalesOrderUncheckedCreateWithoutStatusHistoryInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1236,6 +1376,11 @@ export type SalesOrderUpdateWithoutStatusHistoryInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1270,6 +1415,11 @@ export type SalesOrderUncheckedUpdateWithoutStatusHistoryInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1304,6 +1454,11 @@ export type SalesOrderCreateWithoutShortagesInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1338,6 +1493,11 @@ export type SalesOrderUncheckedCreateWithoutShortagesInput = {
   totalVolume: runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Date | string | null
   confirmedAt?: Date | string | null
+  reservationGroupId?: string | null
+  cancellationRequestedAt?: Date | string | null
+  cancellationReason?: string | null
+  cancellationActorId?: string | null
+  cancellationCorrelationId?: string | null
   canceledAt?: Date | string | null
   completedAt?: Date | string | null
   cancelReason?: string | null
@@ -1388,6 +1548,11 @@ export type SalesOrderUpdateWithoutShortagesInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1422,6 +1587,11 @@ export type SalesOrderUncheckedUpdateWithoutShortagesInput = {
   totalVolume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   pendingSince?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   confirmedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  reservationGroupId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationRequestedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  cancellationReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  cancellationCorrelationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   canceledAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   cancelReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1505,6 +1675,11 @@ export type SalesOrderSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   totalVolume?: boolean
   pendingSince?: boolean
   confirmedAt?: boolean
+  reservationGroupId?: boolean
+  cancellationRequestedAt?: boolean
+  cancellationReason?: boolean
+  cancellationActorId?: boolean
+  cancellationCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1541,6 +1716,11 @@ export type SalesOrderSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   totalVolume?: boolean
   pendingSince?: boolean
   confirmedAt?: boolean
+  reservationGroupId?: boolean
+  cancellationRequestedAt?: boolean
+  cancellationReason?: boolean
+  cancellationActorId?: boolean
+  cancellationCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1573,6 +1753,11 @@ export type SalesOrderSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   totalVolume?: boolean
   pendingSince?: boolean
   confirmedAt?: boolean
+  reservationGroupId?: boolean
+  cancellationRequestedAt?: boolean
+  cancellationReason?: boolean
+  cancellationActorId?: boolean
+  cancellationCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1605,6 +1790,11 @@ export type SalesOrderSelectScalar = {
   totalVolume?: boolean
   pendingSince?: boolean
   confirmedAt?: boolean
+  reservationGroupId?: boolean
+  cancellationRequestedAt?: boolean
+  cancellationReason?: boolean
+  cancellationActorId?: boolean
+  cancellationCorrelationId?: boolean
   canceledAt?: boolean
   completedAt?: boolean
   cancelReason?: boolean
@@ -1614,7 +1804,7 @@ export type SalesOrderSelectScalar = {
   deletedAt?: boolean
 }
 
-export type SalesOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderNumber" | "customerId" | "deliveryAddressId" | "warehouseId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "billingAddressSnapshot" | "currency" | "status" | "orderSource" | "externalChannel" | "externalOrderId" | "idempotencyKey" | "idempotencyRequestHash" | "totalQuantity" | "totalWeight" | "totalVolume" | "pendingSince" | "confirmedAt" | "canceledAt" | "completedAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["salesOrder"]>
+export type SalesOrderOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderNumber" | "customerId" | "deliveryAddressId" | "warehouseId" | "customerSnapshot" | "deliveryAddressSnapshot" | "warehouseSnapshot" | "billingAddressSnapshot" | "currency" | "status" | "orderSource" | "externalChannel" | "externalOrderId" | "idempotencyKey" | "idempotencyRequestHash" | "totalQuantity" | "totalWeight" | "totalVolume" | "pendingSince" | "confirmedAt" | "reservationGroupId" | "cancellationRequestedAt" | "cancellationReason" | "cancellationActorId" | "cancellationCorrelationId" | "canceledAt" | "completedAt" | "cancelReason" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["salesOrder"]>
 export type SalesOrderInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   lines?: boolean | Prisma.SalesOrder$linesArgs<ExtArgs>
   statusHistory?: boolean | Prisma.SalesOrder$statusHistoryArgs<ExtArgs>
@@ -1663,6 +1853,11 @@ export type $SalesOrderPayload<ExtArgs extends runtime.Types.Extensions.Internal
      */
     pendingSince: Date | null
     confirmedAt: Date | null
+    reservationGroupId: string | null
+    cancellationRequestedAt: Date | null
+    cancellationReason: string | null
+    cancellationActorId: string | null
+    cancellationCorrelationId: string | null
     canceledAt: Date | null
     completedAt: Date | null
     cancelReason: string | null
@@ -2118,6 +2313,11 @@ export interface SalesOrderFieldRefs {
   readonly totalVolume: Prisma.FieldRef<"SalesOrder", 'Decimal'>
   readonly pendingSince: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly confirmedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
+  readonly reservationGroupId: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly cancellationRequestedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
+  readonly cancellationReason: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly cancellationActorId: Prisma.FieldRef<"SalesOrder", 'String'>
+  readonly cancellationCorrelationId: Prisma.FieldRef<"SalesOrder", 'String'>
   readonly canceledAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"SalesOrder", 'DateTime'>
   readonly cancelReason: Prisma.FieldRef<"SalesOrder", 'String'>

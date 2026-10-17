@@ -51,8 +51,8 @@ export interface WarehouseSnapshot {
   district: string | null;
   province: string;
   postalCode: string | null;
-  latitude: string;
-  longitude: string;
+  latitude: string | null;
+  longitude: string | null;
 }
 
 /** Tenant legal profile printed as the issuer on dispatch documents. */
@@ -70,18 +70,44 @@ export interface IssuerSnapshot {
 
 // ─── Order Events ───────────────────────────────────────────────────────────
 
-export interface OrderCreatedPayload {
+/** Quantities and totals are decimal strings so Decimal(18,3)/(18,6) survive JSON. */
+export interface OrderLinePayload {
+  lineNumber: number;
+  productId: string;
+  quantity: string;
+}
+
+export interface OrderDraftPayload {
   orderId: string;
+  orderNumber: string;
+  status: string;
   customerId: string;
+  deliveryAddressId: string;
   warehouseId: string;
-  orderLines: Array<{
-    productId: string;
-    quantity: number;
-  }>;
+  currency: string;
+  totalQuantity: string;
+  totalWeight: string;
+  totalVolume: string;
+  orderLines: OrderLinePayload[];
+}
+
+export type OrderCreatedPayload = OrderDraftPayload;
+
+export type OrderUpdatedPayload = OrderDraftPayload;
+
+export interface OrderCanceledPayload {
+  orderId: string;
+  orderNumber: string;
+  previousStatus: string;
+  canceledAt: string;
+  reason: string;
 }
 
 export interface OrderConfirmedPayload {
   orderId: string;
+  orderNumber: string;
+  reservationGroupId: string;
+  orderVersion: number;
   confirmedAt: string;
   customerId: string;
   deliveryAddressId: string;
@@ -89,14 +115,20 @@ export interface OrderConfirmedPayload {
   customerSnapshot: CustomerSnapshot;
   deliveryAddressSnapshot: AddressSnapshot;
   warehouseSnapshot: WarehouseSnapshot;
+  orderLines: Array<OrderLinePayload & { orderLineId: string }>;
+  totalQuantity: string;
+  totalWeight: string;
+  totalVolume: string;
 }
 
 export interface OrderPendingStockPayload {
   orderId: string;
+  warehouseId: string;
+  pendingSince: string;
   shortageItems: Array<{
     productId: string;
-    requestedQuantity: number;
-    availableQuantity: number;
+    requestedQuantity: string;
+    availableQuantity: string;
   }>;
 }
 
@@ -121,7 +153,17 @@ export interface StockMovementPayload {
   actorId: string;
 }
 
-export type StockReceivedPayload = StockMovementPayload;
+export interface StockReceivedPayload extends StockMovementPayload {
+  quantity: string;
+}
+
+export interface StockReservationPayload {
+  reservationGroupId: string;
+  orderId: string;
+  orderVersion: string;
+  warehouseId: string;
+  items: Array<{ productId: string; quantity: string }>;
+}
 
 export interface InventoryReservedPayload {
   reservationGroupId: string;
@@ -222,9 +264,13 @@ export interface AgentExecutionCompletedPayload {
  */
 export interface DomainEventMap {
   OrderCreated: OrderCreatedPayload;
+  OrderUpdated: OrderUpdatedPayload;
+  OrderCanceled: OrderCanceledPayload;
   OrderConfirmed: OrderConfirmedPayload;
   OrderPendingStock: OrderPendingStockPayload;
   StockReceived: StockReceivedPayload;
+  StockReserved: StockReservationPayload;
+  StockReleased: StockReservationPayload;
   InventoryReserved: InventoryReservedPayload;
   InventoryAdjusted: InventoryAdjustedPayload;
   ShipmentReady: ShipmentReadyPayload;

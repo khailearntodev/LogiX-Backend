@@ -40,6 +40,7 @@ model ReservationGroup {
   idempotencyKey String                 @map("idempotency_key") @db.VarChar(100)
   orderVersion   BigInt                 @map("order_version")
   reservedAt     DateTime               @default(now()) @map("reserved_at") @db.Timestamptz(6)
+  acknowledgedAt DateTime?              @map("acknowledged_at") @db.Timestamptz(6)
   releasedAt     DateTime?              @map("released_at") @db.Timestamptz(6)
   issuedAt       DateTime?              @map("issued_at") @db.Timestamptz(6)
   createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)

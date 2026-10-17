@@ -12,6 +12,7 @@ export * from './decorators/current-user.decorator.js';
 export * from './guards/permissions.guard.js';
 export * from './guards/jwt-auth.guard.js';
 export * from './interfaces/jwt-payload.interface.js';
+export * from './access-token-user.js';
 export * from './internal/internal-service-token.js';
 export * from './internal/allow-internal-callers.decorator.js';
 export * from './internal/internal-caller.decorator.js';

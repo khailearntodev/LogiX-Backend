@@ -41,9 +41,12 @@ Fields may be represented differently by the implementation, but the semantic co
 | `StockReceived` | Inventory | Retry pending orders; low-stock checks | `receipt_id` |
 | `InventoryAdjusted` | Inventory | Audit/dashboard refresh | `movement_id` |
 | `OrderCreated` | Order | Audit/notification according to configuration | `order_id` |
-| `OrderConfirmed` | Order | Start fulfillment | `order_id + version` |
-| `OrderPendingStock` | Order | Notify Order Staff/Manager | `order_id + shortage_hash` |
-| `InventoryReserved` | Inventory | Update order state | `reservation_group_id` |
+| `OrderUpdated` | Order | Audit of editable orders; wake pending stock retries | `order_id + version` |
+| `OrderCanceled` | Order | Inventory backup release; audit/notification | `order_id + version` |
+| `OrderConfirmed` | Order | Acknowledge reservation; start fulfillment in phase 5 | `order_id + version` |
+| `OrderPendingStock` | Order | Wake pending stock retries; notify Order Staff/Manager | `order_id + version` |
+| `StockReserved` | Inventory | Record successful all-or-nothing reservation | `reservation_group_id + version` |
+| `StockReleased` | Inventory | Wake pending stock retries after release | `reservation_group_id + version` |
 | `ShipmentReady` | Fulfillment | Make shipment available to Dispatcher | `shipment_id` |
 | `TripPlanned` | Transport | Permit route optimization request | `trip_id + version` |
 | `RouteOptimized` | Route Optimizer | Persist proposed route/metrics | `route_request_id` |
@@ -65,7 +68,7 @@ Order Service
   -> OrderConfirmed
 
 Inventory Service
-  -> InventoryReserved
+  -> StockReserved / StockReleased
 
 Fulfillment Service
   -> ShipmentReady
@@ -146,3 +149,41 @@ Sensitive data and secrets must not be embedded in event payloads or raw logs.
 Event schemas are versioned. Additive, backward-compatible evolution is preferred. Breaking changes require a new version and coordinated consumer migration.
 
 Shared event contracts belong under the repository's contracts package and are referenced by producer/consumer code; business logic does not belong in the shared contract package.
+
+## 12. Implemented Order/Inventory reservation baseline
+
+Shared contracts are in `libs/messaging/src/interfaces/`. Runtime envelopes use
+camelCase fields and permit `actorId: null` for system-triggered decisions.
+`StockReceived.quantity` is additive; `quantityDelta` is retained. Stock
+quantities and shortage values cross service boundaries as decimal strings.
+
+Order confirmation is synchronous: Inventory decides reserved/insufficient;
+Order commits its state/history/outbox afterwards. A failed Order commit after
+successful reservation is recovered with the same version-bound reservation
+key or through the explicit Order reconciliation handshake. No TTL-only release
+is permitted.
+
+Cancellation first commits an intent and increments the Order version, locking
+editing/confirmation while preserving its business status. After Inventory
+release succeeds, Order commits CANCELED/history/outbox and increments version
+again. A background worker retries persisted intents. Shipment cancellation
+and dispatch races remain phase-5 responsibilities.
+
+The relay holds service-local row locks through publish/marking and selects only
+the earliest unpublished event per tenant/aggregate. Failure after broker
+publication but before database commit can still redeliver the same event ID;
+consumer Inbox deduplication is required.
+
+Order's stock consumer serializes FIFO evaluation by tenant/warehouse, ordered
+by `pendingSince, id`. An insufficient order does not block later candidates.
+Per-order Inbox commits with each decision; warehouse Inbox commits when the
+whole pass finishes, allowing recovery after partial progress. `OrderPendingStock`
+and pending `OrderUpdated` also wake evaluation to cover stock arriving before
+the pending Order transaction commits. An insufficient retry does not emit
+another `OrderPendingStock`, preventing a self-triggering event loop.
+
+Consumer handler failures are marked retriable for KafkaJS restart without
+advancing the failed offset. Permanent invalid events currently require
+operator repair and may block their partition; automatic dead-letter routing
+is not implemented. Broker-restart rehearsal and load benchmarks are not
+claimed by the phase-4 API/unit evidence.

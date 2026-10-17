@@ -37,14 +37,14 @@ export class MessagingModule {
       provide: Kafka,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const brokersRaw = config.get<string>('KAFKA_BROKERS');
-        const brokers = brokersRaw
-          ? brokersRaw.split(',')
-          : ['localhost:9092'];
-        const clientId =
-          config.get<string>('KAFKA_CLIENT_ID') ??
-          config.get<string>('SERVICE_NAME') ??
-          'logix-service';
+        const brokersValue = config.getOrThrow<string | string[]>('KAFKA_BROKERS');
+        const brokers = Array.isArray(brokersValue)
+          ? brokersValue
+          : brokersValue.split(',').map((broker) => broker.trim());
+        if (brokers.length === 0 || brokers.some((broker) => !broker)) {
+          throw new Error('KAFKA_BROKERS must contain at least one broker');
+        }
+        const clientId = config.getOrThrow<string>('KAFKA_CLIENT_ID');
 
         return new Kafka({
           clientId,
@@ -59,7 +59,7 @@ export class MessagingModule {
     };
 
     const providers: Provider[] = [kafkaProvider];
-    const exports: any[] = [Kafka];
+    const exports: Array<typeof Kafka | typeof KafkaProducerService> = [Kafka];
 
     if (enableProducer) {
       providers.push({
@@ -67,7 +67,7 @@ export class MessagingModule {
         inject: [Kafka],
         useFactory: (kafka: Kafka) => new KafkaProducerService(kafka),
       });
-      exports.push(KafkaProducerService as any);
+      exports.push(KafkaProducerService);
     }
 
     return {

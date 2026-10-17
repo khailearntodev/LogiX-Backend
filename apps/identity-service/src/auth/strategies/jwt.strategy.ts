@@ -4,12 +4,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../database/prisma.service.js';
 import { JwtPayload, AuthenticatedUser } from '../interfaces/jwt-payload.interface.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private readonly prisma: PrismaService,
     configService: ConfigService,
+    private readonly rolesService: RolesService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
@@ -27,6 +29,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
+    if (
+      payload.jti !== undefined ||
+      !payload.sub ||
+      (!payload.tenantId && payload.isSuperAdmin !== true)
+    ) {
+      throw new UnauthorizedException('Phiên đăng nhập không hợp lệ hoặc đã hết hạn');
+    }
     const user = await this.prisma.user.findFirst({
       where: {
         id: payload.sub,
@@ -39,6 +48,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             tenantId: payload.tenantId,
             status: 'ACTIVE',
             deletedAt: null,
+            tenant: { status: 'ACTIVE', deletedAt: null },
           },
           include: { tenant: true },
         },
@@ -76,38 +86,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Bạn không thuộc về tổ chức này hoặc tài khoản trong tổ chức đã bị khóa');
     }
 
-    let permissions: string[] = [];
-    if (user.isSuperAdmin || userTenant.role === 'OWNER') {
-      permissions = ['*'];
-    } else {
-      const userRoles = await this.prisma.userRole.findMany({
-        where: {
-          userId: user.id,
-          tenantId: userTenant.tenantId,
-          deletedAt: null,
-        },
-        include: {
-          role: {
-            include: {
-              rolePermissions: {
-                where: { deletedAt: null },
-                include: { permission: true },
-              },
-            },
-          },
-        },
-      });
-
-      const permSet = new Set<string>();
-      for (const ur of userRoles) {
-        for (const rp of ur.role.rolePermissions) {
-          if (rp.permission && !rp.permission.deletedAt) {
-            permSet.add(rp.permission.code);
-          }
-        }
-      }
-      permissions = Array.from(permSet);
-    }
+    const { permissions } = await this.rolesService.getEffectivePermissions(
+      user.id,
+      userTenant.tenantId,
+    );
 
     return {
       id: user.id,

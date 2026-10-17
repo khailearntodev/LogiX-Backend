@@ -2,7 +2,7 @@
 // keys outside its schema (e.g. JWT_SECRET used by JwtStrategy).
 import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { Logger } from '@logix/logger';
 import { AppModule } from './app.module.js';
@@ -14,7 +14,9 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
 
   app.use(cookieParser());
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', {
+    exclude: [{ path: 'internal/(.*)', method: RequestMethod.ALL }],
+  });
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3009',
     credentials: true,

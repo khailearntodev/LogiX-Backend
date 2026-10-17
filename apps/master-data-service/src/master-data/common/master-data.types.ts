@@ -22,6 +22,7 @@ export interface WarehouseView extends GeoPoint {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }
 
 /** `weight` and `volume` are strings so Decimal(18,3) / Decimal(18,6) survive JSON. */
@@ -35,6 +36,7 @@ export interface ProductView {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }
 
 export interface VehicleView {
@@ -46,6 +48,7 @@ export interface VehicleView {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }
 
 export interface CustomerView {
@@ -60,6 +63,7 @@ export interface CustomerView {
   disabledReason: string | null;
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }
 
 export interface CustomerAddressView extends GeoPoint {
@@ -79,4 +83,5 @@ export interface CustomerAddressView extends GeoPoint {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: number;
 }

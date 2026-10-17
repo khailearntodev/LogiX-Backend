@@ -28,6 +28,7 @@ async function bootstrap() {
       'X-Correlation-Id',
       'x-request-id',
       'X-Request-Id',
+      'Idempotency-Key',
     ],
   });
 

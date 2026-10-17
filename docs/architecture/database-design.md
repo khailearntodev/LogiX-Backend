@@ -491,7 +491,7 @@ dụng có thể bị thu hồi quyền `DELETE` trên các bảng này sau khi 
 | `billing_address_snapshot` | `jsonb NULL` | Bill-to; chỉ ở mức schema (hóa đơn ngoài MVP) |
 | `currency` | `char(3)` | Currency của tenant |
 | `status` | `varchar(30)` | State machine BRD |
-| `order_source` | `varchar(30)` | `B2B`, `ECOMMERCE` nếu stretch |
+| `order_source` | `varchar(30)` | `MANUAL` (staff nhập tay trong MVP); `ECOMMERCE` nếu stretch |
 | `external_channel` | `varchar(50) NULL` | Stretch |
 | `external_order_id` | `varchar(100) NULL` | Stretch |
 | `idempotency_key` | `varchar(100) NULL` | Chống import/tạo trùng |
@@ -1397,6 +1397,8 @@ Quy tắc:
 | `StockReceived` | Inventory | Order inbox; Notification projection |
 | `InventoryAdjusted` | Inventory | Audit inbox/read model |
 | `OrderCreated` | Order | Audit/Notification inbox |
+| `OrderUpdated` | Order | Audit inbox (chỉnh sửa bản DRAFT) |
+| `OrderCanceled` | Order | Audit/Notification inbox |
 | `OrderConfirmed` | Order | Inventory inbox + reservation transaction |
 | `OrderPendingStock` | Order | Notification inbox |
 | `InventoryReserved` | Inventory | Order inbox + status transition |

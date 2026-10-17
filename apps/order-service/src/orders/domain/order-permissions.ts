@@ -6,4 +6,5 @@ export const ORDER_PERMISSIONS = {
   CANCEL: 'order:sales-order:cancel',
 } as const;
 
-export type OrderPermission = (typeof ORDER_PERMISSIONS)[keyof typeof ORDER_PERMISSIONS];
+export type OrderPermission =
+  (typeof ORDER_PERMISSIONS)[keyof typeof ORDER_PERMISSIONS];

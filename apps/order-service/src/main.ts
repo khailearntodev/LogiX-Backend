@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 import { Logger } from '@logix/logger';
@@ -13,7 +13,9 @@ async function bootstrap() {
 
   // CORS is handled by the API Gateway; this service is not exposed to browsers.
   app.use(cookieParser());
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', {
+    exclude: [{ path: 'internal/(.*)', method: RequestMethod.ALL }],
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

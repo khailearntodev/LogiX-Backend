@@ -12,4 +12,5 @@ export const ORDER_STATUS = {
 
 export type OrderStatus = (typeof ORDER_STATUS)[keyof typeof ORDER_STATUS];
 
-export const ORDER_STATUSES: readonly OrderStatus[] = Object.values(ORDER_STATUS);
+export const ORDER_STATUSES: readonly OrderStatus[] =
+  Object.values(ORDER_STATUS);

@@ -3,13 +3,18 @@ import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { TokenService } from './token.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 describe('TokenService', () => {
   let tokenService: TokenService;
   let jwtService: any;
   let prismaService: any;
+  const rolesService = {
+    getEffectivePermissions: vi.fn(),
+  };
 
   beforeEach(async () => {
+    rolesService.getEffectivePermissions.mockReset().mockResolvedValue({ permissions: ['*'] });
     jwtService = {
       sign: vi.fn().mockReturnValue('signed_jwt_token'),
       verify: vi.fn(),
@@ -32,6 +37,7 @@ describe('TokenService', () => {
         TokenService,
         { provide: JwtService, useValue: jwtService },
         { provide: PrismaService, useValue: prismaService },
+        { provide: RolesService, useValue: rolesService },
       ],
     }).compile();
 
@@ -93,10 +99,87 @@ describe('TokenService', () => {
 
       expect(result.accessToken).toBe('signed_jwt_token');
       expect(result.refreshToken).toBe('signed_jwt_token');
+      expect(jwtService.sign).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sub: 'u1', tenantId: 't1', role: 'OWNER', permissions: ['*'],
+        }),
+        expect.anything(),
+      );
+      expect(rolesService.getEffectivePermissions).toHaveBeenCalledWith('u1', 't1');
       expect(prismaService.session.update).toHaveBeenCalledWith({
         where: { id: 's1' },
         data: { revokedAt: expect.any(Date), revokeReason: 'ROTATED' },
       });
+    });
+
+    function arrangeRefresh(role = 'MEMBER', isSuperAdmin = false) {
+      jwtService.verify.mockReturnValue({
+        sub: 'u1', tenantId: 'stale-tenant', role: 'OWNER', permissions: ['*'],
+      });
+      prismaService.session.findFirst.mockResolvedValue({
+        id: 's1', tenantId: 't1', expiresAt: new Date(Date.now() + 100000),
+      });
+      prismaService.user.findFirst.mockResolvedValue({
+        id: 'u1', email: 'user@example.com', status: 'ACTIVE', isSuperAdmin,
+        userTenants: [{
+          tenantId: 't1', role,
+          tenant: { id: 't1', name: 'Test', logoUrl: null },
+        }],
+      });
+    }
+
+    it('recomputes current custom-role permissions instead of copying stale refresh claims', async () => {
+      arrangeRefresh();
+      rolesService.getEffectivePermissions.mockResolvedValue({
+        permissions: ['order:sales-order:read'],
+      });
+      await tokenService.refreshTokens('refresh');
+      expect(jwtService.sign).toHaveBeenNthCalledWith(1, {
+        sub: 'u1', email: 'user@example.com', tenantId: 't1',
+        role: 'MEMBER', isSuperAdmin: false, permissions: ['order:sales-order:read'],
+      }, expect.anything());
+    });
+
+    it('keeps revoked permissions empty after refresh', async () => {
+      arrangeRefresh();
+      rolesService.getEffectivePermissions.mockResolvedValue({ permissions: [] });
+      await tokenService.refreshTokens('refresh');
+      expect(jwtService.sign).toHaveBeenNthCalledWith(1,
+        expect.objectContaining({ role: 'MEMBER', permissions: [] }),
+        expect.anything(),
+      );
+    });
+
+    it('does not revoke the current session or mint tokens when IAM fails', async () => {
+      arrangeRefresh();
+      rolesService.getEffectivePermissions.mockRejectedValue(new Error('IAM unavailable'));
+      await expect(tokenService.refreshTokens('refresh')).rejects.toThrow('IAM unavailable');
+      expect(jwtService.sign).not.toHaveBeenCalled();
+      expect(prismaService.session.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects refresh after membership is removed', async () => {
+      arrangeRefresh();
+      prismaService.user.findFirst.mockResolvedValue({
+        id: 'u1', isSuperAdmin: false, userTenants: [],
+      });
+      await expect(tokenService.refreshTokens('refresh')).rejects.toThrow(UnauthorizedException);
+      expect(jwtService.sign).not.toHaveBeenCalled();
+    });
+
+    it('refreshes a platform admin in an active tenant without fabricating membership', async () => {
+      arrangeRefresh();
+      prismaService.user.findFirst.mockResolvedValue({
+        id: 'u1', email: 'admin@example.com', isSuperAdmin: true, userTenants: [],
+      });
+      prismaService.tenant = {
+        findFirst: vi.fn().mockResolvedValue({ id: 't1', name: 'Test', logoUrl: null }),
+      };
+      await tokenService.refreshTokens('refresh');
+      expect(jwtService.sign).toHaveBeenNthCalledWith(1,
+        expect.objectContaining({ tenantId: 't1', isSuperAdmin: true, permissions: ['*'] }),
+        expect.anything(),
+      );
     });
   });
 
@@ -186,4 +269,3 @@ describe('TokenService', () => {
     });
   });
 });
-

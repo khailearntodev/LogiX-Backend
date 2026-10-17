@@ -4,6 +4,7 @@ export {
   baseConfigSchema,
   databaseConfigSchema,
   kafkaConfigSchema,
+  outboxConfigSchema,
   redisConfigSchema,
   type BaseConfig,
   type DatabaseConfig,

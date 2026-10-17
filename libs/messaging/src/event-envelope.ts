@@ -29,7 +29,7 @@ export interface DomainEventEnvelope<TPayload = unknown> {
   readonly occurredAt: string;
   readonly producer: ServiceId;
   readonly tenantId: string;
-  readonly actorId: string;
+  readonly actorId: string | null;
   readonly correlationId: string;
   readonly causationId: string;
   readonly aggregateType: string;

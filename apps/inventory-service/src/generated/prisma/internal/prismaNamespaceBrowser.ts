@@ -103,6 +103,7 @@ export const ReservationGroupScalarFieldEnum = {
   idempotencyKey: 'idempotencyKey',
   orderVersion: 'orderVersion',
   reservedAt: 'reservedAt',
+  acknowledgedAt: 'acknowledgedAt',
   releasedAt: 'releasedAt',
   issuedAt: 'issuedAt',
   createdAt: 'createdAt',

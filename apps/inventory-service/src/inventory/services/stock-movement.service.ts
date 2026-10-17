@@ -145,6 +145,7 @@ export class StockMovementService {
           productId: command.productId,
           movementType: command.movementType,
           quantityDelta: delta.toFixed(3),
+          ...(command.movementType === MovementType.RECEIPT && { quantity: delta.toFixed(3) }),
           beforeOnHand: beforeOnHand.toFixed(3),
           afterOnHand: afterOnHand.toFixed(3),
           reservedQuantity: updatedBalance.reservedQuantity.toFixed(3),
