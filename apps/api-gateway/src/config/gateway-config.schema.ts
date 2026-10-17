@@ -7,4 +7,5 @@ import { z } from 'zod';
  */
 export const gatewayConfigSchema = z.object({
   ORDER_SERVICE_URL: z.string().url(),
+  FULFILLMENT_SERVICE_URL: z.string().url(),
 });

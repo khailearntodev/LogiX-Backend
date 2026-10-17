@@ -45,8 +45,11 @@ export type ReservationGroupMinAggregateOutputType = {
   idempotencyKey: string | null
   orderVersion: bigint | null
   reservedAt: Date | null
+  acknowledgedAt: Date | null
   releasedAt: Date | null
   issuedAt: Date | null
+  issueShipmentId: string | null
+  issueRequestId: string | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -62,8 +65,11 @@ export type ReservationGroupMaxAggregateOutputType = {
   idempotencyKey: string | null
   orderVersion: bigint | null
   reservedAt: Date | null
+  acknowledgedAt: Date | null
   releasedAt: Date | null
   issuedAt: Date | null
+  issueShipmentId: string | null
+  issueRequestId: string | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -79,8 +85,11 @@ export type ReservationGroupCountAggregateOutputType = {
   idempotencyKey: number
   orderVersion: number
   reservedAt: number
+  acknowledgedAt: number
   releasedAt: number
   issuedAt: number
+  issueShipmentId: number
+  issueRequestId: number
   createdAt: number
   updatedAt: number
   version: number
@@ -108,8 +117,11 @@ export type ReservationGroupMinAggregateInputType = {
   idempotencyKey?: true
   orderVersion?: true
   reservedAt?: true
+  acknowledgedAt?: true
   releasedAt?: true
   issuedAt?: true
+  issueShipmentId?: true
+  issueRequestId?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -125,8 +137,11 @@ export type ReservationGroupMaxAggregateInputType = {
   idempotencyKey?: true
   orderVersion?: true
   reservedAt?: true
+  acknowledgedAt?: true
   releasedAt?: true
   issuedAt?: true
+  issueShipmentId?: true
+  issueRequestId?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -142,8 +157,11 @@ export type ReservationGroupCountAggregateInputType = {
   idempotencyKey?: true
   orderVersion?: true
   reservedAt?: true
+  acknowledgedAt?: true
   releasedAt?: true
   issuedAt?: true
+  issueShipmentId?: true
+  issueRequestId?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -246,8 +264,11 @@ export type ReservationGroupGroupByOutputType = {
   idempotencyKey: string
   orderVersion: bigint
   reservedAt: Date
+  acknowledgedAt: Date | null
   releasedAt: Date | null
   issuedAt: Date | null
+  issueShipmentId: string | null
+  issueRequestId: string | null
   createdAt: Date
   updatedAt: Date
   version: bigint
@@ -286,8 +307,11 @@ export type ReservationGroupWhereInput = {
   idempotencyKey?: Prisma.StringFilter<"ReservationGroup"> | string
   orderVersion?: Prisma.BigIntFilter<"ReservationGroup"> | bigint | number
   reservedAt?: Prisma.DateTimeFilter<"ReservationGroup"> | Date | string
+  acknowledgedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
   releasedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
   issuedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
+  issueShipmentId?: Prisma.UuidNullableFilter<"ReservationGroup"> | string | null
+  issueRequestId?: Prisma.UuidNullableFilter<"ReservationGroup"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ReservationGroup"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ReservationGroup"> | Date | string
   version?: Prisma.BigIntFilter<"ReservationGroup"> | bigint | number
@@ -304,8 +328,11 @@ export type ReservationGroupOrderByWithRelationInput = {
   idempotencyKey?: Prisma.SortOrder
   orderVersion?: Prisma.SortOrder
   reservedAt?: Prisma.SortOrder
+  acknowledgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   releasedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   issuedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  issueShipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  issueRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -316,6 +343,7 @@ export type ReservationGroupOrderByWithRelationInput = {
 export type ReservationGroupWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   tenantId_idempotencyKey?: Prisma.ReservationGroupTenantIdIdempotencyKeyCompoundUniqueInput
+  tenantId_issueShipmentId?: Prisma.ReservationGroupTenantIdIssueShipmentIdCompoundUniqueInput
   AND?: Prisma.ReservationGroupWhereInput | Prisma.ReservationGroupWhereInput[]
   OR?: Prisma.ReservationGroupWhereInput[]
   NOT?: Prisma.ReservationGroupWhereInput | Prisma.ReservationGroupWhereInput[]
@@ -326,14 +354,17 @@ export type ReservationGroupWhereUniqueInput = Prisma.AtLeast<{
   idempotencyKey?: Prisma.StringFilter<"ReservationGroup"> | string
   orderVersion?: Prisma.BigIntFilter<"ReservationGroup"> | bigint | number
   reservedAt?: Prisma.DateTimeFilter<"ReservationGroup"> | Date | string
+  acknowledgedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
   releasedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
   issuedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
+  issueShipmentId?: Prisma.UuidNullableFilter<"ReservationGroup"> | string | null
+  issueRequestId?: Prisma.UuidNullableFilter<"ReservationGroup"> | string | null
   createdAt?: Prisma.DateTimeFilter<"ReservationGroup"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"ReservationGroup"> | Date | string
   version?: Prisma.BigIntFilter<"ReservationGroup"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"ReservationGroup"> | Date | string | null
   reservations?: Prisma.InventoryReservationListRelationFilter
-}, "id" | "tenantId_idempotencyKey">
+}, "id" | "tenantId_idempotencyKey" | "tenantId_issueShipmentId">
 
 export type ReservationGroupOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -344,8 +375,11 @@ export type ReservationGroupOrderByWithAggregationInput = {
   idempotencyKey?: Prisma.SortOrder
   orderVersion?: Prisma.SortOrder
   reservedAt?: Prisma.SortOrder
+  acknowledgedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   releasedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   issuedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  issueShipmentId?: Prisma.SortOrderInput | Prisma.SortOrder
+  issueRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -369,8 +403,11 @@ export type ReservationGroupScalarWhereWithAggregatesInput = {
   idempotencyKey?: Prisma.StringWithAggregatesFilter<"ReservationGroup"> | string
   orderVersion?: Prisma.BigIntWithAggregatesFilter<"ReservationGroup"> | bigint | number
   reservedAt?: Prisma.DateTimeWithAggregatesFilter<"ReservationGroup"> | Date | string
+  acknowledgedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ReservationGroup"> | Date | string | null
   releasedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ReservationGroup"> | Date | string | null
   issuedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"ReservationGroup"> | Date | string | null
+  issueShipmentId?: Prisma.UuidNullableWithAggregatesFilter<"ReservationGroup"> | string | null
+  issueRequestId?: Prisma.UuidNullableWithAggregatesFilter<"ReservationGroup"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"ReservationGroup"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"ReservationGroup"> | Date | string
   version?: Prisma.BigIntWithAggregatesFilter<"ReservationGroup"> | bigint | number
@@ -386,8 +423,11 @@ export type ReservationGroupCreateInput = {
   idempotencyKey: string
   orderVersion: bigint | number
   reservedAt?: Date | string
+  acknowledgedAt?: Date | string | null
   releasedAt?: Date | string | null
   issuedAt?: Date | string | null
+  issueShipmentId?: string | null
+  issueRequestId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -404,8 +444,11 @@ export type ReservationGroupUncheckedCreateInput = {
   idempotencyKey: string
   orderVersion: bigint | number
   reservedAt?: Date | string
+  acknowledgedAt?: Date | string | null
   releasedAt?: Date | string | null
   issuedAt?: Date | string | null
+  issueShipmentId?: string | null
+  issueRequestId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -422,8 +465,11 @@ export type ReservationGroupUpdateInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   orderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   reservedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  acknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   releasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issueShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -440,8 +486,11 @@ export type ReservationGroupUncheckedUpdateInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   orderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   reservedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  acknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   releasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issueShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -458,8 +507,11 @@ export type ReservationGroupCreateManyInput = {
   idempotencyKey: string
   orderVersion: bigint | number
   reservedAt?: Date | string
+  acknowledgedAt?: Date | string | null
   releasedAt?: Date | string | null
   issuedAt?: Date | string | null
+  issueShipmentId?: string | null
+  issueRequestId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -475,8 +527,11 @@ export type ReservationGroupUpdateManyMutationInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   orderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   reservedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  acknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   releasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issueShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -492,8 +547,11 @@ export type ReservationGroupUncheckedUpdateManyInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   orderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   reservedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  acknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   releasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issueShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -505,6 +563,11 @@ export type ReservationGroupTenantIdIdempotencyKeyCompoundUniqueInput = {
   idempotencyKey: string
 }
 
+export type ReservationGroupTenantIdIssueShipmentIdCompoundUniqueInput = {
+  tenantId: string
+  issueShipmentId: string
+}
+
 export type ReservationGroupCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
@@ -514,8 +577,11 @@ export type ReservationGroupCountOrderByAggregateInput = {
   idempotencyKey?: Prisma.SortOrder
   orderVersion?: Prisma.SortOrder
   reservedAt?: Prisma.SortOrder
+  acknowledgedAt?: Prisma.SortOrder
   releasedAt?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
+  issueShipmentId?: Prisma.SortOrder
+  issueRequestId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -536,8 +602,11 @@ export type ReservationGroupMaxOrderByAggregateInput = {
   idempotencyKey?: Prisma.SortOrder
   orderVersion?: Prisma.SortOrder
   reservedAt?: Prisma.SortOrder
+  acknowledgedAt?: Prisma.SortOrder
   releasedAt?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
+  issueShipmentId?: Prisma.SortOrder
+  issueRequestId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -553,8 +622,11 @@ export type ReservationGroupMinOrderByAggregateInput = {
   idempotencyKey?: Prisma.SortOrder
   orderVersion?: Prisma.SortOrder
   reservedAt?: Prisma.SortOrder
+  acknowledgedAt?: Prisma.SortOrder
   releasedAt?: Prisma.SortOrder
   issuedAt?: Prisma.SortOrder
+  issueShipmentId?: Prisma.SortOrder
+  issueRequestId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -569,6 +641,10 @@ export type ReservationGroupSumOrderByAggregateInput = {
 export type ReservationGroupScalarRelationFilter = {
   is?: Prisma.ReservationGroupWhereInput
   isNot?: Prisma.ReservationGroupWhereInput
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
 }
 
 export type ReservationGroupCreateNestedOneWithoutReservationsInput = {
@@ -594,8 +670,11 @@ export type ReservationGroupCreateWithoutReservationsInput = {
   idempotencyKey: string
   orderVersion: bigint | number
   reservedAt?: Date | string
+  acknowledgedAt?: Date | string | null
   releasedAt?: Date | string | null
   issuedAt?: Date | string | null
+  issueShipmentId?: string | null
+  issueRequestId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -611,8 +690,11 @@ export type ReservationGroupUncheckedCreateWithoutReservationsInput = {
   idempotencyKey: string
   orderVersion: bigint | number
   reservedAt?: Date | string
+  acknowledgedAt?: Date | string | null
   releasedAt?: Date | string | null
   issuedAt?: Date | string | null
+  issueShipmentId?: string | null
+  issueRequestId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -644,8 +726,11 @@ export type ReservationGroupUpdateWithoutReservationsInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   orderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   reservedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  acknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   releasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issueShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -661,8 +746,11 @@ export type ReservationGroupUncheckedUpdateWithoutReservationsInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   orderVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   reservedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  acknowledgedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   releasedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   issuedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  issueShipmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  issueRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -709,8 +797,11 @@ export type ReservationGroupSelect<ExtArgs extends runtime.Types.Extensions.Inte
   idempotencyKey?: boolean
   orderVersion?: boolean
   reservedAt?: boolean
+  acknowledgedAt?: boolean
   releasedAt?: boolean
   issuedAt?: boolean
+  issueShipmentId?: boolean
+  issueRequestId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -728,8 +819,11 @@ export type ReservationGroupSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   idempotencyKey?: boolean
   orderVersion?: boolean
   reservedAt?: boolean
+  acknowledgedAt?: boolean
   releasedAt?: boolean
   issuedAt?: boolean
+  issueShipmentId?: boolean
+  issueRequestId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -745,8 +839,11 @@ export type ReservationGroupSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   idempotencyKey?: boolean
   orderVersion?: boolean
   reservedAt?: boolean
+  acknowledgedAt?: boolean
   releasedAt?: boolean
   issuedAt?: boolean
+  issueShipmentId?: boolean
+  issueRequestId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -762,15 +859,18 @@ export type ReservationGroupSelectScalar = {
   idempotencyKey?: boolean
   orderVersion?: boolean
   reservedAt?: boolean
+  acknowledgedAt?: boolean
   releasedAt?: boolean
   issuedAt?: boolean
+  issueShipmentId?: boolean
+  issueRequestId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
 }
 
-export type ReservationGroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderId" | "warehouseId" | "status" | "idempotencyKey" | "orderVersion" | "reservedAt" | "releasedAt" | "issuedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["reservationGroup"]>
+export type ReservationGroupOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "orderId" | "warehouseId" | "status" | "idempotencyKey" | "orderVersion" | "reservedAt" | "acknowledgedAt" | "releasedAt" | "issuedAt" | "issueShipmentId" | "issueRequestId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["reservationGroup"]>
 export type ReservationGroupInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reservations?: boolean | Prisma.ReservationGroup$reservationsArgs<ExtArgs>
   _count?: boolean | Prisma.ReservationGroupCountOutputTypeDefaultArgs<ExtArgs>
@@ -792,8 +892,11 @@ export type $ReservationGroupPayload<ExtArgs extends runtime.Types.Extensions.In
     idempotencyKey: string
     orderVersion: bigint
     reservedAt: Date
+    acknowledgedAt: Date | null
     releasedAt: Date | null
     issuedAt: Date | null
+    issueShipmentId: string | null
+    issueRequestId: string | null
     createdAt: Date
     updatedAt: Date
     version: bigint
@@ -1230,8 +1333,11 @@ export interface ReservationGroupFieldRefs {
   readonly idempotencyKey: Prisma.FieldRef<"ReservationGroup", 'String'>
   readonly orderVersion: Prisma.FieldRef<"ReservationGroup", 'BigInt'>
   readonly reservedAt: Prisma.FieldRef<"ReservationGroup", 'DateTime'>
+  readonly acknowledgedAt: Prisma.FieldRef<"ReservationGroup", 'DateTime'>
   readonly releasedAt: Prisma.FieldRef<"ReservationGroup", 'DateTime'>
   readonly issuedAt: Prisma.FieldRef<"ReservationGroup", 'DateTime'>
+  readonly issueShipmentId: Prisma.FieldRef<"ReservationGroup", 'String'>
+  readonly issueRequestId: Prisma.FieldRef<"ReservationGroup", 'String'>
   readonly createdAt: Prisma.FieldRef<"ReservationGroup", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"ReservationGroup", 'DateTime'>
   readonly version: Prisma.FieldRef<"ReservationGroup", 'BigInt'>

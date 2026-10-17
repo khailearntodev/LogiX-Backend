@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import type { JwtPayload, AuthenticatedUser } from '../interfaces/jwt-payload.interface.js';
+import { ConfigService } from '@nestjs/config';
+import { accessTokenUser, type JwtPayload, type AuthenticatedUser } from '@logix/auth';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -13,20 +14,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
           request?.cookies?.accessToken || null,
       ]),
       ignoreExpiration: false,
-      secretOrKey: process.env.JWT_SECRET || 'this_is_not_my_secret_i_only_use_env_variable',
+      algorithms: ['HS256'],
+      secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
   validate(payload: JwtPayload): AuthenticatedUser {
-    return {
-      id: payload.sub,
-      email: payload.email,
-      tenantId: payload.tenantId,
-      role: payload.role,
-      isSuperAdmin: Boolean(payload.isSuperAdmin),
-      permissions:
-        payload.permissions ||
-        (payload.role === 'OWNER' || payload.isSuperAdmin ? ['*'] : []),
-    };
+    return accessTokenUser(payload);
   }
 }

@@ -491,7 +491,7 @@ dụng có thể bị thu hồi quyền `DELETE` trên các bảng này sau khi 
 | `billing_address_snapshot` | `jsonb NULL` | Bill-to; chỉ ở mức schema (hóa đơn ngoài MVP) |
 | `currency` | `char(3)` | Currency của tenant |
 | `status` | `varchar(30)` | State machine BRD |
-| `order_source` | `varchar(30)` | `B2B`, `ECOMMERCE` nếu stretch |
+| `order_source` | `varchar(30)` | `MANUAL` (staff nhập tay trong MVP); `ECOMMERCE` nếu stretch |
 | `external_channel` | `varchar(50) NULL` | Stretch |
 | `external_order_id` | `varchar(100) NULL` | Stretch |
 | `idempotency_key` | `varchar(100) NULL` | Chống import/tạo trùng |
@@ -502,6 +502,11 @@ dụng có thể bị thu hồi quyền `DELETE` trên các bảng này sau khi 
 | `canceled_at` | `timestamptz NULL` | Hủy trước dispatch |
 | `completed_at` | `timestamptz NULL` | Chỉ sau delivered |
 | `cancel_reason` | `text NULL` | Lý do nếu hủy |
+| `dispatch_request_id` | `uuid NULL` | Quyết định dispatch bền vững; unique theo tenant, không tự hết hạn |
+| `dispatch_shipment_id` | `uuid NULL` | Shipment được cấp phép; ID xuyên service, không FK |
+| `dispatch_order_version` | `bigint NULL` | Version trong yêu cầu gốc; dùng kiểm tra replay chính xác |
+| `dispatch_granted_at` | `timestamptz NULL` | Ranh giới chặn hủy, kể cả projection chưa IN_DELIVERY |
+| `dispatch_actor_id`, `dispatch_correlation_id` | `uuid NULL` | Truy vết quyết định gốc |
 | `version` | `bigint` | Optimistic concurrency |
 
 `status` chỉ nhận: `DRAFT`, `PENDING_STOCK`, `CONFIRMED`, `PICKING`,
@@ -733,6 +738,7 @@ ON stock_receipts (tenant_id, warehouse_id, received_at DESC);
 
 Các cột: `id`, `tenant_id`, `shipment_number`, `order_id`, `warehouse_id`,
 `delivery_address_id`, `customer_snapshot jsonb`, `delivery_address_snapshot jsonb`,
+`warehouse_snapshot jsonb`, `order_number`, `confirmed_order_version`,
 `issuer_snapshot jsonb NULL`, `status`, `total_weight`, `total_volume`,
 `reservation_group_id`, `assigned_trip_id NULL`, `dispatch_issued_at NULL`,
 `ready_at`, `delivered_at`, `failed_at`, `failure_reason`, cột nền.
@@ -740,8 +746,8 @@ Các cột: `id`, `tenant_id`, `shipment_number`, `order_id`, `warehouse_id`,
 Snapshot khách hàng/địa chỉ được copy từ payload `OrderConfirmed`; `issuer_snapshot`
 là hồ sơ pháp lý tenant (tùy chọn) để in phiếu giao/xuất.
 
-`status`: `CREATED`, `READY`, `ASSIGNED`, `IN_TRANSIT`, `FAILED`, `DELIVERED`,
-`CANCELED`.
+`status`: `PENDING_PICK`, `PICKING`, `READY_TO_SHIP`, `DISPATCHED`, `FAILED`,
+`DELIVERED`, `CANCELED`. Trip assignment remains outside the phase-5 MVP.
 
 ```sql
 CREATE UNIQUE INDEX ux_shipments_order
@@ -750,7 +756,7 @@ CREATE UNIQUE INDEX ux_shipments_number
 ON shipments (tenant_id, shipment_number);
 CREATE INDEX ix_shipments_ready_warehouse
 ON shipments (tenant_id, warehouse_id, ready_at, id)
-WHERE status = 'READY';
+WHERE status = 'READY_TO_SHIP';
 CREATE INDEX ix_shipments_trip_status
 ON shipments (tenant_id, assigned_trip_id, status)
 WHERE assigned_trip_id IS NOT NULL;
@@ -779,6 +785,32 @@ ON shipment_items (tenant_id, shipment_id);
 
 Giống pattern order history: unique theo `(tenant_id, shipment_id,
 shipment_version)` và index timeline `(tenant_id, shipment_id, occurred_at, id)`.
+
+### 9.4 Dispatch intent and source cursor
+
+`shipment_dispatch_intents` stores a unique shipment request with the original
+Order/shipment versions, actor and correlation before any HTTP grant call.
+PENDING survives timeout/restart; COMPLETED commits with dispatch/history/outbox.
+Only a definitive Order conflict changes the intent to REJECTED. Recovery
+persists attempt count and next-attempt time with bounded exponential backoff.
+No database transaction spans the grant HTTP call.
+
+`shipment_order_cursors` is keyed by tenant/order. A cancellation tombstone
+prevents a late historical confirmation from recreating the shipment.
+Shipment creation copies customer/address/warehouse snapshots from the event;
+legacy events obtain only missing immutable line snapshots through Order's
+protected API. No cross-service DB read or Master Data refresh is used.
+
+The initial lifecycle migration refuses nonempty legacy shipment tables rather
+than fabricating snapshots or silently remapping old operational states.
+The verified local pool was empty; other deployments with legacy rows require
+an explicit snapshot/state backfill before applying that migration.
+
+Inventory reservation groups retain `issue_shipment_id` and `issue_request_id`
+as the whole-dispatch receipt. Each product uses movement key
+`shipment:{shipmentId}:issue:{productId}` (within the existing 100-character limit).
+Reserved decrement, on-hand ISSUE primitive, reservation statuses, receipt,
+movement/outbox and consumer inbox commit in the same Inventory transaction.
 
 ## 10. `transport-service` - `logix_transport`
 
@@ -1397,6 +1429,8 @@ Quy tắc:
 | `StockReceived` | Inventory | Order inbox; Notification projection |
 | `InventoryAdjusted` | Inventory | Audit inbox/read model |
 | `OrderCreated` | Order | Audit/Notification inbox |
+| `OrderUpdated` | Order | Audit inbox (chỉnh sửa bản DRAFT) |
+| `OrderCanceled` | Order | Audit/Notification inbox |
 | `OrderConfirmed` | Order | Inventory inbox + reservation transaction |
 | `OrderPendingStock` | Order | Notification inbox |
 | `InventoryReserved` | Inventory | Order inbox + status transition |
@@ -1436,6 +1470,20 @@ outbox trong một transaction. `RELEASED` hoặc `ISSUED` trả kết quả ide
 từ chối theo rule, không release lần hai.
 
 ### 18.3 Dispatch
+
+GĐ5A đã triển khai phân xử tối thiểu Order/Fulfillment theo QĐ-5 của kế hoạch:
+Order khóa cùng row với luồng hủy, kiểm tra READY_TO_SHIP/version/reservation,
+rồi lưu toàn bộ `dispatch_*` và tăng version trong một transaction ngắn, không
+gọi HTTP bên trong. Hủy và cấp phép loại trừ nhau. CHECK
+`ck_orders_dispatch_decision` cấm quyết định thiếu trường, đồng thời có ý định hủy,
+hoặc đã CANCELED. Unique `(tenant_id, dispatch_request_id)` chống dùng lại mã cho
+đơn khác. Retry chính xác trả lại quyết định gốc dù version/projection đã đổi.
+Không chuyển trạng thái nghiệp vụ khi cấp phép; không tự thu hồi quyết định.
+Fulfillment phải lưu request trước khi gọi và phục hồi theo hướng hoàn tất sau
+khi được cấp phép. Phần worker/ISSUE/projection được triển khai trong cụm GĐ5B,
+không được coi là đã có chỉ từ migration GĐ5A.
+
+Luồng Transport mục tiêu sau đây nằm ngoài command tối thiểu của GĐ5:
 
 Transport dùng unique `(tenant_id, trip_id, dispatch_version)`. Inventory consume
 `TripDispatched`, khóa active reservation, giảm đồng thời on-hand và reserved,

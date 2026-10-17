@@ -16,6 +16,7 @@ describe('AuthService', () => {
   beforeEach(async () => {
     rolesService = {
       initializeTenantRoles: vi.fn().mockResolvedValue({}),
+      getEffectivePermissions: vi.fn().mockResolvedValue({ permissions: ['*'] }),
     };
 
     prismaService = {
@@ -28,6 +29,7 @@ describe('AuthService', () => {
       tenant: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findMany: vi.fn().mockResolvedValue([]),
         create: vi.fn(),
         update: vi.fn(),
       },
@@ -136,9 +138,54 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('mock_access_token');
       expect(result.refreshToken).toBe('mock_refresh_token');
       expect(result.user.email).toBe('test@logix.vn');
-      expect(result.activeTenant.id).toBe('t1');
+      expect(result.activeTenant?.id).toBe('t1');
       expect(result.tenants).toHaveLength(1);
       expect(tokenService.createSession).toHaveBeenCalled();
+      expect(rolesService.getEffectivePermissions).toHaveBeenCalledWith('u1', 't1');
+      expect(tokenService.generateAccessToken).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: 't1', role: 'OWNER', permissions: ['*'] }),
+      );
+    });
+
+    it('keeps the platform admin selected tenant consistent with its token without membership', async () => {
+      prismaService.user.findFirst.mockResolvedValue({
+        id: 'admin', email: 'admin@example.com', status: 'ACTIVE',
+        passwordHash: await bcrypt.hash('password123', 10),
+        isSuperAdmin: true, userTenants: [],
+      });
+      prismaService.tenant.findFirst.mockResolvedValue({
+        id: 'selected', code: 'selected', name: 'Selected tenant', logoUrl: null,
+      });
+
+      const result = await authService.login({
+        email: 'admin@example.com', password: 'password123', tenantId: 'selected',
+      });
+
+      expect(prismaService.tenant.findFirst).toHaveBeenCalledWith({
+        where: { id: 'selected', status: 'ACTIVE', deletedAt: null },
+        orderBy: { createdAt: 'asc' },
+      });
+      expect(result.activeTenant?.id).toBe('selected');
+      expect(tokenService.generateAccessToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 'selected', isSuperAdmin: true, permissions: ['*'],
+        }),
+      );
+    });
+
+    it('does not mint a platform admin token for an unavailable selected tenant', async () => {
+      prismaService.user.findFirst.mockResolvedValue({
+        id: 'admin', email: 'admin@example.com', status: 'ACTIVE',
+        passwordHash: await bcrypt.hash('password123', 10),
+        isSuperAdmin: true, userTenants: [],
+      });
+      prismaService.tenant.findFirst.mockResolvedValue(null);
+
+      await expect(authService.login({
+        email: 'admin@example.com', password: 'password123', tenantId: 'unavailable',
+      })).rejects.toThrow(UnauthorizedException);
+      expect(tokenService.generateAccessToken).not.toHaveBeenCalled();
+      expect(tokenService.createSession).not.toHaveBeenCalled();
     });
   });
 
@@ -244,6 +291,26 @@ describe('AuthService', () => {
       expect(result.accessToken).toBe('mock_access_token');
       expect(result.activeTenant.id).toBe('t2');
       expect(result.activeTenant.role).toBe('ADMIN');
+      expect(rolesService.getEffectivePermissions).toHaveBeenCalledWith('u1', 't2');
+      expect(tokenService.generateAccessToken).toHaveBeenCalledWith(
+        expect.objectContaining({ tenantId: 't2', role: 'ADMIN', permissions: ['*'] }),
+      );
+    });
+
+    it('uses only effective permissions from the destination tenant', async () => {
+      prismaService.userTenant.findFirst.mockResolvedValue({
+        id: 'ut2', userId: 'u1', tenantId: 't2', role: 'MEMBER',
+        user: { id: 'u1', email: 'user@example.com', status: 'ACTIVE' },
+        tenant: { id: 't2', code: 'T2', name: 'Second', status: 'ACTIVE' },
+      });
+      rolesService.getEffectivePermissions.mockResolvedValue({
+        permissions: ['order:sales-order:read'],
+      });
+      await authService.switchTenant('u1', { tenantId: 't2' });
+      expect(tokenService.generateAccessToken).toHaveBeenCalledWith({
+        sub: 'u1', email: 'user@example.com', tenantId: 't2',
+        role: 'MEMBER', isSuperAdmin: false, permissions: ['order:sales-order:read'],
+      });
     });
   });
 
@@ -339,4 +406,3 @@ describe('AuthService', () => {
     });
   });
 });
-

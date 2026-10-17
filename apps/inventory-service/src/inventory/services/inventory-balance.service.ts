@@ -4,7 +4,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { QueryBalancesDto } from '../dto/query-balances.dto.js';
 import { QueryMovementsDto } from '../dto/query-movements.dto.js';
 import { UpdateLowStockThresholdDto } from '../dto/update-low-stock-threshold.dto.js';
-import { DEFAULT_PAGE_SIZE } from '../inventory.constants.js';
+import { DEFAULT_PAGE_SIZE, ReferenceType } from '../inventory.constants.js';
 import { toBalanceView, toMovementView } from '../inventory.mappers.js';
 import type {
   InventoryBalanceView,
@@ -67,7 +67,9 @@ export class InventoryBalanceService {
     });
 
     if (!row) {
-      throw new NotFoundException('Không tìm thấy tồn kho cho kho và sản phẩm này');
+      throw new NotFoundException(
+        'Không tìm thấy tồn kho cho kho và sản phẩm này',
+      );
     }
 
     return toBalanceView(row);
@@ -101,8 +103,31 @@ export class InventoryBalanceService {
       this.prisma.stockMovement.count({ where }),
     ]);
 
+    const receiptIds = [
+      ...new Set(
+        rows
+          .filter((row) => row.referenceType === ReferenceType.STOCK_RECEIPT)
+          .map((row) => row.referenceId),
+      ),
+    ];
+    const receipts = receiptIds.length
+      ? await this.prisma.stockReceipt.findMany({
+          where: { tenantId, deletedAt: null, id: { in: receiptIds } },
+          select: { id: true, receiptNumber: true },
+        })
+      : [];
+    const receiptNumbers = new Map(
+      receipts.map((receipt) => [receipt.id, receipt.receiptNumber]),
+    );
+
     return {
-      items: rows.map((row) => toMovementView(row)),
+      items: rows.map((row) => ({
+        ...toMovementView(row),
+        referenceNumber:
+          row.referenceType === ReferenceType.STOCK_RECEIPT
+            ? (receiptNumbers.get(row.referenceId) ?? null)
+            : null,
+      })),
       page,
       pageSize,
       total,
@@ -121,7 +146,9 @@ export class InventoryBalanceService {
     });
 
     if (!existing) {
-      throw new NotFoundException('Không tìm thấy tồn kho cho kho và sản phẩm này');
+      throw new NotFoundException(
+        'Không tìm thấy tồn kho cho kho và sản phẩm này',
+      );
     }
 
     const updated = await this.prisma.inventoryBalance.update({
@@ -158,7 +185,9 @@ export class InventoryBalanceService {
 
     const whereSql = Prisma.join(conditions, ' AND ');
 
-    const idRows = await this.prisma.$queryRaw<Array<{ id: string }>>(Prisma.sql`
+    const idRows = await this.prisma.$queryRaw<
+      Array<{ id: string }>
+    >(Prisma.sql`
       SELECT id
       FROM inventory.inventory_balances
       WHERE ${whereSql}
@@ -166,7 +195,9 @@ export class InventoryBalanceService {
       LIMIT ${pageSize} OFFSET ${skip}
     `);
 
-    const totalRows = await this.prisma.$queryRaw<Array<{ total: number }>>(Prisma.sql`
+    const totalRows = await this.prisma.$queryRaw<
+      Array<{ total: number }>
+    >(Prisma.sql`
       SELECT COUNT(*)::int AS total
       FROM inventory.inventory_balances
       WHERE ${whereSql}

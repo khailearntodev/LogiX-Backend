@@ -1,13 +1,4 @@
-export interface JwtPayload {
-  sub: string;
-  email: string;
-  tenantId: string;
-  isSuperAdmin?: boolean;
-  tokenVersion?: number;
-  jti?: string;
-  iat?: number;
-  exp?: number;
-}
+export type { JwtPayload } from '@logix/auth';
 
 export interface AuthenticatedUser {
   id: string;

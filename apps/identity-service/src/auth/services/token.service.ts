@@ -3,12 +3,14 @@ import { JwtService } from '@nestjs/jwt';
 import crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service.js';
 import { JwtPayload } from '../interfaces/jwt-payload.interface.js';
+import { RolesService } from '../../iam/services/roles.service.js';
 
 @Injectable()
 export class TokenService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly rolesService: RolesService,
   ) {}
 
   generateAccessToken(payload: JwtPayload): string {
@@ -98,30 +100,42 @@ export class TokenService {
     }
 
     const userTenant = user.userTenants[0];
-    if (!userTenant || !userTenant.tenant) {
+    const tenant = userTenant?.tenant ?? (
+      user.isSuperAdmin
+        ? await this.prisma.tenant.findFirst({
+            where: { id: session.tenantId, status: 'ACTIVE', deletedAt: null },
+          })
+        : null
+    );
+    if (!tenant) {
       throw new UnauthorizedException('Bạn không còn truy cập vào tổ chức này');
     }
 
-    // Revoke old session
-    await this.prisma.session.update({
-      where: { id: session.id },
-      data: { revokedAt: new Date(), revokeReason: 'ROTATED' },
-    });
-
-    // Create new tokens and session
+    const { permissions } = await this.rolesService.getEffectivePermissions(
+      user.id,
+      session.tenantId,
+    );
     const newPayload: JwtPayload = {
       sub: user.id,
       email: user.email,
-      tenantId: userTenant.tenantId,
+      tenantId: session.tenantId,
+      role: userTenant?.role ?? (user.isSuperAdmin ? 'OWNER' : undefined),
       isSuperAdmin: Boolean(user.isSuperAdmin),
+      permissions,
     };
 
     const newAccessToken = this.generateAccessToken(newPayload);
     const newRefreshToken = this.generateRefreshToken(newPayload);
 
+    // Resolve current access before revoking the usable session.
+    await this.prisma.session.update({
+      where: { id: session.id },
+      data: { revokedAt: new Date(), revokeReason: 'ROTATED' },
+    });
+
     await this.createSession({
       userId: user.id,
-      tenantId: userTenant.tenantId,
+      tenantId: session.tenantId,
       refreshToken: newRefreshToken,
       userAgent: session.userAgent || undefined,
       deviceId: session.deviceId || undefined,
@@ -136,10 +150,10 @@ export class TokenService {
         displayName: user.displayName,
         phoneNumber: user.phoneNumber,
         avatarUrl: user.avatarUrl,
-        tenantId: userTenant.tenantId,
-        tenantName: userTenant.tenant.name,
-        tenantLogoUrl: userTenant.tenant.logoUrl,
-        role: userTenant.role,
+        tenantId: session.tenantId,
+        tenantName: tenant.name,
+        tenantLogoUrl: tenant.logoUrl,
+        role: newPayload.role,
         isSuperAdmin: Boolean(user.isSuperAdmin),
       },
     };

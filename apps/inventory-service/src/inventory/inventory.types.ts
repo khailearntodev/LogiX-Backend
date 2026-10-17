@@ -21,6 +21,7 @@ export interface StockMovementView {
   afterOnHand: string;
   referenceType: string;
   referenceId: string;
+  referenceNumber: string | null;
   reason: string | null;
   actorId: string | null;
   occurredAt: Date;

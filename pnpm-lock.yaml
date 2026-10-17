@@ -208,6 +208,9 @@ importers:
 
   apps/fulfillment-service:
     dependencies:
+      '@logix/auth':
+        specifier: workspace:*
+        version: link:../../libs/auth
       '@logix/common':
         specifier: workspace:*
         version: link:../../libs/common
@@ -223,6 +226,9 @@ importers:
       '@logix/logger':
         specifier: workspace:*
         version: link:../../libs/logger
+      '@logix/messaging':
+        specifier: workspace:*
+        version: link:../../libs/messaging
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -232,6 +238,9 @@ importers:
       '@nestjs/core':
         specifier: ^12.0.1
         version: 12.0.1(@nestjs/common@12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/passport':
+        specifier: ^12.0.0
+        version: 12.0.0(@nestjs/common@12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0)
       '@nestjs/platform-express':
         specifier: ^12.0.1
         version: 12.0.1(@nestjs/common@12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1)
@@ -241,6 +250,27 @@ importers:
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3))(typescript@6.0.3)
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.15.1
+        version: 0.15.1
+      cookie-parser:
+        specifier: ^1.4.7
+        version: 1.4.7
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.4.2
+      kafkajs:
+        specifier: ^2.2.4
+        version: 2.2.4
+      passport:
+        specifier: ^0.7.0
+        version: 0.7.0
+      passport-jwt:
+        specifier: ^4.0.1
+        version: 4.0.1
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -250,6 +280,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0
@@ -263,12 +296,18 @@ importers:
       '@nestjs/testing':
         specifier: ^12.0.1
         version: 12.0.1(@nestjs/common@12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@12.0.1)(@nestjs/microservices@12.0.1)(@nestjs/platform-express@12.0.1)
+      '@types/cookie-parser':
+        specifier: ^1.4.9
+        version: 1.4.10(@types/express@5.0.6)
       '@types/express':
         specifier: ^5.0.0
         version: 5.0.6
       '@types/node':
         specifier: ^24.0.0
         version: 24.13.3
+      '@types/passport-jwt':
+        specifier: ^4.0.1
+        version: 4.0.1
       '@types/pg':
         specifier: ^8.23.1
         version: 8.23.1
@@ -468,6 +507,9 @@ importers:
       '@logix/logger':
         specifier: workspace:*
         version: link:../../libs/logger
+      '@logix/messaging':
+        specifier: workspace:*
+        version: link:../../libs/messaging
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -501,6 +543,9 @@ importers:
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
+      kafkajs:
+        specifier: ^2.2.4
+        version: 2.2.4
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -516,6 +561,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0
@@ -577,6 +625,9 @@ importers:
 
   apps/master-data-service:
     dependencies:
+      '@logix/auth':
+        specifier: workspace:*
+        version: link:../../libs/auth
       '@logix/common':
         specifier: workspace:*
         version: link:../../libs/common
@@ -816,6 +867,9 @@ importers:
       '@logix/logger':
         specifier: workspace:*
         version: link:../../libs/logger
+      '@logix/messaging':
+        specifier: workspace:*
+        version: link:../../libs/messaging
       '@nestjs/common':
         specifier: ^12.0.1
         version: 12.0.1(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -846,6 +900,12 @@ importers:
       cookie-parser:
         specifier: ^1.4.7
         version: 1.4.7
+      dotenv:
+        specifier: ^17.2.3
+        version: 17.4.2
+      kafkajs:
+        specifier: ^2.2.4
+        version: 2.2.4
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -1195,6 +1255,9 @@ importers:
       kafkajs:
         specifier: ^2.2.4
         version: 2.2.4
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@nestjs/config':
         specifier: ^4.0.2

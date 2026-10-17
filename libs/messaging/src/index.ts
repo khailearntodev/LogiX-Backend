@@ -1,7 +1,7 @@
 export {
   type DomainEventEnvelope,
   type CreateDomainEvent,
-} from './event-envelope.js';
+} from "./event-envelope.js";
 
 export {
   type DomainEventMap,
@@ -10,7 +10,11 @@ export {
   type CustomerSnapshot,
   type WarehouseSnapshot,
   type IssuerSnapshot,
+  type OrderLinePayload,
+  type OrderDraftPayload,
   type OrderCreatedPayload,
+  type OrderUpdatedPayload,
+  type OrderCanceledPayload,
   type OrderConfirmedPayload,
   type OrderPendingStockPayload,
   type StockMovementPayload,
@@ -26,8 +30,33 @@ export {
   type DeliveryFailedPayload,
   type ForecastCompletedPayload,
   type AgentExecutionCompletedPayload,
-} from './interfaces/domain-event.interface.js';
+} from "./interfaces/domain-event.interface.js";
 
-export { KafkaProducerService } from './kafka-producer.service.js';
-export { MessagingModule } from './messaging.module.js';
-export type { MessagingModuleOptions } from './messaging.module.js';
+export { KafkaProducerService } from "./kafka-producer.service.js";
+export { MessagingModule } from "./messaging.module.js";
+export type { MessagingModuleOptions } from "./messaging.module.js";
+export { OutboxRelay, outboxRetryDelay } from "./outbox-relay.js";
+export type {
+  OutboxRelayOptions,
+  OutboxRelayRecord,
+  OutboxRelayStore,
+  OutboxRelayTransaction,
+} from "./outbox-relay.js";
+export { PrismaOutboxStore } from "./prisma-outbox.store.js";
+export type {
+  ReservationLine,
+  ReserveRequest,
+  ReservationShortage,
+  ReserveResult,
+  ReservationPreview,
+} from "./interfaces/reservation.interface.js";
+export {
+  KafkaEventConsumer,
+  parseEventEnvelope,
+} from "./kafka-event-consumer.js";
+export type { OutboxDatabase } from "./prisma-outbox.store.js";
+export * from "./interfaces/shipment.contract.js";
+export type {
+  AuthorizeOrderDispatchRequest,
+  OrderDispatchGrant,
+} from "./interfaces/dispatch.interface.js";

@@ -9,6 +9,8 @@ import type {
 
 type Decimal = Prisma.Decimal;
 
+// Row versions are small monotonic counters, so Number() never loses precision.
+
 function coord(value: Decimal | null): string | null {
   return value === null ? null : value.toFixed(6);
 }
@@ -27,6 +29,7 @@ export function toWarehouseView(row: {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: bigint;
 }): WarehouseView {
   return {
     id: row.id,
@@ -42,6 +45,7 @@ export function toWarehouseView(row: {
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    version: Number(row.version),
   };
 }
 
@@ -55,6 +59,7 @@ export function toProductView(row: {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: bigint;
 }): ProductView {
   return {
     id: row.id,
@@ -66,6 +71,7 @@ export function toProductView(row: {
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    version: Number(row.version),
   };
 }
 
@@ -78,6 +84,7 @@ export function toVehicleView(row: {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: bigint;
 }): VehicleView {
   return {
     id: row.id,
@@ -88,6 +95,7 @@ export function toVehicleView(row: {
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    version: Number(row.version),
   };
 }
 
@@ -103,6 +111,7 @@ export function toCustomerView(row: {
   disabledReason: string | null;
   createdAt: Date;
   updatedAt: Date;
+  version: bigint;
 }): CustomerView {
   return {
     id: row.id,
@@ -116,6 +125,7 @@ export function toCustomerView(row: {
     disabledReason: row.disabledReason,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    version: Number(row.version),
   };
 }
 
@@ -138,6 +148,7 @@ export function toCustomerAddressView(row: {
   status: string;
   createdAt: Date;
   updatedAt: Date;
+  version: bigint;
 }): CustomerAddressView {
   return {
     id: row.id,
@@ -158,5 +169,6 @@ export function toCustomerAddressView(row: {
     status: row.status,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
+    version: Number(row.version),
   };
 }

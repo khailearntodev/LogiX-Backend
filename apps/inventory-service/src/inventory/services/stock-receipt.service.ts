@@ -56,7 +56,9 @@ export class StockReceiptService {
           },
         });
 
-        for (const [index, line] of dto.lines.entries()) {
+        const orderedLines = dto.lines.map((line, index) => ({ line, index }))
+          .sort((a, b) => a.line.productId.localeCompare(b.line.productId));
+        for (const { index, line } of orderedLines) {
           const movement = await this.stockMovement.applyMovementInTransaction(tx, {
             tenantId: actor.tenantId,
             warehouseId: dto.warehouseId,

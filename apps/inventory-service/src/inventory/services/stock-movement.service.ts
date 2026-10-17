@@ -133,7 +133,9 @@ export class StockMovementService {
         eventType:
           command.movementType === MovementType.RECEIPT
             ? InventoryEventType.STOCK_RECEIVED
-            : InventoryEventType.INVENTORY_ADJUSTED,
+            : command.movementType === MovementType.ISSUE
+              ? InventoryEventType.STOCK_ISSUED
+              : InventoryEventType.INVENTORY_ADJUSTED,
         eventVersion: INVENTORY_EVENT_VERSION,
         aggregateType: 'InventoryBalance',
         aggregateId: balance.id,
@@ -145,6 +147,7 @@ export class StockMovementService {
           productId: command.productId,
           movementType: command.movementType,
           quantityDelta: delta.toFixed(3),
+          ...(command.movementType === MovementType.RECEIPT && { quantity: delta.toFixed(3) }),
           beforeOnHand: beforeOnHand.toFixed(3),
           afterOnHand: afterOnHand.toFixed(3),
           reservedQuantity: updatedBalance.reservedQuantity.toFixed(3),

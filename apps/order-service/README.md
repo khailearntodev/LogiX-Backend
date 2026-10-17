@@ -1,114 +1,131 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# order-service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Owns SalesOrder, OrderLine, order shortages and status history. Master Data
+references are validated through its API; Order stores immutable snapshots.
+Inventory alone owns balances and reservation groups.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Authority: [the implementation plan](../../docs/plan_ghi_ro_so_task_backlog/ke-hoach-trien-khai-quan-ly-don-hang.md),
+[the Order specification](../../docs/plan_ghi_ro_so_task_backlog/quan-ly-don-hang-backend-frontend.md)
+and [service boundaries](../../docs/architecture/service-boundaries.md).
 
-## Description
+## Public API
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+The Gateway forwards `/api/v1/orders`. Access tokens must carry a tenant and
+the corresponding `order:sales-order:*` permission; refresh tokens are rejected.
 
-## Project setup
+| Method | Path under `/api/v1/orders` | Permission | Purpose |
+|---|---|---|---|
+| POST | `/` | `create` | Create draft; `Idempotency-Key` required |
+| GET | `/` | `read` | Filtered, paginated list |
+| GET | `/:id` | `read` | Detail, immutable snapshots and version |
+| GET | `/:id/history` | `read` | Status history |
+| PATCH | `/:id` | `update` | Edit DRAFT/PENDING_STOCK if no active reservation/cancel intent |
+| GET | `/:id/confirm-preview` | `approve` | Current availability and Order version; advisory only |
+| POST | `/:id/confirm` | `approve` | `{version}`; reserve all lines or enter PENDING_STOCK |
+| POST | `/:id/retry-reservation` | `approve` | `{version}`; retry PENDING_STOCK |
+| GET | `/:id/shortages` | `read` | Unresolved shortages with decimal-string required/available |
+| POST | `/:id/cancel` | `cancel` | `{version, reason}`; persist intent, release, finalize cancellation |
 
-```bash
-$ pnpm install
+All commands are tenant-scoped. Version conflicts return 409 rather than
+overwriting another command. Preview is not a reservation; confirmation
+rechecks inventory. Inventory timeout/network/5xx returns 503, never
+INSUFFICIENT or optimistic confirmation.
+
+## Reservation and cancellation
+
+Order holds its row lock while calling Inventory with an internal token and
+the stable key `order:{orderId}:v{orderVersion}`. Inventory RESERVED leads to
+CONFIRMED; INSUFFICIENT writes shortages and PENDING_STOCK. The first pending
+timestamp is retained on retry. Sending line/warehouse changes resets FIFO
+position and resolves obsolete shortages.
+
+Edits check Inventory's active group under the Order lock. An orphan reservation
+must be reconciled before edits; Inventory unavailability does not permit an
+unsafe edit.
+
+Cancellation persists `cancellationRequestedAt`, reason/actor/correlation and
+increments version before release. Business status remains unchanged but
+editing/confirmation is locked. Successful release commits CANCELED, history
+and outbox and increments version again. A background worker retries durable
+intents. `cancellationRequestedAt` is exposed for the UI to display recovery.
+Repeated public cancel after completion returns 409; recovery workers tolerate
+already completed cancellation without another release.
+
+## Dispatch arbitration (phase 5A)
+
+`POST /internal/orders/:orderId/authorize-dispatch` accepts only an internal
+token issued by Fulfillment for Order. It is not proxied by Gateway and does
+not accept a user access token. Tenant comes from the verified internal claim,
+never the body. The body contains UUID `requestId`, `shipmentId`,
+`reservationGroupId`, `actorId` and positive safe-integer `orderVersion`.
+Success returns 201 with those fields, `orderId`, `grantedAt` and the original
+`correlationId`; exact retries return the same decision.
+
+Fulfillment must persist the exact request before calling. Only READY_TO_SHIP
+with the expected version and matching reservation can receive a new grant.
+Order locks the same row as cancellation and persists the grant plus a version
+increment, without changing business status. A pending cancellation blocks a
+grant; a grant blocks cancel and cancellation recovery before Inventory release.
+Cancellation is allowed in PICKING/READY_TO_SHIP only before a grant.
+
+The decision does not expire and is not proof of completed dispatch/stock issue.
+After a grant Fulfillment must recover forward, never infer rejection from a
+timeout. Different replay content or a request key used for another order
+returns 409. A database CHECK forbids partial decisions and simultaneous
+cancellation/dispatch. Deploy the additive migration before the new code.
+
+Fulfillment's dispatch-intent worker, shipment lifecycle events, Inventory ISSUE
+and the confirmation dialog are subsequent phase-5 work; this internal endpoint
+alone does not enable user dispatch.
+
+## Events and reconciliation
+
+- Shared relay publishes Order outbox to `KAFKA_ORDER_TOPIC`, preserving
+  aggregate order with database row locking. Delivery is at-least-once.
+- `StockReceived`/`StockReleased` wake FIFO evaluation by tenant/warehouse.
+  Insufficient candidates do not block later orders. Each Order decision and
+  its Inbox entry commit together; a warehouse Inbox marks the completed pass.
+- `OrderPendingStock` and pending `OrderUpdated` also wake evaluation, covering
+  receipts arriving before pending state commits. Repeated insufficient retries
+  do not emit another pending event.
+- `POST /internal/orders/reconcile-reservation` accepts only Inventory's internal
+  token and is not proxied by Gateway. It returns ACKNOWLEDGE for referenced or
+  successfully recovered reservations, KEEP during cancellation recovery, and
+  explicit RELEASE only when the supplied group is no longer usable by Order.
+- Failed Kafka handlers keep their offset and restart for redelivery. Invalid
+  permanent events currently require operator repair and can block a partition;
+  automatic DLQ handling is not implemented.
+
+Shipment creation, picking, dispatch, stock issue and lifecycle projection are
+phase 5, not implemented by this service's phase-4 milestone.
+
+## Configuration and checks
+
+Copy [.env.example](.env.example) into local `.env` and supply all required
+values. JWT must match Identity; the internal secret must match Inventory.
+Kafka, Inventory and the Order database must be available at startup. Use
+[the Kafka runbook](../../infrastructure/docker-compose/README.md) to provision
+the shared topics; no broker address is silently defaulted in code.
+
+Run from the backend root:
+
+```powershell
+pnpm --filter order-service db:generate
+pnpm --filter order-service db:migrate:deploy
+pnpm --filter order-service start:dev
 ```
 
-## Compile and run the project
+Validation:
 
-```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+```powershell
+pnpm --filter @logix/messaging build
+pnpm --filter order-service lint
+pnpm --filter order-service test
+pnpm --filter order-service exec tsc --noEmit
+pnpm --filter order-service build
 ```
 
-## Run tests
-
-```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observer](https://observer.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Permanent unit tests are kept as regression coverage. Temporary integration
+scripts, QA tenants and dedicated Kafka topics/groups are removed after runs.
+See the main plan for executed API evidence and unverified browser/hardening
+work.

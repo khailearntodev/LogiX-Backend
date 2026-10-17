@@ -10,14 +10,19 @@ import { InvitationsService } from './invitations.service.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { TokenService } from '../../auth/services/token.service.js';
 import { MailService } from '../../mail/services/mail.service.js';
+import { RolesService } from './roles.service.js';
 
 describe('InvitationsService', () => {
   let invitationsService: InvitationsService;
   let prisma: any;
   let tokenService: any;
   let mailService: any;
+  const effectivePermissions = vi.fn();
 
   beforeEach(async () => {
+    effectivePermissions.mockReset().mockResolvedValue({
+      permissions: ['order:sales-order:read'],
+    });
     mailService = {
       sendInvitationEmail: vi.fn().mockResolvedValue(true),
       sendResetPasswordEmail: vi.fn().mockResolvedValue(true),
@@ -66,6 +71,9 @@ describe('InvitationsService', () => {
         { provide: PrismaService, useValue: prisma },
         { provide: TokenService, useValue: tokenService },
         { provide: MailService, useValue: mailService },
+        { provide: RolesService, useValue: {
+          getEffectivePermissions: effectivePermissions,
+        } },
       ],
     }).compile();
 
@@ -339,6 +347,12 @@ describe('InvitationsService', () => {
 
       expect(result.accessToken).toBe('mock_access_token');
       expect(result.assignedRoles[0].code).toBe('DISPATCHER');
+      expect(effectivePermissions).toHaveBeenCalledWith('user-new-id', 'tenant-1');
+      expect(tokenService.generateAccessToken).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tenantId: 'tenant-1', role: 'DISPATCHER', permissions: ['order:sales-order:read'],
+        }),
+      );
       expect(prisma.userRole.upsert).toHaveBeenCalledWith({
         where: {
           tenantId_userId_roleId: {

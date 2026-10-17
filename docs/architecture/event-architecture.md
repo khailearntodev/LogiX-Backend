@@ -41,9 +41,12 @@ Fields may be represented differently by the implementation, but the semantic co
 | `StockReceived` | Inventory | Retry pending orders; low-stock checks | `receipt_id` |
 | `InventoryAdjusted` | Inventory | Audit/dashboard refresh | `movement_id` |
 | `OrderCreated` | Order | Audit/notification according to configuration | `order_id` |
-| `OrderConfirmed` | Order | Start fulfillment | `order_id + version` |
-| `OrderPendingStock` | Order | Notify Order Staff/Manager | `order_id + shortage_hash` |
-| `InventoryReserved` | Inventory | Update order state | `reservation_group_id` |
+| `OrderUpdated` | Order | Audit of editable orders; wake pending stock retries | `order_id + version` |
+| `OrderCanceled` | Order | Inventory backup release; audit/notification | `order_id + version` |
+| `OrderConfirmed` | Order | Acknowledge reservation; start fulfillment in phase 5 | `order_id + version` |
+| `OrderPendingStock` | Order | Wake pending stock retries; notify Order Staff/Manager | `order_id + version` |
+| `StockReserved` | Inventory | Record successful all-or-nothing reservation | `reservation_group_id + version` |
+| `StockReleased` | Inventory | Wake pending stock retries after release | `reservation_group_id + version` |
 | `ShipmentReady` | Fulfillment | Make shipment available to Dispatcher | `shipment_id` |
 | `TripPlanned` | Transport | Permit route optimization request | `trip_id + version` |
 | `RouteOptimized` | Route Optimizer | Persist proposed route/metrics | `route_request_id` |
@@ -65,7 +68,7 @@ Order Service
   -> OrderConfirmed
 
 Inventory Service
-  -> InventoryReserved
+  -> StockReserved / StockReleased
 
 Fulfillment Service
   -> ShipmentReady
@@ -146,3 +149,87 @@ Sensitive data and secrets must not be embedded in event payloads or raw logs.
 Event schemas are versioned. Additive, backward-compatible evolution is preferred. Breaking changes require a new version and coordinated consumer migration.
 
 Shared event contracts belong under the repository's contracts package and are referenced by producer/consumer code; business logic does not belong in the shared contract package.
+
+## 12. Implemented Order/Inventory reservation baseline
+
+Shared contracts are in `libs/messaging/src/interfaces/`. Runtime envelopes use
+camelCase fields and permit `actorId: null` for system-triggered decisions.
+`StockReceived.quantity` is additive; `quantityDelta` is retained. Stock
+quantities and shortage values cross service boundaries as decimal strings.
+
+Order confirmation is synchronous: Inventory decides reserved/insufficient;
+Order commits its state/history/outbox afterwards. A failed Order commit after
+successful reservation is recovered with the same version-bound reservation
+key or through the explicit Order reconciliation handshake. No TTL-only release
+is permitted.
+
+Cancellation first commits an intent and increments the Order version, locking
+editing/confirmation while preserving its business status. After Inventory
+release succeeds, Order commits CANCELED/history/outbox and increments version
+again. A background worker retries persisted intents.
+
+Phase 5A adds an irrevocable Order dispatch grant under the same row lock used
+by cancellation. Pending cancellation rejects dispatch; a grant rejects cancel
+before any release, even before IN_DELIVERY projection. Only Fulfillment's
+internal token can request a grant; exact retries replay the persisted decision.
+This is a synchronous internal contract, not a shipment event or proof of stock
+issue. Fulfillment must persist its request and recover forward after a grant.
+Phase 5B adds Shipment creation/cancellation, dispatch-intent recovery,
+lifecycle projection and Inventory ISSUE after this gate.
+
+The relay holds service-local row locks through publish/marking and selects only
+the earliest unpublished event per tenant/aggregate. Failure after broker
+publication but before database commit can still redeliver the same event ID;
+consumer Inbox deduplication is required.
+
+Order's stock consumer serializes FIFO evaluation by tenant/warehouse, ordered
+by `pendingSince, id`. An insufficient order does not block later candidates.
+Per-order Inbox commits with each decision; warehouse Inbox commits when the
+whole pass finishes, allowing recovery after partial progress. `OrderPendingStock`
+and pending `OrderUpdated` also wake evaluation to cover stock arriving before
+the pending Order transaction commits. An insufficient retry does not emit
+another `OrderPendingStock`, preventing a self-triggering event loop.
+
+Consumer handler failures are marked retriable for KafkaJS restart without
+advancing the failed offset. Permanent invalid events currently require
+operator repair and may block their partition; automatic dead-letter routing
+is not implemented. Broker-restart rehearsal and load benchmarks are not
+claimed by the phase-4 API/unit evidence.
+
+## 13. Fulfillment lifecycle (phase 5B)
+
+`OrderConfirmed` keeps event version 1 with additive line fields:
+`skuSnapshot`, `productNameSnapshot`, `unitSnapshot`, `unitWeight`, `unitVolume`.
+Legacy events lacking all five fields use Fulfillment-only
+`GET /internal/orders/:orderId/fulfillment-snapshot`; malformed rich events are
+rejected, not silently repaired. Customer/address/warehouse JSON stays copied
+from the original event. Creating a pool entry has no stock side effect.
+
+Shipment events share `ShipmentLifecyclePayload` in `@logix/messaging`:
+shipment/order/warehouse/reservation IDs, optional dispatch request and reason.
+The relay publishes to required `KAFKA_FULFILLMENT_TOPIC`, keyed by aggregate,
+using a separate durable group in Order and Inventory.
+
+| Event | Order projection | Inventory effect |
+| --- | --- | --- |
+| ShipmentCreated | None | None |
+| ShipmentPicking | PICKING | None |
+| ShipmentReadyToShip | READY_TO_SHIP | None |
+| ShipmentDispatched | IN_DELIVERY, matching persisted grant required | ISSUE |
+| ShipmentDelivered | COMPLETED + completedAt | None |
+| ShipmentDeliveryFailed | DELIVERY_FAILED | None |
+| ShipmentCanceled / ShipmentCancelRejected | None | None |
+
+Envelope producer, tenant, IDs, event version and aggregate identity are checked.
+Order locks its own row, enforces existing forward transitions, and records
+invalid/stale events as `IGNORED_STALE`. Redelivery is not enabled. A producer's
+outbox preserves same-aggregate ordering; arbitrary reordering of future events
+is not a supported transport contract. Inbox and aggregate versions prevent
+replay from moving lifecycle backward.
+
+Inventory serializes ISSUE with reservation/release using the tenant/order
+advisory lock, then locks product balances in sorted order. Replay with a new
+event ID checks the persisted shipment/request receipt, not only Inbox.
+Stock movements emit `StockIssued`, never `InventoryAdjusted` for ISSUE.
+Permanent malformed events retain the existing observable retry/blocking
+behavior; automatic DLQ and full phase-5 benchmark remain separate work.

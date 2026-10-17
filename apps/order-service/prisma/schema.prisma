@@ -35,6 +35,18 @@ model SalesOrder {
   /// FIFO anchor for reservation retry; reset when a PENDING_STOCK order is edited.
   pendingSince            DateTime?            @map("pending_since") @db.Timestamptz(6)
   confirmedAt             DateTime?            @map("confirmed_at") @db.Timestamptz(6)
+  reservationGroupId      String?              @map("reservation_group_id") @db.Uuid
+  cancellationRequestedAt DateTime?            @map("cancellation_requested_at") @db.Timestamptz(6)
+  cancellationReason      String?              @map("cancellation_reason") @db.Text
+  cancellationActorId     String?              @map("cancellation_actor_id") @db.Uuid
+  cancellationCorrelationId String?            @map("cancellation_correlation_id") @db.Uuid
+  /// Irrevocable dispatch authorization; excludes cancellation even before lifecycle projection arrives.
+  dispatchRequestId       String?              @map("dispatch_request_id") @db.Uuid
+  dispatchShipmentId      String?              @map("dispatch_shipment_id") @db.Uuid
+  dispatchOrderVersion    BigInt?              @map("dispatch_order_version")
+  dispatchGrantedAt       DateTime?            @map("dispatch_granted_at") @db.Timestamptz(6)
+  dispatchActorId         String?              @map("dispatch_actor_id") @db.Uuid
+  dispatchCorrelationId   String?              @map("dispatch_correlation_id") @db.Uuid
   canceledAt              DateTime?            @map("canceled_at") @db.Timestamptz(6)
   completedAt             DateTime?            @map("completed_at") @db.Timestamptz(6)
   cancelReason            String?              @map("cancel_reason") @db.Text
@@ -47,6 +59,7 @@ model SalesOrder {
   shortages               OrderShortage[]
 
   @@unique([tenantId, orderNumber], map: "ux_orders_tenant_number")
+  @@unique([tenantId, dispatchRequestId], map: "ux_orders_dispatch_request")
   @@index([tenantId, status, createdAt(sort: Desc)], map: "ix_orders_tenant_status_created")
   @@index([tenantId, customerId, createdAt(sort: Desc)], map: "ix_orders_customer_created")
   @@index([tenantId, warehouseId, status, createdAt], map: "ix_orders_warehouse_status")

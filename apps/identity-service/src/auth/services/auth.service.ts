@@ -62,12 +62,19 @@ export class AuthService {
 
     if (!user.userTenants || user.userTenants.length === 0) {
       if (user.isSuperAdmin) {
-        const firstTenant = await this.prisma.tenant.findFirst({
-          where: { status: 'ACTIVE', deletedAt: null },
+        const selectedTenant = await this.prisma.tenant.findFirst({
+          where: {
+            ...(dto.tenantId ? { id: dto.tenantId } : {}),
+            status: 'ACTIVE',
+            deletedAt: null,
+          },
           orderBy: { createdAt: 'asc' },
         });
 
-        const tenantId = dto.tenantId || firstTenant?.id || '';
+        if (dto.tenantId && !selectedTenant) {
+          throw new UnauthorizedException('Bạn không có quyền truy cập vào tổ chức này');
+        }
+        const tenantId = selectedTenant?.id || '';
         const payload = {
           sub: user.id,
           email: user.email,
@@ -109,12 +116,12 @@ export class AuthService {
             avatarUrl: user.avatarUrl,
             isSuperAdmin: true,
           },
-          activeTenant: firstTenant
+          activeTenant: selectedTenant
             ? {
-                id: firstTenant.id,
-                code: firstTenant.code,
-                name: firstTenant.name,
-                logoUrl: firstTenant.logoUrl,
+                id: selectedTenant.id,
+                code: selectedTenant.code,
+                name: selectedTenant.name,
+                logoUrl: selectedTenant.logoUrl,
                 role: 'OWNER',
               }
             : null,
@@ -159,38 +166,10 @@ export class AuthService {
       }),
     ]);
 
-    let permissions: string[] = [];
-    if (user.isSuperAdmin || selectedUserTenant.role === 'OWNER') {
-      permissions = ['*'];
-    } else {
-      const userRoles = await this.prisma.userRole.findMany({
-        where: {
-          userId: user.id,
-          tenantId: selectedUserTenant.tenantId,
-          deletedAt: null,
-        },
-        include: {
-          role: {
-            include: {
-              rolePermissions: {
-                where: { deletedAt: null },
-                include: { permission: true },
-              },
-            },
-          },
-        },
-      });
-
-      const permSet = new Set<string>();
-      for (const ur of userRoles) {
-        for (const rp of ur.role.rolePermissions) {
-          if (rp.permission && !rp.permission.deletedAt) {
-            permSet.add(rp.permission.code);
-          }
-        }
-      }
-      permissions = Array.from(permSet);
-    }
+    const { permissions } = await this.rolesService.getEffectivePermissions(
+      user.id,
+      selectedUserTenant.tenantId,
+    );
 
     const payload = {
       sub: user.id,
@@ -433,38 +412,10 @@ export class AuthService {
       });
     }
 
-    let permissions: string[] = [];
-    if (userTenant.user.isSuperAdmin || userTenant.role === 'OWNER') {
-      permissions = ['*'];
-    } else {
-      const userRoles = await this.prisma.userRole.findMany({
-        where: {
-          userId: userTenant.userId,
-          tenantId: userTenant.tenantId,
-          deletedAt: null,
-        },
-        include: {
-          role: {
-            include: {
-              rolePermissions: {
-                where: { deletedAt: null },
-                include: { permission: true },
-              },
-            },
-          },
-        },
-      });
-
-      const permSet = new Set<string>();
-      for (const ur of userRoles) {
-        for (const rp of ur.role.rolePermissions) {
-          if (rp.permission && !rp.permission.deletedAt) {
-            permSet.add(rp.permission.code);
-          }
-        }
-      }
-      permissions = Array.from(permSet);
-    }
+    const { permissions } = await this.rolesService.getEffectivePermissions(
+      userTenant.userId,
+      userTenant.tenantId,
+    );
 
     const payload = {
       sub: userTenant.userId,

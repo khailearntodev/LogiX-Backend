@@ -87,6 +87,41 @@ It must not become a business-logic dumping ground. Business validation remains 
 
 ## 5. Configuration and secrets
 
+### User access tokens and permissions
+
+Identity owns effective access resolution (`RolesService.getEffectivePermissions`).
+Login, tenant switching, invitation acceptance and refresh use that resolver;
+refresh recomputes permissions from current IAM data rather than copying the
+refresh token's claims. The access JWT carries `sub`, `email`, `tenantId`,
+`role`, `isSuperAdmin` and `permissions`, together with its signed expiry.
+The profile/effective-permissions endpoint uses the same IAM rules.
+
+Order, Inventory and Master Data use `@logix/auth`'s `accessTokenUser` to map
+verified claims consistently. Passport verifies signature and expiry first.
+Refresh JWTs (identified by `jti`) are not API access tokens. Missing permission
+claims never grant permissions. Endpoint guards and tenant-scoped business
+queries remain required; the mapper alone does not authorize operations.
+Identity keeps database-backed user/membership validation for its own APIs.
+
+Business services use a snapshot of permissions until the access token expires
+or is replaced. This is not immediate cross-service session/permission revocation.
+After deploying this fix, an existing session must refresh or log in again to
+replace access tokens issued without permission claims. Do not disable guards
+or grant wildcard access to work around an old token.
+
+Deploy/restart Identity, Order, Inventory and Master Data together. Configure the
+same `JWT_SECRET` in each service; Inventory and Master Data now fail startup
+when it is absent rather than using a fallback secret. A platform administrator
+without membership can select an active tenant, but the returned tenant and JWT
+must identify that same tenant. An unavailable requested tenant is rejected.
+
+Auth regression verification includes login, refresh, tenant switching,
+invitation acceptance, custom read-only roles, permission removal and
+refresh-token rejection. The isolated Gateway/PostgreSQL run passed 37 HTTP
+checks without business-data writes; test fixtures and owned processes were
+removed afterward. Browser UI acceptance and immediate revocation of existing
+business-service access tokens are not covered by this verification.
+
 Runtime configuration should be environment-driven. Model/provider selection must be configurable without code recompilation, as required by the BRD.
 
 Secrets such as API keys must come from secret/configuration mechanisms and must never be committed to source control or written to logs/events.
@@ -94,6 +129,11 @@ Secrets such as API keys must come from secret/configuration mechanisms and must
 ## 6. Observability
 
 Every service must emit structured logs and metrics appropriate to its responsibility. Cross-service operations use correlation metadata.
+
+The shared `@logix/logger` redacts `Authorization`, cookies and
+`x-internal-service-token` request headers in both development and production.
+Correlation headers remain available; request bodies are not enabled for HTTP
+logging. Keep the logger credential-redaction regression when changing logging.
 
 The MVP must make it possible to observe at least:
 

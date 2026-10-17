@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Shipment: 'Shipment',
+  ShipmentDispatchIntent: 'ShipmentDispatchIntent',
+  ShipmentOrderCursor: 'ShipmentOrderCursor',
   ShipmentItem: 'ShipmentItem',
   ShipmentStatusHistory: 'ShipmentStatusHistory',
   OutboxEvent: 'OutboxEvent',
@@ -83,6 +85,9 @@ export const ShipmentScalarFieldEnum = {
   deliveryAddressId: 'deliveryAddressId',
   customerSnapshot: 'customerSnapshot',
   deliveryAddressSnapshot: 'deliveryAddressSnapshot',
+  warehouseSnapshot: 'warehouseSnapshot',
+  orderNumber: 'orderNumber',
+  confirmedOrderVersion: 'confirmedOrderVersion',
   issuerSnapshot: 'issuerSnapshot',
   status: 'status',
   totalWeight: 'totalWeight',
@@ -101,6 +106,35 @@ export const ShipmentScalarFieldEnum = {
 } as const
 
 export type ShipmentScalarFieldEnum = (typeof ShipmentScalarFieldEnum)[keyof typeof ShipmentScalarFieldEnum]
+
+
+export const ShipmentDispatchIntentScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  shipmentId: 'shipmentId',
+  orderVersion: 'orderVersion',
+  shipmentVersion: 'shipmentVersion',
+  actorId: 'actorId',
+  correlationId: 'correlationId',
+  status: 'status',
+  rejectionReason: 'rejectionReason',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShipmentDispatchIntentScalarFieldEnum = (typeof ShipmentDispatchIntentScalarFieldEnum)[keyof typeof ShipmentDispatchIntentScalarFieldEnum]
+
+
+export const ShipmentOrderCursorScalarFieldEnum = {
+  tenantId: 'tenantId',
+  orderId: 'orderId',
+  orderVersion: 'orderVersion',
+  canceled: 'canceled'
+} as const
+
+export type ShipmentOrderCursorScalarFieldEnum = (typeof ShipmentOrderCursorScalarFieldEnum)[keyof typeof ShipmentOrderCursorScalarFieldEnum]
 
 
 export const ShipmentItemScalarFieldEnum = {

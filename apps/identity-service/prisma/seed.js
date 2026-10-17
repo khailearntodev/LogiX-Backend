@@ -3,6 +3,14 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../dist/generated/prisma/client.js';
 
 export const SYSTEM_PERMISSIONS = [
+  { code: 'fulfillment:shipment:read', module: 'FULFILLMENT', resource: 'shipment', action: 'read',
+    name: 'Xem lô giao', description: 'Xem danh sách, chi tiết và thông tin trước xuất giao' },
+  { code: 'fulfillment:shipment:update', module: 'FULFILLMENT', resource: 'shipment', action: 'update',
+    name: 'Chuẩn bị lô giao', description: 'Ghi nhận lấy hàng và sẵn sàng giao' },
+  { code: 'fulfillment:shipment:dispatch', module: 'FULFILLMENT', resource: 'shipment', action: 'execute',
+    name: 'Xuất giao', description: 'Xác nhận xuất giao lô hàng' },
+  { code: 'fulfillment:shipment:complete', module: 'FULFILLMENT', resource: 'shipment', action: 'complete',
+    name: 'Ghi nhận kết quả giao', description: 'Ghi nhận giao thành công hoặc thất bại' },
   // --- Phân hệ Kho & Tồn kho (INVENTORY) ---
   {
     code: 'inventory:warehouse:read',

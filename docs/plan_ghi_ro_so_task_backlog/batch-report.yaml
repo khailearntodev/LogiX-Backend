@@ -1,0 +1,521 @@
+batch_id: G5-A-through-G5-D
+latest_batch: G5-D
+scope: Order arbitration, Fulfillment lifecycle, Inventory ISSUE, projection, Gateway/RBAC, Shipment frontend and isolated hardening evidence
+overall_phase_status: blocked
+authority: ke-hoach-trien-khai-quan-ly-don-hang.md#70-quyet-dinh-va-thu-tu-trien-khai-da-chot
+completed_tasks: [G5-A01, G5-A02, G5-A03, G5-B01, G5-B02, G5-B03, G5-B04, G5-C01, G5-C02, G5-C03, G5-C04, G5-D01, G5-D04]
+blocked_tasks: [G5-D02, G5-D03]
+post_batch_repairs:
+  date: "2026-10-17"
+  scope: Historical QA poison events, missing local Fulfillment topic, Shipment layout and Order/Shipment VI/EN
+  status: verified_code_and_local_runtime
+  database:
+    exact_qa_inbox_tombstones: 14
+    source_absence_and_prior_inventory_cleanup_verified: true
+    business_rows_deleted: 0
+    kafka_offsets_reset: false
+    legitimate_legacy_events_processed: 36
+    shipments: { PENDING_PICK: 32, CANCELED: 4 }
+    fulfillment_order_consumer_partition_lags: [0, 0, 0, 0, 0, 0]
+    fulfillment_outbox: { published: 40, pending: 0 }
+  configuration:
+    setup_kafka_provisions: [Order, Inventory, Fulfillment]
+    local_topic: { partitions: 6, replication_factor: 1 }
+    secrets_changed: false
+  verification:
+    fulfillment: { files: 6, passed: 96, failed: 0, exit_code: 0 }
+    locales_and_error_mappers: { assertions: 924, source_files: 39, locales: [vi, en], exit_code: 0 }
+    gateway: { probes: 10, statuses: [200, 400, 401, 403, 404], qa_rows_created: 0, exit_code: 0 }
+    kafka_setup: { cases: 4, exit_code: 0 }
+    frontend: { lint: PASS, typecheck: PASS, production_build: PASS, compiled_container_breakpoints: 5 }
+    browser: NOT_RUN_USER_REQUEST
+  limitations:
+    - Existing backend dev stack needs restart if Order/Inventory exited before the missing topic was provisioned; bounded verification hosts are stopped.
+    - Initial parallel validation hit local memory allocation errors; all six Fulfillment test files passed with one worker.
+    - Existing Next middleware and Vitest plugin deprecation warnings remain; no new dependency or framework was added.
+    - Does not resolve long-outage persisted retry or benchmark acceptance blockers.
+human_readable_labels_follow_up:
+  date: "2026-10-17"
+  status: verified_code_and_read_only_runtime
+  authority: Main plan section 7.4 follow-up; user selected current-directory
+  trace: [G5-C02, G5-C04, G5-D01]
+  requirements: [REQ-015, REQ-019, REQ-020]
+  actor_policy: current-directory
+  changes:
+    - Current name and email for Shipment/Order/Inventory actors; self from Auth and others from authorized Identity member directory by userId.
+    - One directory request per mounted history/auth scope; abort and scope guards prevent stale tenant profiles.
+    - Null actors are System; former or unavailable users are explicitly unknown; errors and denial have VI/EN retry states.
+    - Snapshot product name/SKU in confirmation and shortages; current warehouse/product name and code in balances.
+    - Inventory resolves receipt referenceNumber in one tenant-scoped own-database query; frontend accepts SHIPMENT and resolves its number through protected public API.
+    - Full technical IDs retained in expandable details and transport/routes; manual-adjustment actor is not used as a business number.
+  implementation_files:
+    - ../LogiX-Frontend/src/components/shared/entity-label.tsx
+    - ../LogiX-Frontend/src/features/identity/components/actor-directory.tsx
+    - ../LogiX-Frontend/src/features/identity/api/auth.api.ts
+    - ../LogiX-Frontend/src/features/orders/components/order-product-label.tsx
+    - ../LogiX-Frontend/src/features/inventory/components/balances-table.tsx
+    - ../LogiX-Frontend/src/features/inventory/components/movement-reference.tsx
+    - ../LogiX-Frontend/src/features/inventory/components/movement-history-sheet.tsx
+    - apps/inventory-service/src/inventory/services/inventory-balance.service.ts
+    - apps/inventory-service/src/inventory/services/inventory-balance.service.spec.ts
+  verification:
+    inventory: { files: 6, passed: 53, failed: 0, new_regressions: 5, pre_fix_failures: 5, build: PASS, typecheck: PASS, lint: PASS, exit_code: 0 }
+    frontend: { source_behavior_checks: 59, lint: PASS, typecheck: PASS, production_build: PASS, vi_en_parity: PASS, exit_code: 0 }
+    runtime:
+      result: PASS
+      gateway_probes: 8
+      statuses: [200, 401, 403]
+      receipt_movement_rows_matched_to_source: 100
+      active_directory_members_checked: 1
+      shipment_history_actors_resolved: 2
+      unrelated_tenant_directory: 403
+      missing_inventory_read_permission: 403
+    evidence: Session JSON summaries only; no tokens, names or emails recorded
+    browser: NOT_RUN_USER_REQUEST
+  safety:
+    business_rows_written: 0
+    roles_or_permissions_changed: false
+    migrations_added: false
+    identity_history_backfilled: false
+    cross_service_database_reads_in_application: false
+    new_dependencies: false
+  cleanup: Temporary frontend and runtime QA scripts removed; five permanent Inventory regressions retained
+  unchanged_blockers: [G5-D02, G5-D03, UI_visual_acceptance]
+pending_batches:
+  - G5-D: Resolve long-outage persisted retry and transaction contention; stabilize QA broker and repeat measured hardening
+  - UI_acceptance: Browser and visual acceptance excluded by user, remains unverified
+required_endpoints:
+  - method: POST
+    path: /internal/orders/:orderId/authorize-dispatch
+    source: ke-hoach-trien-khai-quan-ly-don-hang.md QD-5 and section 7.0
+    status: implemented
+endpoint_probes:
+  - method: POST
+    path: /internal/orders/:orderId/authorize-dispatch
+    status: 201
+    result: PASS
+    boundary: direct service-to-service only; Gateway returns 404
+files_changed:
+  G5-A01:
+    - file: apps/order-service/prisma/schema.prisma
+      change_type: modified
+      description: Nullable durable dispatch fields and tenant/request unique key
+    - file: apps/order-service/prisma/migrations/20261017054805_order_dispatch_arbitration/migration.sql
+      change_type: created
+      description: Additive transactional migration, unique key and cancellation-exclusion CHECK
+    - file: libs/messaging/src/interfaces/dispatch.interface.ts
+      change_type: created
+      description: Stable request/grant contract exported by shared messaging
+  G5-A02:
+    - file: apps/order-service/src/orders/services/order-dispatch.service.ts
+      change_type: created
+      description: Row-locked authorization, exact replay and explicit conflicts
+    - file: apps/order-service/src/orders/orders-dispatch.internal.controller.ts
+      change_type: created
+      description: Fulfillment-only internal endpoint, strict DTO and claim-derived tenant
+    - file: apps/order-service/src/orders/services/order-command.service.ts
+      change_type: modified
+      description: Block cancel/recovery release after grant; reuse common row lock
+    - file: apps/order-service/src/orders/services/order-reservation.service.ts
+      change_type: modified
+      description: Reuse existing row-lock SQL without changing reservation behavior
+  G5-A03:
+    - file: apps/order-service/src/orders/services/order-dispatch.service.spec.ts
+      change_type: created
+      description: Grant, exact replay, invalid state/version/reservation and database errors
+    - file: apps/order-service/src/orders/orders-dispatch.internal.controller.spec.ts
+      change_type: created
+      description: Internal guard metadata, DTO, tenant and correlation validation
+    - file: apps/order-service/src/orders/services/order-command.service.spec.ts
+      change_type: modified
+      description: Cancel/recovery blocks after grant and valid pre-dispatch cancellation
+upstream_artifacts_consumed:
+  G5-A01:
+    - artifact: ke-hoach-trien-khai-quan-ly-don-hang.md
+      used_for: QD-5 and user-approved arbitration policy
+    - artifact: ../architecture/database-design.md
+      used_for: Service-owned persistence and transaction boundaries
+  G5-A02:
+    - artifact: quan-ly-don-hang-backend-frontend.md
+      used_for: REQ-014, REQ-016, REQ-019 and SC-009/010/011
+evidence_mapping:
+  G5-A01:
+    - upstream: QD-5
+      output: ck_orders_dispatch_decision and ux_orders_dispatch_request
+      evidence: Migration applied by migrate dev; real negative CHECK/unique tests passed
+  G5-A02:
+    - upstream: REQ-014 and REQ-019
+      output: OrderDispatchService and OrderCommandService
+      evidence: 20 scheduled concurrent pairs, 10 cancel wins and 10 grant wins; no stock issue
+  G5-A03:
+    - upstream: SC-011 foundation
+      output: Durable grant and cancellation intent
+      evidence: Owned Inventory outage/recovery and Order restart; not Kafka recovery
+traceability:
+  - requirement: REQ-014
+    plan_item: "7.0.1"
+    task: G5-A02
+    status: completed_for_batch_only
+  - requirement: REQ-016
+    plan_item: "7.0.1"
+    task: G5-A03
+    status: completed_for_new_internal_endpoint
+  - requirement: REQ-019
+    plan_item: "7.0.1"
+    task: G5-A03
+    status: partial_phase_coverage
+protocol_violation: false
+errors: []
+warnings:
+  - severity: INFO
+    message: Backend 5A/5B and frontend 5C code are complete; 5D remains blocked and UI unverified.
+  - severity: INFO
+    message: No frontend or browser verification in batch 5A. Themed confirmation dialog is approved, not implemented.
+  - severity: INFO
+    message: Two 100-connection 600-second benchmarks were measured and failed acceptance; SC-011/012 are not signed off.
+test_results:
+  G5-A03:
+    command: pnpm --filter @logix/auth --filter @logix/messaging --filter order-service --filter inventory-service test
+    exit_code: 0
+    passed: 324
+    failed: 0
+    skipped: 0
+    failures: []
+    breakdown: { order: 226, inventory: 37, auth: 31, messaging: 30 }
+runtime_validation:
+  environment:
+    docker: AVAILABLE, server 29.7.2
+    node: AVAILABLE, v22.19.0
+    infra_tier: Real existing PostgreSQL, isolated QA tenant IDs and random application ports
+    browser_tier: SKIPPED, backend internal contract only; frontend unchanged
+  startup: PASS, isolated full Gateway/Order/Inventory test hosts
+  integration:
+    status: PASS
+    exit_code: 0
+    http_checks: 81
+    concurrent_pairs: 20
+    cancel_wins: 10
+    dispatch_wins: 10
+    additional_assertions: Persistence, stock invariants, database CHECK and unique constraints
+  recovery:
+    status: PASS
+    scope: Owned Inventory outage, explicit cancellation completion, persisted grant after Order restart
+    gaps: No automatic scheduler timing, Kafka consumer recovery or completed shipment dispatch tested
+  cleanup:
+    status: PASS
+    details: Exact QA rows removed from Order/Inventory; owned processes stopped; temporary scripts deleted
+  overall: PASS_FOR_BATCH_5A_ONLY
+validation:
+  order_lint: PASS
+  order_typecheck_including_tests: PASS
+  order_build: PASS
+  messaging_build: PASS
+  messaging_typecheck: PASS
+  full_phase_acceptance: UNVERIFIED
+follow_up_batch:
+  batch_id: G5-B
+  status: completed
+  authority: ke-hoach-trien-khai-quan-ly-don-hang.md#702
+  tasks:
+    G5-B01:
+      output: Shared lifecycle contracts, rich/legacy snapshots, unique pool, cancellation cursor and Inbox
+      requirements: [REQ-014, REQ-016, REQ-019]
+    G5-B02:
+      output: Strict shipment APIs, persisted version-bound dispatch intent, exact replay and automatic backoff recovery
+      requirements: [REQ-014, REQ-015, REQ-016, REQ-019]
+    G5-B03:
+      output: Atomic Inventory ISSUE receipt/movements and forward-only Order lifecycle/history projection
+      requirements: [REQ-014, REQ-015, REQ-019]
+    G5-B04:
+      output: Public-only Gateway proxy, four permission catalogue records, runtime proof and cleanup
+      requirements: [REQ-016, REQ-019]
+  required_endpoints:
+    - { method: GET, path: /api/v1/shipments, status: implemented, probe: 200 }
+    - {
+        method: GET,
+        path: /api/v1/shipments/:id,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: POST,
+        path: /api/v1/shipments/:id/start-picking,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: POST,
+        path: /api/v1/shipments/:id/mark-ready,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: GET,
+        path: /api/v1/shipments/:id/dispatch-preview,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: POST,
+        path: /api/v1/shipments/:id/dispatch,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: POST,
+        path: /api/v1/shipments/:id/mark-delivered,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: POST,
+        path: /api/v1/shipments/:id/mark-failed,
+        status: implemented,
+        probe: 200,
+      }
+    - {
+        method: GET,
+        path: /internal/orders/:orderId/fulfillment-snapshot,
+        status: implemented,
+        probe: 200,
+        gateway_probe: 404,
+      }
+  test_results:
+    passed: 435
+    failed: 0
+    skipped: 0
+    exit_code: 0
+    breakdown:
+      {
+        fulfillment: 94,
+        order: 244,
+        inventory: 48,
+        auth: 31,
+        messaging_source_only: 16,
+        gateway: 1,
+        identity_catalogue: 1,
+      }
+    commands:
+      - pnpm --filter fulfillment-service --filter order-service --filter inventory-service --filter api-gateway test
+      - pnpm --filter @logix/auth exec vitest run src
+      - pnpm --filter @logix/messaging exec vitest run src
+      - pnpm --filter identity-service exec vitest run src/iam/services/fulfillment-permissions.spec.ts
+    counting_note: Source-only messaging selection excludes emitted dist test copies; historical G5-A command counts remain historical.
+  runtime_validation:
+    environment:
+      docker: AVAILABLE, server 29.7.2
+      node: AVAILABLE, v22.19.0
+      infra_tier: Real PostgreSQL and Kafka, three service-owned isolated QA databases and unique topics/groups/ports
+      browser_tier: SKIPPED, backend-only batch; UI remains G5-C
+    startup: PASS, four full AppModule hosts and HTTP readiness probes
+    integration:
+      { status: PASS, exit_code: 0, http_checks: 73, journey_files: 3 }
+    e2e_api:
+      {
+        status: PASS,
+        exit_code: 0,
+        flows:
+          [
+            delivered,
+            failed,
+            cancel_before_grant,
+            cancel_after_grant,
+            lost_grant_response_restart,
+            atomic_issue_rollback_retry,
+            replay,
+            legacy_snapshot,
+            cancellation_tombstone,
+          ],
+      }
+    recovery:
+      dispatch: Original Order grant replayed automatically after Fulfillment restart, one dispatch event and one ISSUE per product
+      issue: QA-only second-product movement failure rolled back balances/statuses/movements; removing trigger enabled automatic Kafka retry
+    catalogue: Four approved permissions upserted alone; rolePermission and user counts unchanged
+    cleanup: PASS, all owned QA hosts/topics/groups/databases removed; temporary scripts deleted, permanent regression tests retained
+    overall: PASS_FOR_BATCH_5B_ONLY
+  migrations:
+    applied_without_reset:
+      - apps/fulfillment-service/prisma/migrations/20261017063840_shipment_lifecycle_intents/migration.sql
+      - apps/fulfillment-service/prisma/migrations/20261017070521_dispatch_recovery_backoff/migration.sql
+      - apps/inventory-service/prisma/migrations/20261017064243_reservation_shipment_issue/migration.sql
+      - apps/inventory-service/prisma/migrations/20261017071200_unique_shipment_issue/migration.sql
+    prerequisite: Initial lifecycle migration requires empty legacy shipment pool; local pool verified empty.
+  validation:
+    four_service_builds: PASS
+    four_service_source_typechecks: PASS
+    four_service_lints: PASS
+    order_inventory_typechecks_including_tests: PASS
+    shared_messaging_build_typecheck: PASS
+    full_phase_acceptance: UNVERIFIED
+  warnings:
+    - severity: INFO
+      message: Full Fulfillment/Gateway tsc still sees the pre-existing test/app.e2e-spec.ts supertest/types import; source builds/typechecks pass.
+    - severity: INFO
+      message: Configure required Fulfillment env keys, shared KAFKA_FULFILLMENT_TOPIC and Gateway FULFILLMENT_SERVICE_URL before starting local services. Existing local secrets were not copied or rewritten.
+    - severity: INFO
+      message: No browser acceptance, shared-broker outage, full demo backfill or 100-VU benchmark claimed. Malformed permanent events still block/retry under existing messaging policy.
+
+frontend_batch:
+  batch_id: G5-C
+  status: complete_for_code_and_non_browser_validation
+  authority: ke-hoach-trien-khai-quan-ly-don-hang.md section 7.4; user explicitly excluded browser checks
+  requirements: [REQ-015, REQ-019, REQ-020]
+  implementation:
+    G5-C01:
+      - Synchronized ignored local Order/Inventory/Fulfillment/Gateway env; preserved database URLs and existing secrets
+      - Validated all four config schemas and JWT consistency; no secrets printed or tracked
+      - Added typed Shipment API/schema, permission constants, read route guard and sidebar
+    G5-C02:
+      - Added thin pool/detail routes and Shipment feature
+      - Pool URL filters for warehouse/status/date, pagination, loading/error/empty/retry states
+      - Immutable shipment snapshots/items/totals/history and real Order links
+    G5-C03:
+      - Versioned picking/ready actions and explicit themed dispatch/completion confirmations
+      - Backend dispatch preview with order/shipment/reservation/version binding
+      - Exact request retained across unknown outcome retries and same-screen dialog close/reopen
+      - Submit mutex, pending action lock, explicit 409 reload and failed-delivery reason
+    G5-C04:
+      - Public Order summary/detail grant fields and grant-aware cancel in all callers
+      - Real orderId shipment lookup, no fake IDs or unauthorized shipment query
+      - Shared bounded visible-tab refresh with request cancellation and no overlapping Shipment reads
+      - Both VI/EN locale copies updated; theme tokens and responsive layouts
+  validation:
+    frontend_validate: { command: pnpm validate, exit_code: 0, lint: PASS, typecheck: PASS, build: PASS }
+    order_tests: { command: pnpm test, exit_code: 0, files: 15, passed: 245, failed: 0, skipped: 0 }
+    order_build_typecheck_lint: { exit_code: 0, result: PASS }
+    frontend_temporary_assertions:
+      command: node --test qa5c-contracts.cjs
+      exit_code: 0
+      passed: 16
+      failed: 0
+      skipped: 0
+      scope:
+        - 336 shipment status-permission-intent combinations and Order grant/cancel matrix
+        - Valid and malformed schemas, decimal strings, safe versions and grant fields
+        - API list-detail-preview-five-commands mapping and exact replay body
+        - Localized 400-401-403-404-409-domain-network failures
+        - Exactly 12 polls, hidden-tab pause, focus and cleanup
+        - Non-DOM hook-handler harness for request retention, dialog reopen, double submit, failure reason and conflict
+    local_env_schemas: { services: 4, result: PASS, secrets_logged: false, database_urls_changed: false }
+    browser_visual: NOT_RUN_USER_REQUEST
+    new_runtime_gateway_kafka_acceptance: NOT_RUN_CODE_ONLY_SCOPE
+    full_phase_acceptance: UNVERIFIED
+  cleanup:
+    temporary_assertion_script: removed_after_validation
+    permanent_order_mapper_regression: retained
+    qa_accounts_or_business_data_created: false
+    processes_started_or_stopped: false
+    demo_data_modified: false
+    dependencies_added: false
+    commits_created: false
+  warnings:
+    - severity: INFO
+      message: Restart affected local services to load synchronized env. No production consumer/demo backfill was started in this code-only batch.
+    - severity: INFO
+      message: Existing Next middleware deprecation warning remains; no unrelated migration was made.
+    - severity: INFO
+      message: Source, unit/handler and build checks are not browser/visual or full-runtime acceptance. Those and the isolated benchmark remain G5-D.
+
+hardening_batch:
+  batch_id: G5-D
+  status: blocked
+  overall: FAIL
+  report: runtime-validation-report.md
+  authority: ke-hoach-trien-khai-quan-ly-don-hang.md sections 7.5-7.7; SC-001 through SC-012
+  requirements: [REQ-015, REQ-016, REQ-019, REQ-020]
+  tasks:
+    G5-D01:
+      status: completed_for_functional_scope
+      output: Source baseline, real API journeys and shared internal-header log redaction
+    G5-D02:
+      status: blocked
+      reason: Persisted relay attempt/backoff not observed during long broker outage; producer retry exceeded SQL transaction lifetime
+    G5-D03:
+      status: blocked
+      reason: HTTP 500, API latency over target and Kafka coordinator histogram failure; no stable passing benchmark
+    G5-D04:
+      status: completed_for_reporting_and_cleanup
+      output: SC matrix, actual metrics, explicit failures and owned-resource cleanup
+  files_changed:
+    - libs/logger/src/logger.module.ts
+    - libs/logger/src/logger.module.spec.ts
+    - docs/architecture/runtime-architecture.md
+    - docs/plan_ghi_ro_so_task_backlog/runtime-validation-report.md
+    - docs/plan_ghi_ro_so_task_backlog/ke-hoach-trien-khai-quan-ly-don-hang.md
+    - docs/plan_ghi_ro_so_task_backlog/checkpoints/tasks-to-impl.yaml
+    - docs/plan_ghi_ro_so_task_backlog/batch-report.yaml
+  validation:
+    source_unit_tests:
+      exit_code: 0
+      passed: 449
+      failed: 0
+      skipped: 0
+      breakdown: { order: 245, inventory: 48, fulfillment: 94, master_data: 10, gateway: 1, auth: 31, messaging: 16, identity_catalogue: 1, logger: 3 }
+      counting: Unique source tests; 446 baseline plus three logger regressions, not repeated-run totals
+    logger:
+      negative_proof: Before fix, internal-header regression failed in development and production
+      final_tests: { command: pnpm --filter @logix/logger exec vitest run src, exit_code: 0, passed: 3 }
+      typecheck_build: { exit_code: 0, result: PASS }
+      lint: { exit_code: 0, runner: Existing order-service oxlint binary, scope: Absolute libs/logger/src path }
+    five_service_build_lint_source_typecheck: { exit_code: 0, result: PASS }
+    frontend_validate: { command: pnpm validate, exit_code: 0, result: PASS }
+    functional:
+      command: node qa5d-runtime.mjs --functional-only
+      exit_code: 0
+      result: PASS
+      assertions: 72
+      run: qa5d_1792227358381
+      real_services: [gateway, order, inventory, fulfillment, master_data]
+      after_logger_fix: true
+      raw_jwt_in_final_logs: 0
+      qa_personal_markers_in_final_logs: 0
+      redacted_internal_headers_observed: 95
+    extended_outage:
+      command: node qa5d-runtime.mjs --supplement
+      exit_code: 1
+      result: FAIL
+      assertions_before_failure: 97
+      passed_scenarios_before_failure: [five_command_guard_matrix, cross_tenant_duplicate_number, four_scheduled_dispatch_winners, lost_grant_response_restart, multi_product_issue_rollback_retry]
+      failure: persisted relay failure convergence timeout after 75000 ms
+      no_waiver: true
+    benchmark:
+      command: node qa5d-runtime.mjs
+      exit_code: null
+      intended_exit_code: 1
+      termination: Caller stopped after failed assertion, report persistence and resource cleanup because Kafka observer kept retrying
+      result: FAIL
+      before_logger_fix: true
+      connections: 100
+      pipelining: 1
+      rate_cap_requests_per_second: 100
+      duration_seconds: 600.97
+      requests: 44465
+      non_2xx: 69
+      transport_errors: 0
+      timeouts: 0
+      api_measured_p95_ms: 2837.45
+      endpoint_p95_ms: { list: 1369.25, detail: 2368.69, create: 3976.31, confirm: 1550.57 }
+      event_observed_p95_ms: 1203
+      event_samples: 8733
+      event_metric_valid_for_signoff: false
+      reason: Independent observer coordinator failed; incomplete samples cannot establish full publish-to-effect acceptance
+      initial_run: { duration_seconds: 600.72, requests: 55193, non_2xx: 51, api_measured_p95_ms: 1876.59, create_p95_ms: 2676.44, concurrent_frontend_build: true }
+    browser: NOT_RUN_USER_REQUEST
+    full_phase_acceptance: FAIL
+  cleanup:
+    owned_qa_databases_broker_topics_groups_hosts: removed
+    temporary_scripts_load_dependencies_and_logs: removed_after_evidence
+    permanent_logger_regression: retained
+    shared_broker_and_database_server: untouched
+    demo_data_and_existing_frontend: untouched
+    local_env_changed: false
+    commits_created: false
+  warnings:
+    - severity: HIGH
+      message: Kafka request/retry can outlive locked SQL outbox transaction; persisted retry and long-outage recovery remain blocked.
+    - severity: HIGH
+      message: Load profile produced 500 and transaction-start timeout; no claim of passing SC-012 or production capacity.
+    - severity: HIGH
+      message: Dedicated Kafka 4.1.1 coordinator raised a negative histogram exception; last measured event samples are incomplete.
+    - severity: INFO
+      message: QD-7 transaction/counter, auth protocol and business contracts are unchanged. UI remains unverified.

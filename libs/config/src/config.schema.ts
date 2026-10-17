@@ -39,13 +39,26 @@ export const kafkaConfigSchema = z.object({
   KAFKA_BROKERS: z
     .string()
     .min(1)
-    .transform((v) => v.split(',')),
+    .transform((v) => v.split(',').map((broker) => broker.trim()))
+    .refine((brokers) => brokers.every((broker) => /^[^:\s]+:\d+$/.test(broker)), {
+      message: 'KAFKA_BROKERS must contain comma-separated host:port addresses',
+    }),
 
   /** Kafka client ID, typically the service name. */
   KAFKA_CLIENT_ID: z.string().min(1),
 
   /** Consumer group ID for this service. */
   KAFKA_GROUP_ID: z.string().min(1).optional(),
+});
+
+export const outboxConfigSchema = z.object({
+  KAFKA_ORDER_TOPIC: z.string().min(1),
+  KAFKA_INVENTORY_TOPIC: z.string().min(1),
+  OUTBOX_INTERVAL_MS: z.coerce.number().int().positive(),
+  OUTBOX_BATCH_SIZE: z.coerce.number().int().positive(),
+  OUTBOX_RETRY_BASE_MS: z.coerce.number().int().positive(),
+  OUTBOX_RETRY_MAX_MS: z.coerce.number().int().positive(),
+  OUTBOX_TRANSACTION_TIMEOUT_MS: z.coerce.number().int().positive(),
 });
 
 /**

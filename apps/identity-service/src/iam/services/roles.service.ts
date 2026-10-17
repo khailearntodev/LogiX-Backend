@@ -593,7 +593,10 @@ export class RolesService {
 
     // 2. Kiểm tra quan hệ thành viên trong tenant
     const membership = await this.prisma.userTenant.findFirst({
-      where: { userId, tenantId, status: 'ACTIVE', deletedAt: null },
+      where: {
+        userId, tenantId, status: 'ACTIVE', deletedAt: null,
+        tenant: { status: 'ACTIVE', deletedAt: null },
+      },
     });
 
     if (!membership) {
@@ -617,12 +620,13 @@ export class RolesService {
         userId,
         tenantId,
         deletedAt: null,
+        role: { tenantId, deletedAt: null },
       },
       include: {
         role: {
           include: {
             rolePermissions: {
-              where: { deletedAt: null },
+              where: { tenantId, deletedAt: null },
               include: { permission: true },
             },
           },

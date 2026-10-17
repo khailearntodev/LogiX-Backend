@@ -9,6 +9,7 @@ export const MovementType = {
 export type MovementType = (typeof MovementType)[keyof typeof MovementType];
 
 export const ReferenceType = {
+  SHIPMENT: 'SHIPMENT',
   STOCK_RECEIPT: 'STOCK_RECEIPT',
   MANUAL_ADJUSTMENT: 'MANUAL_ADJUSTMENT',
 } as const;
@@ -20,6 +21,7 @@ export const ReceiptStatus = {
 } as const;
 
 export const InventoryEventType = {
+  STOCK_ISSUED: 'StockIssued',
   STOCK_RECEIVED: 'StockReceived',
   INVENTORY_ADJUSTED: 'InventoryAdjusted',
 } as const;

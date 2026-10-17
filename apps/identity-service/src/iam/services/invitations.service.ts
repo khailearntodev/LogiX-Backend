@@ -14,6 +14,7 @@ import { TokenService } from '../../auth/services/token.service.js';
 import { MailService } from '../../mail/services/mail.service.js';
 import { CreateInvitationDto } from '../dto/create-invitation.dto.js';
 import { AcceptInvitationDto } from '../../auth/dto/accept-invitation.dto.js';
+import { RolesService } from './roles.service.js';
 
 @Injectable()
 export class InvitationsService {
@@ -22,6 +23,7 @@ export class InvitationsService {
     @Inject(forwardRef(() => TokenService))
     private readonly tokenService: TokenService,
     private readonly mailService: MailService,
+    private readonly rolesService: RolesService,
   ) {}
 
   /**
@@ -455,23 +457,10 @@ export class InvitationsService {
       return { membership, validRoles };
     });
 
-    let permissions: string[] = [];
-    if (user.isSuperAdmin || membership.role === 'OWNER') {
-      permissions = ['*'];
-    } else {
-      const assignedRoleIds = validRoles.map((r) => r.id);
-      const rolePerms = await this.prisma.rolePermission.findMany({
-        where: { roleId: { in: assignedRoleIds }, deletedAt: null },
-        include: { permission: true },
-      });
-      const permSet = new Set<string>();
-      for (const rp of rolePerms) {
-        if (rp.permission && !rp.permission.deletedAt) {
-          permSet.add(rp.permission.code);
-        }
-      }
-      permissions = Array.from(permSet);
-    }
+    const { permissions } = await this.rolesService.getEffectivePermissions(
+      user.id,
+      invitation.tenantId,
+    );
 
     const payload = {
       sub: user.id,
