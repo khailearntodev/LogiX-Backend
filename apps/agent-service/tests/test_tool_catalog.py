@@ -67,10 +67,10 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 15
+    assert len(specs) == 16
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 13
+    assert len(read_tools) == 14
     assert len(sensitive_tools) == 2
     assert {s.name for s in sensitive_tools} == {"confirm_order", "dispatch_shipment"}
     for s in sensitive_tools:
@@ -93,6 +93,8 @@ def test_tools_are_filtered_by_permission() -> None:
     assert "list_warehouses" in names("inventory:warehouse:read")
     assert "list_orders" in names("order:sales-order:read")
     assert "get_order" in names("order:sales-order:read")
+    assert "create_order" not in names("order:sales-order:read")
+    assert "create_order" in names("order:sales-order:create")
     assert "confirm_order" not in names("order:sales-order:read")
     assert "confirm_order" in names("order:sales-order:approve")
     assert "list_shipments" in names("fulfillment:shipment:read")

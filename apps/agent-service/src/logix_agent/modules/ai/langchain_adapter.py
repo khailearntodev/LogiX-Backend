@@ -87,15 +87,32 @@ def _to_gateway_messages(messages: Sequence[BaseMessage]) -> list[dict[str, Any]
 
 
 def _clean_schema(schema: dict[str, Any]) -> dict[str, Any]:
-    """Strip titles and unsupported fields for LLM function declarations."""
-    clean = {k: v for k, v in schema.items() if k not in ("title", "$defs", "definitions")}
-    if "properties" in clean and isinstance(clean["properties"], dict):
-        clean["properties"] = {
-            pk: {k: v for k, v in pv.items() if k not in ("title",)}
-            for pk, pv in clean["properties"].items()
-            if isinstance(pv, dict)
-        }
-    return clean
+    """Dereference $defs and strip titles/unsupported fields for LLM function declarations."""
+    defs = schema.get("$defs") or schema.get("definitions") or {}
+
+    def _resolve(node: Any) -> Any:
+        if isinstance(node, dict):
+            if "$ref" in node and isinstance(node["$ref"], str):
+                ref_name = node["$ref"].split("/")[-1]
+                if ref_name in defs:
+                    resolved = _resolve(defs[ref_name].copy())
+                    extra = {k: _resolve(v) for k, v in node.items() if k != "$ref"}
+                    return {**resolved, **extra}
+            return {
+                k: _resolve(v)
+                for k, v in node.items()
+                if k not in ("title", "$defs", "definitions")
+            }
+        if isinstance(node, list):
+            return [_resolve(item) for item in node]
+        return node
+
+    cleaned = _resolve(schema)
+    if isinstance(cleaned, dict):
+        cleaned.pop("$defs", None)
+        cleaned.pop("definitions", None)
+        cleaned.pop("title", None)
+    return cleaned
 
 
 def _to_tool_definitions(tools: Sequence[Any]) -> list[ToolDefinition]:

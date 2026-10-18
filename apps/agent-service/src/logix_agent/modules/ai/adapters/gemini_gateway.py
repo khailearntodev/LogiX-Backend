@@ -49,6 +49,30 @@ from logix_agent.modules.ai.ports import ModelProfileRegistry
 GATEWAY_BACKEND = "gemini_sdk"
 
 
+def _clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
+    """Gemini FunctionDeclaration schema validator forbids $defs, $ref and title."""
+    defs = schema.get("$defs", {})
+
+    def _resolve(node: Any) -> Any:
+        if isinstance(node, dict):
+            if "$ref" in node and isinstance(node["$ref"], str):
+                ref_name = node["$ref"].split("/")[-1]
+                if ref_name in defs:
+                    resolved = _resolve(defs[ref_name].copy())
+                    extra = {k: _resolve(v) for k, v in node.items() if k != "$ref"}
+                    return {**resolved, **extra}
+            return {k: _resolve(v) for k, v in node.items() if k not in ("$defs", "title")}
+        if isinstance(node, list):
+            return [_resolve(item) for item in node]
+        return node
+
+    cleaned = _resolve(schema)
+    if isinstance(cleaned, dict):
+        cleaned.pop("$defs", None)
+        cleaned.pop("title", None)
+    return cleaned
+
+
 class GeminiModelGateway:
     """Concrete ModelGateway that delegates to Google Gemini.
 
@@ -255,11 +279,16 @@ class GeminiModelGateway:
 
         declarations: list[types.FunctionDeclaration] = []
         for t in tools:
+            param_schema = (
+                _clean_schema_for_gemini(t.input_schema)
+                if t.input_schema
+                else None
+            )
             declarations.append(
                 types.FunctionDeclaration(
                     name=t.name,
                     description=t.description,
-                    parameters=t.input_schema if t.input_schema else None,
+                    parameters=param_schema,
                 )
             )
 
