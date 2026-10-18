@@ -40,6 +40,7 @@ def _registry(handler):  # type: ignore[no-untyped-def]
             "inventory": "http://inventory.test",
             "master_data": "http://master.test",
             "order": "http://order.test",
+            "fulfillment": "http://fulfillment.test",
         },
         backoff_seconds=0,
         transport=httpx.MockTransport(handler),
@@ -66,13 +67,14 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 12
+    assert len(specs) == 15
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 11
-    assert len(sensitive_tools) == 1
-    assert sensitive_tools[0].name == "confirm_order"
-    assert sensitive_tools[0].preview is not None
+    assert len(read_tools) == 13
+    assert len(sensitive_tools) == 2
+    assert {s.name for s in sensitive_tools} == {"confirm_order", "dispatch_shipment"}
+    for s in sensitive_tools:
+        assert s.preview is not None
 
     for spec in specs:
         assert spec.name == spec.name.lower()
@@ -93,6 +95,10 @@ def test_tools_are_filtered_by_permission() -> None:
     assert "get_order" in names("order:sales-order:read")
     assert "confirm_order" not in names("order:sales-order:read")
     assert "confirm_order" in names("order:sales-order:approve")
+    assert "list_shipments" in names("fulfillment:shipment:read")
+    assert "get_shipment" in names("fulfillment:shipment:read")
+    assert "dispatch_shipment" not in names("fulfillment:shipment:read")
+    assert "dispatch_shipment" in names("fulfillment:shipment:dispatch")
 
 
 async def test_list_balances_maps_query_params() -> None:
@@ -331,3 +337,102 @@ async def test_confirm_order_invoke_with_approval() -> None:
     dumped = result.model_dump(mode="json")
     assert dumped["status"] == "CONFIRMED"
     assert dumped["version"] == 2
+
+
+SHIPMENT_ID = str(uuid.uuid4())
+
+
+def _shipment_summary(**extra: object) -> dict[str, object]:
+    return {
+        "id": SHIPMENT_ID,
+        "shipmentNumber": "SH-001",
+        "orderId": ORDER_ID,
+        "orderNumber": "SO-001",
+        "warehouseId": WH,
+        "status": "READY_TO_SHIP",
+        "totalWeight": "15.500",
+        "totalVolume": "0.035",
+        "version": 1,
+        "createdAt": "2026-10-18T09:00:00Z",
+        **extra,
+    }
+
+
+async def test_list_and_get_shipments() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.path == "/api/v1/shipments":
+            return httpx.Response(
+                200,
+                json={"items": [_shipment_summary()], "page": 1, "pageSize": 10, "total": 1},
+            )
+        return httpx.Response(200, json=_shipment_summary(items=[]))
+
+    registry = _registry(handler)
+    ctx = _ctx("fulfillment:shipment:read")
+
+    list_res = await registry.invoke("list_shipments", ctx, {"status": "READY_TO_SHIP"})
+    assert seen[0].url.path == "/api/v1/shipments"
+    assert seen[0].url.params["status"] == "READY_TO_SHIP"
+    assert list_res.model_dump(mode="json")["total"] == 1
+
+    detail_res = await registry.invoke("get_shipment", ctx, {"shipment_id": SHIPMENT_ID})
+    assert seen[1].url.path == f"/api/v1/shipments/{SHIPMENT_ID}"
+    assert detail_res.model_dump(mode="json")["shipment_number"] == "SH-001"
+
+
+async def test_dispatch_shipment_preview_and_execute() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "GET":
+            return httpx.Response(
+                200,
+                json={
+                    "shipmentId": SHIPMENT_ID,
+                    "shipmentNumber": "SH-001",
+                    "orderId": ORDER_ID,
+                    "version": 1,
+                    "orderVersion": 2,
+                    "reservationGroupId": str(uuid.uuid4()),
+                },
+            )
+        return httpx.Response(200, json=_shipment_summary(status="DISPATCHED", version=2))
+
+    registry = _registry(handler)
+    ctx = _ctx("fulfillment:shipment:dispatch")
+
+    # 1. Preview
+    preview = await registry.preview("dispatch_shipment", ctx, {"shipment_id": SHIPMENT_ID})
+    assert seen[0].url.path == f"/api/v1/shipments/{SHIPMENT_ID}/dispatch-preview"
+    assert preview.target_type == "shipment"
+    assert preview.target_version == 1
+
+    # 2. Invoke without approval fails
+    with pytest.raises(ApprovalRequiredError):
+        await registry.invoke("dispatch_shipment", ctx, {"shipment_id": SHIPMENT_ID})
+
+    # 3. Invoke with approval succeeds
+    approval = ApprovedAction(
+        approval_id="appr-2",
+        target_type="shipment",
+        target_id=SHIPMENT_ID,
+        target_version=1,
+    )
+    approved_ctx = ToolContext(actor=ctx.actor, correlation_id="c2", approval=approval)
+    result = await registry.invoke(
+        "dispatch_shipment", approved_ctx, {"shipment_id": SHIPMENT_ID, "order_version": 2}
+    )
+
+    assert seen[1].method == "POST"
+    assert seen[1].url.path == f"/api/v1/shipments/{SHIPMENT_ID}/dispatch"
+    import json
+
+    body = json.loads(seen[1].content)
+    assert body["version"] == 1
+    assert body["orderVersion"] == 2
+    assert body["confirmed"] is True
+    assert result.model_dump(mode="json")["status"] == "DISPATCHED"

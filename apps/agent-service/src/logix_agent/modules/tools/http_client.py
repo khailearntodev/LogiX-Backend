@@ -139,6 +139,7 @@ def create_service_client(settings: AgentSettings) -> ServiceClient:
             "order": settings.order_service_url,
             "master_data": settings.master_data_service_url,
             "inventory": settings.inventory_service_url,
+            "fulfillment": settings.fulfillment_service_url,
         },
         timeout_seconds=settings.tool_http_timeout_seconds,
         max_attempts=settings.tool_http_max_attempts,

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from logix_agent.modules.registry import ToolRegistry
-from logix_agent.modules.tools.catalog import inventory, master_data, order
+from logix_agent.modules.tools.catalog import fulfillment, inventory, master_data, order
 from logix_agent.modules.tools.http_client import ServiceClient
 
 
@@ -12,4 +12,5 @@ def build_tool_registry(client: ServiceClient) -> ToolRegistry:
     inventory.register(registry, client)
     master_data.register(registry, client)
     order.register(registry, client)
+    fulfillment.register(registry, client)
     return registry

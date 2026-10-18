@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from logix_agent.config import settings
+from logix_agent.db import model_registry  # noqa: F401
 from logix_agent.db.session import create_engine, create_session_factory
 from logix_agent.modules.agent.router import build_official_runtime
 from logix_agent.modules.agent.router import router as official_agent_router
@@ -21,7 +22,6 @@ from logix_agent.modules.ai.ports import ModelGateway
 from logix_agent.modules.confirmations.service import (
     ConfirmationService,
     InMemoryConfirmationStore,
-    SqlAlchemyConfirmationStore,
 )
 from logix_agent.modules.planner.checkpointer import create_checkpointer
 from logix_agent.modules.tools.catalog import build_tool_registry
@@ -84,11 +84,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.tool_registry = build_tool_registry(service_client)
 
     checkpointer = create_checkpointer(settings)
-    confirmation_store = (
-        SqlAlchemyConfirmationStore(session_factory)
-        if session_factory is not None
-        else InMemoryConfirmationStore()
-    )
+    confirmation_store = InMemoryConfirmationStore()
     app.state.confirmation_service = ConfirmationService(confirmation_store)
 
     try:

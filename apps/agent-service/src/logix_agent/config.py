@@ -25,6 +25,7 @@ class AgentSettings(BaseSettings):
     order_service_url: str = "http://localhost:3002"
     master_data_service_url: str = "http://localhost:3003"
     inventory_service_url: str = "http://localhost:3004"
+    fulfillment_service_url: str = "http://localhost:3005"
     tool_http_timeout_seconds: float = 10.0
     tool_http_max_attempts: int = 2
 
