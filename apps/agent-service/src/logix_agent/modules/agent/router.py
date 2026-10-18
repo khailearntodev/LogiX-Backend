@@ -87,9 +87,8 @@ async def run_agent(
             "tenant_id": actor.tenant_id,
             "user_id": actor.user_id,
             "access_token": actor.access_token,
-            "correlation_id": request.headers.get("x-correlation-id")
-            or input_data.run_id,
-        }
+            "correlation_id": request.headers.get("x-correlation-id") or input_data.run_id,
+        },
     }
     # Identity comes from the token only; client-supplied tools, state, context and props are dropped.
     safe_input = input_data.model_copy(

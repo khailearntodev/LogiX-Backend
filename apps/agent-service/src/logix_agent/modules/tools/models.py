@@ -1,19 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import (
-    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKeyConstraint,
     Index,
     Integer,
-    Numeric,
     String,
-    Text,
     UniqueConstraint,
     text,
 )
@@ -22,8 +19,11 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from logix_agent.db.base import Base, SCHEMA, TenantMutableMixin
+from logix_agent.db.base import SCHEMA, Base, TenantMutableMixin
 
+if TYPE_CHECKING:
+    from logix_agent.modules.confirmations.models import ConfirmationRequest
+    from logix_agent.modules.executions.models import AgentExecution
 
 EMPTY_JSON = text("'{}'::jsonb")
 
@@ -85,22 +85,15 @@ class ToolCall(TenantMutableMixin, Base):
     attempt_count: Mapped[int] = mapped_column(
         Integer, nullable=False, default=1, server_default=text("1")
     )
-    started_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    finished_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
     target_service: Mapped[str | None] = mapped_column(String(100), nullable=True)
     business_entity_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    business_entity_id: Mapped[UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True), nullable=True
-    )
+    business_entity_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
     error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     execution: Mapped[AgentExecution] = relationship(back_populates="tool_calls")
     confirmations: Mapped[list[ConfirmationRequest]] = relationship(
         back_populates="tool_call", overlaps="confirmations,execution"
     )
-

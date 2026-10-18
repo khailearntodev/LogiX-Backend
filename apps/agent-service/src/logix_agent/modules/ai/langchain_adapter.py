@@ -23,6 +23,7 @@ from langchain_core.messages import (
 )
 from langchain_core.messages.ai import UsageMetadata
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from pydantic import ConfigDict
 
 from logix_agent.modules.ai.contracts import ModelRequest, ModelResponse
 from logix_agent.modules.ai.ports import ModelGateway
@@ -49,10 +50,7 @@ def _text_of(message: BaseMessage) -> str:
 
 
 def _to_gateway_messages(messages: Sequence[BaseMessage]) -> list[dict[str, Any]]:
-    return [
-        {"role": _ROLE_BY_TYPE.get(m.type, "user"), "content": _text_of(m)}
-        for m in messages
-    ]
+    return [{"role": _ROLE_BY_TYPE.get(m.type, "user"), "content": _text_of(m)} for m in messages]
 
 
 def _usage_of(response: ModelResponse) -> UsageMetadata | None:
@@ -73,7 +71,7 @@ class ModelGatewayChatModel(BaseChatModel):
     model_profile: str = "planner-default"
     system_policy_version: str = "v1"
 
-    model_config = {"arbitrary_types_allowed": True}
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @property
     def _llm_type(self) -> str:
@@ -82,8 +80,9 @@ class ModelGatewayChatModel(BaseChatModel):
     async def _call_gateway(
         self, messages: list[BaseMessage], kwargs: dict[str, Any]
     ) -> ModelResponse:
-        tenant_id = kwargs.get("tenant_id")
-        correlation_id = kwargs.get("correlation_id")
+        configurable = kwargs.get("configurable") or {}
+        tenant_id = kwargs.get("tenant_id") or configurable.get("tenant_id")
+        correlation_id = kwargs.get("correlation_id") or configurable.get("correlation_id")
         if not tenant_id or not correlation_id:
             raise ValueError("tenant_id and correlation_id are required")
         gateway: ModelGateway = self.gateway

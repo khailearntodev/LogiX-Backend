@@ -1,29 +1,22 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
+from typing import Any, ClassVar
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     BigInteger,
-    CheckConstraint,
     DateTime,
-    ForeignKeyConstraint,
     Index,
-    Integer,
-    Numeric,
     String,
-    Text,
-    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
-from logix_agent.db.base import Base, SCHEMA, TenantMutableMixin
-
+from logix_agent.db.base import SCHEMA, Base
 
 EMPTY_JSON = text("'{}'::jsonb")
 
@@ -35,9 +28,7 @@ class LlmProviderConfig(Base):
             "ux_active_platform_provider_config",
             "provider",
             unique=True,
-            postgresql_where=text(
-                "tenant_id IS NULL AND is_active = true AND deleted_at IS NULL"
-            ),
+            postgresql_where=text("tenant_id IS NULL AND is_active = true AND deleted_at IS NULL"),
         ),
         Index(
             "ux_active_tenant_provider_config",
@@ -51,9 +42,7 @@ class LlmProviderConfig(Base):
         {"schema": SCHEMA},
     )
 
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id: Mapped[UUID | None] = mapped_column(PG_UUID(as_uuid=True), nullable=True)
     provider: Mapped[str] = mapped_column(String(100), nullable=False)
     model: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -77,9 +66,6 @@ class LlmProviderConfig(Base):
     version: Mapped[int] = mapped_column(
         BigInteger, nullable=False, default=1, server_default=text("1")
     )
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    __mapper_args__ = {"version_id_col": version}
-
+    __mapper_args__: ClassVar[dict[str, Any]] = {"version_id_col": version}

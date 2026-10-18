@@ -10,16 +10,15 @@ Schemas follow the design in ``ai-services-technical-design.md`` §8.5.2.
 from __future__ import annotations
 
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-
 # ── Enums ────────────────────────────────────────────────────────
 
 
-class FinishReason(str, Enum):
+class FinishReason(StrEnum):
     """Why the model stopped generating."""
 
     STOP = "stop"
@@ -28,7 +27,7 @@ class FinishReason(str, Enum):
     ERROR = "error"
 
 
-class ModelCapability(str, Enum):
+class ModelCapability(StrEnum):
     """Capabilities that a model profile may require."""
 
     TOOL_CALLING = "tool_calling"

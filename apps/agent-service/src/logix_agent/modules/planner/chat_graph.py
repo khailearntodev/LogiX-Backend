@@ -53,9 +53,7 @@ class ChatRunError(Exception):
 def _classify(exc: ModelGatewayError) -> str:
     if isinstance(exc, ModelTimeoutError):
         return MODEL_TIMEOUT
-    if isinstance(
-        exc, (ModelRateLimitError, ModelUnavailableError, FallbackExhaustedError)
-    ):
+    if isinstance(exc, (ModelRateLimitError, ModelUnavailableError, FallbackExhaustedError)):
         return MODEL_UNAVAILABLE
     return INTERNAL
 
@@ -66,9 +64,7 @@ def build_chat_graph(
     checkpointer: BaseCheckpointSaver,
     prompt_policy_version: str = "v1",
 ) -> CompiledStateGraph:
-    model = ModelGatewayChatModel(
-        gateway=gateway, system_policy_version=prompt_policy_version
-    )
+    model = ModelGatewayChatModel(gateway=gateway, system_policy_version=prompt_policy_version)
 
     async def chat(state: MessagesState, config: RunnableConfig) -> dict:
         configurable = config.get("configurable", {})
@@ -86,9 +82,7 @@ def build_chat_graph(
                 correlation_id=correlation_id,
             )
         except ModelGatewayError as exc:
-            logger.warning(
-                "Model call failed (correlation_id=%s): %s", correlation_id, exc
-            )
+            logger.warning("Model call failed (correlation_id=%s): %s", correlation_id, exc)
             raise ChatRunError(_classify(exc)) from exc
         return {"messages": [reply]}
 

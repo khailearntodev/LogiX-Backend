@@ -23,7 +23,8 @@ from __future__ import annotations
 import asyncio
 import json
 import time
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 import litellm
 from litellm import ModelResponse as LiteLLMModelResponse
@@ -137,10 +138,9 @@ class LiteLLMModelGateway:
                 litellm.acompletion(**call_kwargs),
                 timeout=timeout_sec,
             )
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise ModelTimeoutError(
-                f"LiteLLM call timed out after {timeout_sec}s "
-                f"for model '{profile.model}'"
+                f"LiteLLM call timed out after {timeout_sec}s for model '{profile.model}'"
             ) from exc
         except Exception as exc:
             raise self._map_error(exc, profile.model) from exc
@@ -285,15 +285,11 @@ class LiteLLMModelGateway:
 
         # Rate limit / quota exceeded
         if isinstance(exc, litellm.RateLimitError):
-            return ModelRateLimitError(
-                f"Rate limit exceeded for model '{model_identifier}': {msg}"
-            )
+            return ModelRateLimitError(f"Rate limit exceeded for model '{model_identifier}': {msg}")
 
         # Timeout
         if isinstance(exc, litellm.Timeout):
-            return ModelTimeoutError(
-                f"Request timed out for model '{model_identifier}': {msg}"
-            )
+            return ModelTimeoutError(f"Request timed out for model '{model_identifier}': {msg}")
 
         # Service unavailable / server errors
         if isinstance(exc, litellm.ServiceUnavailableError):

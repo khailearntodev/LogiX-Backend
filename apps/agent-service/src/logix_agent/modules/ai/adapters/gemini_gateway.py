@@ -20,7 +20,8 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -111,8 +112,7 @@ class GeminiModelGateway:
         # Clean model name (strip any 'google/' or 'gemini/' prefix)
         model_name = profile.model
         for prefix in ("google/", "gemini/"):
-            if model_name.startswith(prefix):
-                model_name = model_name[len(prefix) :]
+            model_name = model_name.removeprefix(prefix)
 
         timeout_sec = request.timeout_override or profile.timeout_seconds
 
@@ -143,7 +143,7 @@ class GeminiModelGateway:
                 config=config,
             )
             raw_response = await asyncio.wait_for(call_coro, timeout=timeout_sec)
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise ModelTimeoutError(
                 f"Gemini call timed out after {timeout_sec}s for model '{model_name}'"
             ) from exc
@@ -189,9 +189,7 @@ class GeminiModelGateway:
                 fn_name = msg.get("name") or "tool_result"
                 tool_content = msg.get("content")
                 response_dict = (
-                    {"result": tool_content}
-                    if not isinstance(tool_content, dict)
-                    else tool_content
+                    {"result": tool_content} if not isinstance(tool_content, dict) else tool_content
                 )
                 contents.append(
                     types.Content(
@@ -216,9 +214,7 @@ class GeminiModelGateway:
         system_instruction = "\n\n".join(system_parts) if system_parts else None
         return contents, system_instruction
 
-    def _build_tools(
-        self, tools: Sequence[ToolDefinition]
-    ) -> list[types.Tool] | None:
+    def _build_tools(self, tools: Sequence[ToolDefinition]) -> list[types.Tool] | None:
         """Convert ToolDefinition list to Gemini types.Tool."""
         if not tools:
             return None
@@ -277,9 +273,9 @@ class GeminiModelGateway:
         text_content: str | None = None
         try:
             text_content = raw.text
-        except Exception:
+        except (AttributeError, ValueError):
             # When tool calls are generated, raw.text can raise if no text part
-            pass
+            text_content = None
 
         return ModelResponse(
             provider="gemini",
@@ -307,9 +303,7 @@ class GeminiModelGateway:
                     f"Gemini rate limit exceeded for model '{model_name}': {msg}"
                 )
             if code in (408, 504) or "DEADLINE_EXCEEDED" in msg:
-                return ModelTimeoutError(
-                    f"Gemini timeout for model '{model_name}': {msg}"
-                )
+                return ModelTimeoutError(f"Gemini timeout for model '{model_name}': {msg}")
             if isinstance(exc, genai_errors.ServerError) or (code and code >= 500):
                 return ModelUnavailableError(
                     f"Gemini unavailable ({code}) for model '{model_name}': {msg}"

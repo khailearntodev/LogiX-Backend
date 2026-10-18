@@ -54,4 +54,3 @@ class AgentSettings(BaseSettings):
 
 
 settings = AgentSettings()
-

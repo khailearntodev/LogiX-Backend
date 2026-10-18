@@ -39,8 +39,12 @@ def _error_for_status(status: int) -> ToolError:
         code, message = _STATUS_ERRORS[status]
         return ToolError(code, message)
     if 400 <= status < 500:
-        return ToolError(TOOL_INVALID_REQUEST, "Yêu cầu không hợp lệ, vui lòng kiểm tra lại tham số.")
-    return ToolError(TOOL_UNAVAILABLE, "Dịch vụ nghiệp vụ hiện không khả dụng. Vui lòng thử lại sau.")
+        return ToolError(
+            TOOL_INVALID_REQUEST, "Yêu cầu không hợp lệ, vui lòng kiểm tra lại tham số."
+        )
+    return ToolError(
+        TOOL_UNAVAILABLE, "Dịch vụ nghiệp vụ hiện không khả dụng. Vui lòng thử lại sau."
+    )
 
 
 class ServiceClient:
@@ -95,10 +99,13 @@ class ServiceClient:
                     headers=headers,
                 )
             except httpx.TimeoutException:
-                error = ToolError(TOOL_TIMEOUT, "Dịch vụ nghiệp vụ phản hồi quá lâu. Vui lòng thử lại.")
+                error = ToolError(
+                    TOOL_TIMEOUT, "Dịch vụ nghiệp vụ phản hồi quá lâu. Vui lòng thử lại."
+                )
             except httpx.TransportError:
                 error = ToolError(
-                    TOOL_UNAVAILABLE, "Không kết nối được tới dịch vụ nghiệp vụ. Vui lòng thử lại sau."
+                    TOOL_UNAVAILABLE,
+                    "Không kết nối được tới dịch vụ nghiệp vụ. Vui lòng thử lại sau.",
                 )
             else:
                 if response.is_success:

@@ -4,6 +4,7 @@ Retry, fallback and capability policy are covered in ``test_gateway_policies``.
 """
 
 from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 from google.genai import errors as genai_errors
 from google.genai import types
@@ -105,9 +106,7 @@ async def test_gemini_gateway_tool_calls(mock_genai_client, profile_registry):
 
 
 @pytest.mark.asyncio
-async def test_gemini_gateway_resolves_fallback_profile_model(
-    mock_genai_client, profile_registry
-):
+async def test_gemini_gateway_resolves_fallback_profile_model(mock_genai_client, profile_registry):
     mock_response = MagicMock(spec=types.GenerateContentResponse)
     mock_response.text = "Fallback answer"
     mock_response.function_calls = None
@@ -150,9 +149,7 @@ async def test_gemini_gateway_maps_api_errors(
 
 
 @pytest.mark.asyncio
-async def test_gemini_gateway_does_not_retry_or_fall_back(
-    mock_genai_client, profile_registry
-):
+async def test_gemini_gateway_does_not_retry_or_fall_back(mock_genai_client, profile_registry):
     mock_genai_client.aio.models.generate_content.side_effect = genai_errors.APIError(
         code=503, response_json={"message": "Service unavailable"}
     )

@@ -86,16 +86,12 @@ async def list_inventory_balances(
         # The service reads the string "false" as true, so only send it when set.
         "lowStockOnly": True if low_stock_only else None,
     }
-    raw = await _get(
-        settings.inventory_service_url, "/api/v1/inventory/balances", runtime, params
-    )
+    raw = await _get(settings.inventory_service_url, "/api/v1/inventory/balances", runtime, params)
     return _page(raw, BALANCE_FIELDS)
 
 
 @tool
-async def get_inventory_balance(
-    runtime: ToolRuntime, warehouse_id: UUID, product_id: UUID
-) -> dict:
+async def get_inventory_balance(runtime: ToolRuntime, warehouse_id: UUID, product_id: UUID) -> dict:
     """Get the stock balance of one product in one warehouse.
 
     Args:
@@ -129,9 +125,7 @@ async def list_products(
         "page": page,
         "pageSize": min(page_size, MAX_PAGE_SIZE),
     }
-    raw = await _get(
-        settings.master_data_service_url, "/api/v1/products", runtime, params
-    )
+    raw = await _get(settings.master_data_service_url, "/api/v1/products", runtime, params)
     return _page(raw, PRODUCT_FIELDS)
 
 

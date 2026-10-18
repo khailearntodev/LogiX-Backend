@@ -7,7 +7,8 @@ Concrete implementations live in ``adapters/`` and are wired at startup.
 
 from __future__ import annotations
 
-from typing import Protocol, Sequence, runtime_checkable
+from collections.abc import Sequence
+from typing import Protocol, runtime_checkable
 
 from logix_agent.modules.ai.contracts import (
     ModelProfile,
