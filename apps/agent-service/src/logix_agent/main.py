@@ -72,6 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         settings.inventory_service_url,
         settings.master_data_service_url,
     )
+    session_factory = None
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:

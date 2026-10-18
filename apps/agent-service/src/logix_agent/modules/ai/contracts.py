@@ -137,6 +137,10 @@ class ModelToolCall(BaseModel):
     id: str = Field(..., description="Provider-assigned tool-call identifier.")
     name: str = Field(..., max_length=100)
     arguments: dict[str, Any] = Field(default_factory=dict)
+    thought_signature: str | None = Field(
+        default=None,
+        description="Opaque cryptographic signature for thinking models (e.g. Gemini 2.5/3.0+).",
+    )
 
 
 class ModelUsage(BaseModel):

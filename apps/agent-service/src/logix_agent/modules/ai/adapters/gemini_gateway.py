@@ -18,6 +18,8 @@ Design reference: ``ai-services-technical-design.md`` §8.5, §20.
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 import time
 import uuid
 from collections.abc import Sequence
@@ -181,27 +183,59 @@ class GeminiModelGateway:
                 for tc in msg.get("tool_calls") or []:
                     fn_name = tc.get("function", {}).get("name") or tc.get("name")
                     fn_args = tc.get("function", {}).get("arguments") or tc.get("arguments") or {}
-                    parts.append(types.Part.from_function_call(name=fn_name, args=fn_args))
+                    sig_b64 = tc.get("thought_signature")
+                    sig_bytes: bytes | None = None
+                    if sig_b64:
+                        try:
+                            sig_bytes = base64.b64decode(sig_b64)
+                        except Exception:
+                            sig_bytes = None
+                    if sig_bytes:
+                        parts.append(
+                            types.Part(
+                                function_call=types.FunctionCall(name=fn_name, args=fn_args),
+                                thought_signature=sig_bytes,
+                            )
+                        )
+                    else:
+                        parts.append(types.Part.from_function_call(name=fn_name, args=fn_args))
                 if parts:
                     contents.append(types.Content(role="model", parts=parts))
             elif role in ("tool", "function"):
                 # Tool response message
                 fn_name = msg.get("name") or "tool_result"
                 tool_content = msg.get("content")
-                response_dict = (
-                    {"result": tool_content} if not isinstance(tool_content, dict) else tool_content
+                if isinstance(tool_content, str):
+                    try:
+                        response_dict = json.loads(tool_content)
+                    except Exception:
+                        response_dict = {"result": tool_content}
+                elif isinstance(tool_content, dict):
+                    response_dict = tool_content
+                else:
+                    response_dict = {"result": tool_content}
+
+                if not isinstance(response_dict, dict):
+                    response_dict = {"result": response_dict}
+
+                resp_part = types.Part.from_function_response(
+                    name=fn_name,
+                    response=response_dict,
                 )
-                contents.append(
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_function_response(
-                                name=fn_name,
-                                response=response_dict,
-                            )
-                        ],
+                if (
+                    contents
+                    and contents[-1].role == "user"
+                    and contents[-1].parts
+                    and getattr(contents[-1].parts[0], "function_response", None) is not None
+                ):
+                    contents[-1].parts.append(resp_part)
+                else:
+                    contents.append(
+                        types.Content(
+                            role="user",
+                            parts=[resp_part],
+                        )
                     )
-                )
             else:
                 # User message
                 contents.append(
@@ -242,7 +276,28 @@ class GeminiModelGateway:
         """Map Gemini raw response to normalized ModelResponse."""
         # 1. Tool calls
         tool_calls: list[ModelToolCall] = []
-        if raw.function_calls:
+        candidate = raw.candidates[0] if (hasattr(raw, "candidates") and raw.candidates) else None
+        if candidate and candidate.content and candidate.content.parts:
+            fc_idx = 0
+            for part in candidate.content.parts:
+                if part.function_call:
+                    fc = part.function_call
+                    call_id = getattr(fc, "id", None) or f"call_{fc.name}_{fc_idx}_{uuid.uuid4().hex[:6]}"
+                    args = dict(fc.args) if fc.args else {}
+                    sig = getattr(part, "thought_signature", None)
+                    sig_b64: str | None = None
+                    if sig:
+                        sig_b64 = base64.b64encode(sig).decode("ascii") if isinstance(sig, bytes) else str(sig)
+                    tool_calls.append(
+                        ModelToolCall(
+                            id=call_id,
+                            name=fc.name,
+                            arguments=args,
+                            thought_signature=sig_b64,
+                        )
+                    )
+                    fc_idx += 1
+        elif raw.function_calls:
             for idx, fc in enumerate(raw.function_calls):
                 call_id = getattr(fc, "id", None) or f"call_{fc.name}_{idx}_{uuid.uuid4().hex[:6]}"
                 args = dict(fc.args) if fc.args else {}
