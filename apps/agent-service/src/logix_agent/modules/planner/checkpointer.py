@@ -14,11 +14,7 @@ logger = logging.getLogger(__name__)
 
 def create_checkpointer(settings: AgentSettings) -> BaseCheckpointSaver:
     """Create a checkpointer based on configuration and environment."""
-    if not settings.database_url:
-        if settings.environment != "development":
-            raise RuntimeError(
-                "DATABASE_URL must be configured for non-development environment checkpointer."
-            )
+    if settings.environment == "development" or not settings.database_url:
         logger.info("Using InMemorySaver checkpointer for development/testing.")
         return InMemorySaver()
 
