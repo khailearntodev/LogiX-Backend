@@ -67,12 +67,16 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 16
+    assert len(specs) == 19
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 14
-    assert len(sensitive_tools) == 2
-    assert {s.name for s in sensitive_tools} == {"confirm_order", "dispatch_shipment"}
+    assert len(read_tools) == 16
+    assert len(sensitive_tools) == 3
+    assert {s.name for s in sensitive_tools} == {
+        "confirm_order",
+        "dispatch_shipment",
+        "approve_trip_route",
+    }
     for s in sensitive_tools:
         assert s.preview is not None
 
@@ -101,6 +105,11 @@ def test_tools_are_filtered_by_permission() -> None:
     assert "get_shipment" in names("fulfillment:shipment:read")
     assert "dispatch_shipment" not in names("fulfillment:shipment:read")
     assert "dispatch_shipment" in names("fulfillment:shipment:dispatch")
+    assert "propose_trip_route" not in names("fulfillment:shipment:read")
+    assert "propose_trip_route" in names("transport:route:optimize")
+    assert "get_route_plan_comparison" in names("transport:route:read")
+    assert "approve_trip_route" not in names("transport:route:optimize")
+    assert "approve_trip_route" in names("transport:route:approve")
 
 
 async def test_list_balances_maps_query_params() -> None:

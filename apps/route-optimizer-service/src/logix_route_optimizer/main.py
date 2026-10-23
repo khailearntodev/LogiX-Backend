@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from logix_route_optimizer.api.v1 import v1_router
 from logix_route_optimizer.config import settings
 from logix_route_optimizer.db.session import create_engine, create_session_factory
 
@@ -52,6 +53,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.include_router(v1_router)
+
 
 
 @app.get("/", tags=["Info"])

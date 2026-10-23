@@ -38,8 +38,11 @@ SYSTEM_PROMPT = (
     "You are LogiX Copilot, an intelligent assistant for a B2B logistics platform. "
     "Reply in the language the user writes in and keep answers concise. "
     "Use the available tools to read or update business data; never invent data. "
-    "For sensitive actions (such as confirming sales orders), a confirmation preview "
-    "will be requested automatically before any modification is executed."
+    "When asked to plan or optimize delivery routes, use propose_trip_route to analyze "
+    "the optimal stop sequence on the OSRM road network, summarize the distance savings "
+    "compared to baselines, and ask the dispatcher for explicit approval. "
+    "For sensitive actions (such as confirming sales orders or approving delivery routes), "
+    "a confirmation preview will be requested automatically before any modification is executed."
 )
 
 _STATUS_MESSAGES = {
@@ -220,7 +223,9 @@ def create_preview_node(
         try:
             preview = await registry.preview(tool_name, context, tool_args)
         except Exception as exc:
-            logger.warning("%s [PREVIEW_NODE:ERROR] preview failed for tool '%s': %s", tag, tool_name, exc)
+            logger.warning(
+                "%s [PREVIEW_NODE:ERROR] preview failed for tool '%s': %s", tag, tool_name, exc
+            )
             err_msg = _format_tool_error(exc)
             return {
                 "messages": [
@@ -473,7 +478,9 @@ def create_execute_tool_node(registry: ToolRegistry):
             try:
                 result = await registry.invoke(name, context, args)
                 elapsed = time.monotonic() - t0
-                logger.info("%s [EXECUTE_TOOL:SUCCESS] tool '%s' finished in %.2fs", tag, name, elapsed)
+                logger.info(
+                    "%s [EXECUTE_TOOL:SUCCESS] tool '%s' finished in %.2fs", tag, name, elapsed
+                )
                 tool_messages.append(
                     ToolMessage(content=result.model_dump_json(), name=name, tool_call_id=call_id)
                 )
@@ -540,9 +547,17 @@ def create_route_after_tool(max_steps: int = 10):
     def route_after_tool(state: PlannerState) -> str:
         step_count = state.get("step_count", 0)
         if step_count >= max_steps:
-            logger.warning("[ROUTING:AFTER_TOOL] step_count=%d reached max_steps=%d -> END", step_count, max_steps)
+            logger.warning(
+                "[ROUTING:AFTER_TOOL] step_count=%d reached max_steps=%d -> END",
+                step_count,
+                max_steps,
+            )
             return END
-        logger.info("[ROUTING:AFTER_TOOL] step_count=%d < max_steps=%d -> loop back to agent", step_count, max_steps)
+        logger.info(
+            "[ROUTING:AFTER_TOOL] step_count=%d < max_steps=%d -> loop back to agent",
+            step_count,
+            max_steps,
+        )
         return "agent"
 
     return route_after_tool
