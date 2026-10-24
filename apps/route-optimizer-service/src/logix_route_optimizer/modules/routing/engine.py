@@ -10,6 +10,7 @@ from uuid import UUID
 from logix_route_optimizer.modules.distance.service import (
     ResilientDistanceService,
 )
+from logix_route_optimizer.modules.routing.checker import SolutionChecker
 from logix_route_optimizer.modules.routing.defaults import (
     DEFAULT_DEPOT,
     DEFAULT_SAMPLE_STOPS,
@@ -21,6 +22,7 @@ from logix_route_optimizer.modules.routing.schemas import (
     StopDetailOut,
     StopIn,
 )
+from logix_route_optimizer.modules.routing.solver import ORToolsCVRPSolver
 
 logger = logging.getLogger(__name__)
 
@@ -33,8 +35,13 @@ def _compute_input_hash(data: dict[str, Any]) -> str:
 class RouteEngine:
     """Core engine responsible for computing routes, distances, durations, and baselines."""
 
-    def __init__(self, distance_service: ResilientDistanceService | None = None) -> None:
+    def __init__(
+        self,
+        distance_service: ResilientDistanceService | None = None,
+        solver: ORToolsCVRPSolver | None = None,
+    ) -> None:
         self.distance_service = distance_service or ResilientDistanceService()
+        self.solver = solver or ORToolsCVRPSolver(time_limit_seconds=5)
 
     def _solve_nearest_neighbor(
         self, matrix: list[list[float]], n_stops: int
@@ -58,6 +65,8 @@ class RouteEngine:
 
     def _calc_tour_distance(self, matrix: list[list[float]], tour_stop_indices: list[int]) -> float:
         """Calculate total distance of tour Depot -> Stop 1 -> ... -> Stop N -> Depot."""
+        if not tour_stop_indices:
+            return 0.0
         total = 0.0
         current = 0
         for next_node in tour_stop_indices:
@@ -79,14 +88,15 @@ class RouteEngine:
 
         feasibility_status = "FEASIBLE"
         feasibility_note = "Tải trọng và thể tích xe đáp ứng tốt toàn bộ đơn hàng."
-        if (
+        is_overcapacity = (
             total_demand_weight > vehicle.capacity_weight_kg
             or total_demand_volume > vehicle.capacity_volume_m3
-        ):
+        )
+        if is_overcapacity:
             feasibility_status = "INFEASIBLE"
             feasibility_note = (
-                f"CẢNH BÁO: Quá tải! Tổng trọng lượng ({total_demand_weight}kg/{vehicle.capacity_weight_kg}kg) "
-                f"hoặc thể tích ({total_demand_volume}m3/{vehicle.capacity_volume_m3}m3) vượt sức chứa xe."
+                f"CẢNH BÁO: Quá tải! Tổng trọng lượng ({total_demand_weight:.1f}kg/{vehicle.capacity_weight_kg:.1f}kg) "
+                f"hoặc thể tích ({total_demand_volume:.2f}m3/{vehicle.capacity_volume_m3:.2f}m3) vượt sức chứa xe."
             )
 
         # Coordinate list: index 0 is depot, indices 1..N are stops
@@ -98,18 +108,60 @@ class RouteEngine:
         dur_matrix = matrix_result.durations_s
 
         n_stops = len(stops)
-        # Sequential route order: 1, 2, ..., n_stops
-        seq_indices = list(range(1, n_stops + 1))
-        # Baseline Nearest Neighbor order
-        nn_indices = self._solve_nearest_neighbor(dist_matrix, n_stops)
 
-        # Total distance calculations
+        # Baselines:
+        # 1. Sequential route order: 1, 2, ..., n_stops (Input Order)
+        seq_indices = list(range(1, n_stops + 1))
         sequential_dist_m = self._calc_tour_distance(dist_matrix, seq_indices)
+
+        # 2. Nearest Neighbor order
+        nn_indices = self._solve_nearest_neighbor(dist_matrix, n_stops)
         nn_dist_m = self._calc_tour_distance(dist_matrix, nn_indices)
 
-        # Choose tour to return (input sequence as requested for Phase 1 route provision)
-        chosen_indices = seq_indices
-        total_distance_m = sequential_dist_m
+        # 3. Solve with Google OR-Tools CVRP Solver
+        demand_weights = [0.0] + [s.demand_weight_kg for s in stops]
+        demand_volumes = [0.0] + [s.demand_volume_m3 for s in stops]
+
+        solver_result = self.solver.solve(
+            distance_matrix_m=dist_matrix,
+            demand_weights_kg=demand_weights,
+            demand_volumes_m3=demand_volumes,
+            capacity_weight_kg=vehicle.capacity_weight_kg,
+            capacity_volume_m3=vehicle.capacity_volume_m3,
+        )
+
+        chosen_indices: list[int]
+        total_distance_m: float
+        solver_method: str
+
+        if solver_result.status in ("OPTIMAL", "FEASIBLE") and solver_result.ordered_stop_indices:
+            check_report = SolutionChecker.check_solution(
+                ordered_stop_indices=solver_result.ordered_stop_indices,
+                num_stops=n_stops,
+                distance_matrix_m=dist_matrix,
+                demand_weights_kg=demand_weights,
+                demand_volumes_m3=demand_volumes,
+                capacity_weight_kg=vehicle.capacity_weight_kg,
+                capacity_volume_m3=vehicle.capacity_volume_m3,
+            )
+            if check_report.is_valid:
+                chosen_indices = solver_result.ordered_stop_indices
+                total_distance_m = solver_result.total_distance_m
+                solver_method = f"Google OR-Tools CVRP ({solver_result.status})"
+            else:
+                logger.warning("SolutionChecker reported violations: %s; falling back to Nearest Neighbor", check_report.violations)
+                chosen_indices = nn_indices
+                total_distance_m = nn_dist_m
+                solver_method = "Fallback Nearest Neighbor (Check Failed)"
+        elif is_overcapacity:
+            chosen_indices = nn_indices
+            total_distance_m = nn_dist_m
+            solver_method = "Google OR-Tools CVRP (Infeasible Overcapacity)"
+        else:
+            logger.warning("OR-Tools solver status %s; falling back to Nearest Neighbor", solver_result.status)
+            chosen_indices = nn_indices
+            total_distance_m = nn_dist_m
+            solver_method = "Fallback Nearest Neighbor"
 
         # 2. Build stop details with leg distances
         stop_details: list[StopDetailOut] = []
@@ -155,19 +207,24 @@ class RouteEngine:
         baseline_input_order_km = round(sequential_dist_m / 1000.0, 2)
         baseline_nearest_neighbor_km = round(nn_dist_m / 1000.0, 2)
 
-        # Comparison savings (relative to longer baseline or input sequence)
-        higher_baseline = max(baseline_input_order_km, baseline_nearest_neighbor_km)
-        distance_saved_km = max(0.0, round(higher_baseline - total_distance_km, 2))
-        improvement_ratio_percent = (
-            round((distance_saved_km / higher_baseline) * 100.0, 2)
-            if higher_baseline > 0
-            else 0.0
+        # Comparison savings relative to input order baseline
+        if baseline_input_order_km > 0 and total_distance_km < baseline_input_order_km:
+            distance_saved_km = round(baseline_input_order_km - total_distance_km, 2)
+            improvement_ratio_percent = round((distance_saved_km / baseline_input_order_km) * 100.0, 2)
+        else:
+            distance_saved_km = 0.0
+            improvement_ratio_percent = 0.0
+
+        savings_note = (
+            f"Tiết kiệm {distance_saved_km} km ({improvement_ratio_percent}%) so với thứ tự ban đầu."
+            if distance_saved_km > 0
+            else "Tuyến đường đã đạt mức tối ưu."
         )
 
         recommended_action = (
-            f"Lộ trình {n_stops} điểm dừng đã được lập thành công ({total_distance_km} km, "
-            f"khoảng {total_duration_minutes} phút). {feasibility_note} "
-            f"Vui lòng phê duyệt để chuyến xe có thể dispatch."
+            f"Lộ trình {n_stops} điểm dừng đã được tối ưu hóa bằng {solver_method} "
+            f"({total_distance_km} km, khoảng {total_duration_minutes} phút). {savings_note} "
+            f"{feasibility_note} Vui lòng phê duyệt để chuyến xe có thể dispatch."
         )
 
         return ProposedRouteOut(
@@ -188,7 +245,7 @@ class RouteEngine:
             vehicle_capacity_volume_m3=vehicle.capacity_volume_m3,
             total_demand_volume_m3=total_demand_volume,
             feasibility_status=feasibility_status,
-            solver_method="Sequential Road Route Provider",
+            solver_method=solver_method,
             distance_provider=matrix_result.provider_name,
             stops=stop_details,
             recommended_action=recommended_action,

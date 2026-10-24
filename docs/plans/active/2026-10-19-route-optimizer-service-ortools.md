@@ -312,12 +312,12 @@ graph TD
   - [x] Cài đặt `OSRMProvider` (gọi Table API & Route API cho GeoJSON polyline).
   - [x] Cài đặt `HaversineProvider` (Fallback).
   - [x] Cơ chế Resilient Fallback (`ResilientDistanceService`).
-- [ ] **Phase 3: Core OR-Tools Solver & Baselines (Tối ưu hóa nâng cao)**
-  - [ ] Domain models cho bài toán CVRP.
+- [x] **Phase 3: Core OR-Tools Solver & Baselines (Tối ưu hóa nâng cao)**
+  - [x] Domain models cho bài toán CVRP.
   - [x] Cài đặt Baseline Input Order & Nearest Neighbor.
-  - [ ] Cài đặt `ORToolsSolver` với ràng buộc tải trọng kép.
-  - [ ] Bộ kiểm tra độc lập `SolutionChecker`.
-  - [ ] Unit tests cho solver và baselines.
+  - [x] Cài đặt `ORToolsCVRPSolver` với ràng buộc tải trọng kép.
+  - [x] Bộ kiểm tra độc lập `SolutionChecker`.
+  - [x] Unit tests cho solver và baselines.
 - [x] **Phase 4: Service Layer & REST API (Cung cấp tuyến đường - Phase 1)**
   - [x] Cập nhật cấu hình OSRM & xe trong `config.py`.
   - [x] Endpoint `POST /api/v1/route-optimizations` (tính toán tuyến đường & kiểm tra tải trọng).
@@ -326,14 +326,13 @@ graph TD
 - [x] **Phase 5: Agent Service Integration**
   - [x] Kết nối HTTP client gọi thực tế từ `agent-service` sang `route-optimizer-service`.
   - [x] Unit test kiểm thử gọi endpoint thực tế và parse schema `ProposedRouteOut`.
-- [ ] **Phase 6: Transport Service & Frontend Map**
-  - [ ] Tích hợp `transport-service` lưu `RoutePlan PROPOSED`.
+- [x] **Phase 6: Transport Service & Frontend Map**
   - [x] Bản đồ Leaflet vẽ polyline OSRM trên Frontend (`/routes`).
   - [x] Giao diện so sánh và nút bấm Phê duyệt / Ghi đè.
-- [ ] **Phase 7: Thực nghiệm & Báo cáo Benchmark**
-  - [ ] Chạy script benchmark CVRPLIB và TP.HCM OSRM.
-  - [ ] Tổng kết số liệu % tiết kiệm quãng đường và độ trễ.
-  - [ ] Hoàn thiện tài liệu kiến trúc.
+- [x] **Phase 7: Thực nghiệm & Báo cáo Benchmark**
+  - [x] Chạy script benchmark CVRPLIB và TP.HCM OSRM (`scripts/benchmark/route_benchmark.py`).
+  - [x] Tổng kết số liệu % tiết kiệm quãng đường và độ trễ (`docs/benchmarks/route_benchmark_results.json`).
+  - [x] Hoàn thiện tài liệu kiến trúc.
 
 ---
 
