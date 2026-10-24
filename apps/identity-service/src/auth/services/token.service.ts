@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service.js';
 import { JwtPayload } from '../interfaces/jwt-payload.interface.js';
 import { RolesService } from '../../iam/services/roles.service.js';
+import { SUPER_ADMIN_CONTEXT_ROLE } from '../auth.constants.js';
 
 @Injectable()
 export class TokenService {
@@ -101,7 +102,7 @@ export class TokenService {
 
     const userTenant = user.userTenants[0];
     const tenant = userTenant?.tenant ?? (
-      user.isSuperAdmin
+      user.isSuperAdmin === true
         ? await this.prisma.tenant.findFirst({
             where: { id: session.tenantId, status: 'ACTIVE', deletedAt: null },
           })
@@ -119,7 +120,7 @@ export class TokenService {
       sub: user.id,
       email: user.email,
       tenantId: session.tenantId,
-      role: userTenant?.role ?? (user.isSuperAdmin ? 'OWNER' : undefined),
+      role: userTenant?.role ?? (user.isSuperAdmin === true ? SUPER_ADMIN_CONTEXT_ROLE : undefined),
       isSuperAdmin: Boolean(user.isSuperAdmin),
       permissions,
     };

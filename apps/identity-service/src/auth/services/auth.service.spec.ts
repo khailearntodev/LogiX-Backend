@@ -283,7 +283,7 @@ describe('AuthService', () => {
         tenantId: 't2',
         role: 'ADMIN',
         user: { id: 'u1', email: 'user@logix.vn', status: 'ACTIVE' },
-        tenant: { id: 't2', code: 'branch2', name: 'Branch 2', logoUrl: null },
+        tenant: { id: 't2', code: 'branch2', name: 'Branch 2', logoUrl: null, status: 'ACTIVE', deletedAt: null },
       });
 
       const result = await authService.switchTenant('u1', { tenantId: 't2' });

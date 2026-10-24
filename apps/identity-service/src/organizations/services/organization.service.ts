@@ -11,6 +11,7 @@ import { CreateOrganizationDto } from '../dto/create-organization.dto.js';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto.js';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto.js';
 import { RolesService } from '../../iam/services/roles.service.js';
+import { SUPER_ADMIN_CONTEXT_ROLE } from '../../auth/auth.constants.js';
 
 const LEGAL_PROFILE_FIELDS = [
   'legalName',
@@ -145,6 +146,7 @@ export class OrganizationService {
   }
 
   async getOrganization(userId: string, tenantId: string) {
+    const platformTenant = await this.getPlatformTenant(userId, tenantId);
     const userTenant = await this.prisma.userTenant.findFirst({
       where: {
         userId,
@@ -165,26 +167,28 @@ export class OrganizationService {
       },
     });
 
-    if (!userTenant || !userTenant.tenant || userTenant.tenant.deletedAt !== null || userTenant.tenant.status !== 'ACTIVE') {
+    const tenant = platformTenant ?? userTenant?.tenant;
+    if (!tenant || tenant.deletedAt !== null || tenant.status !== 'ACTIVE') {
       throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
     }
 
     return {
-      id: userTenant.tenant.id,
-      code: userTenant.tenant.code,
-      name: userTenant.tenant.name,
-      logoUrl: userTenant.tenant.logoUrl,
-      status: userTenant.tenant.status,
-      settings: userTenant.tenant.settings,
-      legalProfile: toLegalProfileView(userTenant.tenant),
-      role: userTenant.role,
-      isDefault: userTenant.isDefault,
-      createdAt: userTenant.tenant.createdAt,
-      updatedAt: userTenant.tenant.updatedAt,
+      id: tenant.id,
+      code: tenant.code,
+      name: tenant.name,
+      logoUrl: tenant.logoUrl,
+      status: tenant.status,
+      settings: tenant.settings,
+      legalProfile: toLegalProfileView(tenant),
+      role: userTenant?.role ?? SUPER_ADMIN_CONTEXT_ROLE,
+      isDefault: userTenant?.isDefault ?? false,
+      createdAt: tenant.createdAt,
+      updatedAt: tenant.updatedAt,
     };
   }
 
   async updateOrganization(userId: string, tenantId: string, dto: UpdateOrganizationDto) {
+    const platformTenant = await this.getPlatformTenant(userId, tenantId);
     const userTenant = await this.prisma.userTenant.findFirst({
       where: {
         userId,
@@ -205,19 +209,20 @@ export class OrganizationService {
       },
     });
 
-    if (!userTenant || !userTenant.tenant || userTenant.tenant.deletedAt !== null || userTenant.tenant.status !== 'ACTIVE') {
+    const tenant = platformTenant ?? userTenant?.tenant;
+    if (!tenant || tenant.deletedAt !== null || tenant.status !== 'ACTIVE') {
       throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
     }
 
-    if (userTenant.role !== 'OWNER' && userTenant.role !== 'ADMIN') {
+    if (!platformTenant && userTenant?.role !== 'OWNER' && userTenant?.role !== 'ADMIN') {
       throw new ForbiddenException('Chỉ Quản trị viên hoặc Chủ sở hữu mới có quyền cập nhật thông tin tổ chức');
     }
 
     const legalChanges = pickLegalProfileChanges(dto);
     const mergedAddressLine =
-      legalChanges.addressLine !== undefined ? legalChanges.addressLine : userTenant.tenant.addressLine;
+      legalChanges.addressLine !== undefined ? legalChanges.addressLine : tenant.addressLine;
     const mergedProvince =
-      legalChanges.province !== undefined ? legalChanges.province : userTenant.tenant.province;
+      legalChanges.province !== undefined ? legalChanges.province : tenant.province;
     // Mirrors ck_tenants_legal_address so the caller gets a 400 instead of a DB error.
     if (!mergedAddressLine !== !mergedProvince) {
       throw new BadRequestException(
@@ -240,8 +245,8 @@ export class OrganizationService {
       name: updatedTenant.name,
       logoUrl: updatedTenant.logoUrl,
       legalProfile: toLegalProfileView(updatedTenant),
-      role: userTenant.role,
-      isDefault: userTenant.isDefault,
+      role: userTenant?.role ?? SUPER_ADMIN_CONTEXT_ROLE,
+      isDefault: userTenant?.isDefault ?? false,
       message: 'Cập nhật thông tin tổ chức thành công',
     };
   }
@@ -287,6 +292,7 @@ export class OrganizationService {
   }
 
   async getMembers(userId: string, tenantId: string) {
+    const platformTenant = await this.getPlatformTenant(userId, tenantId);
     const callerMembership = await this.prisma.userTenant.findFirst({
       where: {
         userId,
@@ -304,7 +310,7 @@ export class OrganizationService {
       },
     });
 
-    if (!callerMembership) {
+    if (!platformTenant && !callerMembership) {
       throw new ForbiddenException('Bạn không có quyền xem danh sách thành viên của tổ chức này');
     }
 
@@ -353,6 +359,7 @@ export class OrganizationService {
     memberId: string,
     dto: UpdateMemberRoleDto,
   ) {
+    const platformTenant = await this.getPlatformTenant(callerUserId, tenantId);
     const caller = await this.prisma.userTenant.findFirst({
       where: {
         userId: callerUserId,
@@ -370,7 +377,7 @@ export class OrganizationService {
       },
     });
 
-    if (!caller || (caller.role !== 'OWNER' && caller.role !== 'ADMIN')) {
+    if (!platformTenant && (!caller || (caller.role !== 'OWNER' && caller.role !== 'ADMIN'))) {
       throw new ForbiddenException('Chỉ Chủ sở hữu hoặc Quản trị viên mới có quyền phân quyền thành viên');
     }
 
@@ -403,7 +410,7 @@ export class OrganizationService {
     }
 
     // Nếu người thực hiện là ADMIN: không được thay đổi quyền của OWNER, không được nâng ai lên làm OWNER
-    if (caller.role === 'ADMIN') {
+    if (!platformTenant && caller?.role === 'ADMIN') {
       if (targetMembership.role === 'OWNER') {
         throw new ForbiddenException('Quản trị viên không thể thay đổi vai trò của Chủ sở hữu');
       }
@@ -413,7 +420,7 @@ export class OrganizationService {
     }
 
     // Nếu hạ quyền của chính mình khi là OWNER duy nhất
-    if (caller.role === 'OWNER' && targetMembership.userId === callerUserId && dto.role !== 'OWNER') {
+    if (caller?.role === 'OWNER' && targetMembership.userId === callerUserId && dto.role !== 'OWNER') {
       const ownerCount = await this.prisma.userTenant.count({
         where: {
           tenantId,
@@ -452,6 +459,7 @@ export class OrganizationService {
   }
 
   async removeMember(callerUserId: string, tenantId: string, memberId: string) {
+    const platformTenant = await this.getPlatformTenant(callerUserId, tenantId);
     const caller = await this.prisma.userTenant.findFirst({
       where: {
         userId: callerUserId,
@@ -469,7 +477,7 @@ export class OrganizationService {
       },
     });
 
-    if (!caller || (caller.role !== 'OWNER' && caller.role !== 'ADMIN')) {
+    if (!platformTenant && (!caller || (caller.role !== 'OWNER' && caller.role !== 'ADMIN'))) {
       throw new ForbiddenException('Chỉ Chủ sở hữu hoặc Quản trị viên mới có quyền khai trừ thành viên');
     }
 
@@ -610,7 +618,7 @@ export class OrganizationService {
 
   async deleteOrganization(userId: string, tenantId: string) {
     const user = await this.prisma.user.findUnique({
-      where: { id: userId, deletedAt: null },
+      where: { id: userId, status: 'ACTIVE', deletedAt: null },
       select: { id: true, isSuperAdmin: true },
     });
 
@@ -745,5 +753,19 @@ export class OrganizationService {
       message: 'Xóa tổ chức thành công. Bạn vẫn có thể hoạt động bình thường trong các tổ chức khác.',
     };
   }
-}
 
+  private async getPlatformTenant(userId: string, tenantId: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, status: 'ACTIVE', deletedAt: null },
+      select: { isSuperAdmin: true },
+    });
+    if (user?.isSuperAdmin !== true) return null;
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { id: tenantId, status: 'ACTIVE', deletedAt: null },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Không tìm thấy tổ chức đang hoạt động');
+    }
+    return tenant;
+  }
+}

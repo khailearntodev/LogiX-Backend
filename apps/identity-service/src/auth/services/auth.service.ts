@@ -18,6 +18,7 @@ import { UpdateProfileDto } from '../dto/update-profile.dto.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
 import { RolesService } from '../../iam/services/roles.service.js';
 import { MailService } from '../../mail/services/mail.service.js';
+import { SUPER_ADMIN_CONTEXT_ROLE } from '../auth.constants.js';
 
 @Injectable()
 export class AuthService {
@@ -79,7 +80,7 @@ export class AuthService {
           sub: user.id,
           email: user.email,
           tenantId,
-          role: 'OWNER',
+          role: SUPER_ADMIN_CONTEXT_ROLE,
           isSuperAdmin: true,
           permissions: ['*'],
         };
@@ -122,7 +123,7 @@ export class AuthService {
                 code: selectedTenant.code,
                 name: selectedTenant.name,
                 logoUrl: selectedTenant.logoUrl,
-                role: 'OWNER',
+                role: SUPER_ADMIN_CONTEXT_ROLE,
               }
             : null,
           tenants: allTenants.map((t) => ({
@@ -130,8 +131,8 @@ export class AuthService {
             code: t.code,
             name: t.name,
             logoUrl: t.logoUrl,
-            role: 'SUPER_ADMIN',
-            isDefault: t.id === tenantId,
+            role: SUPER_ADMIN_CONTEXT_ROLE,
+            isDefault: false,
           })),
         };
       }
@@ -344,7 +345,7 @@ export class AuthService {
   }
 
   async switchTenant(userId: string, dto: SwitchTenantDto, meta?: { userAgent?: string; ipAddress?: string }) {
-    let userTenant = await this.prisma.userTenant.findFirst({
+    const userTenant = await this.prisma.userTenant.findFirst({
       where: {
         userId,
         tenantId: dto.tenantId,
@@ -365,47 +366,24 @@ export class AuthService {
       },
     });
 
-    if (!userTenant) {
-      const user = await this.prisma.user.findFirst({
+    const user = userTenant?.user ??
+      await this.prisma.user.findFirst({
         where: { id: userId, status: 'ACTIVE', deletedAt: null },
       });
-      if (user?.isSuperAdmin) {
-        const tenant = await this.prisma.tenant.findFirst({
+    const tenant = userTenant?.tenant ?? (user?.isSuperAdmin === true
+      ? await this.prisma.tenant.findFirst({
           where: { id: dto.tenantId, status: 'ACTIVE', deletedAt: null },
-        });
-        if (tenant) {
-          userTenant = {
-            id: `sa_switch_${tenant.id}`,
-            userId: user.id,
-            tenantId: tenant.id,
-            role: 'OWNER',
-            status: 'ACTIVE',
-            isDefault: false,
-            joinedAt: new Date(),
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            deletedAt: null,
-            user,
-            tenant,
-          } as any;
-        }
-      }
-    }
-
+        })
+      : null);
     if (
-      !userTenant ||
-      !userTenant.user ||
-      userTenant.user.status !== 'ACTIVE' ||
-      Boolean(userTenant.user.deletedAt) ||
-      !userTenant.tenant ||
-      userTenant.tenant.status === 'INACTIVE' ||
-      Boolean(userTenant.tenant.deletedAt)
+      !user || user.status !== 'ACTIVE' || Boolean(user.deletedAt) ||
+      !tenant || tenant.status !== 'ACTIVE' || Boolean(tenant.deletedAt)
     ) {
       throw new UnauthorizedException('Bạn không có quyền chuyển sang tổ chức này hoặc tổ chức đã bị ngưng hoạt động');
     }
 
     // Cập nhật thời điểm vừa tương tác/làm việc tại Tenant này nếu có bản ghi thực tế
-    if (!userTenant.id.startsWith('sa_switch_')) {
+    if (userTenant) {
       await this.prisma.userTenant.update({
         where: { id: userTenant.id },
         data: { updatedAt: new Date() },
@@ -413,16 +391,16 @@ export class AuthService {
     }
 
     const { permissions } = await this.rolesService.getEffectivePermissions(
-      userTenant.userId,
-      userTenant.tenantId,
+      user.id,
+      tenant.id,
     );
 
     const payload = {
-      sub: userTenant.userId,
-      email: userTenant.user.email,
-      tenantId: userTenant.tenantId,
-      role: userTenant.role,
-      isSuperAdmin: Boolean(userTenant.user.isSuperAdmin),
+      sub: user.id,
+      email: user.email,
+      tenantId: tenant.id,
+      role: userTenant?.role ?? SUPER_ADMIN_CONTEXT_ROLE,
+      isSuperAdmin: user.isSuperAdmin === true,
       permissions,
     };
 
@@ -430,8 +408,8 @@ export class AuthService {
     const refreshToken = this.tokenService.generateRefreshToken(payload);
 
     await this.tokenService.createSession({
-      userId: userTenant.userId,
-      tenantId: userTenant.tenantId,
+      userId: user.id,
+      tenantId: tenant.id,
       refreshToken,
       userAgent: meta?.userAgent,
       ipAddress: meta?.ipAddress,
@@ -441,19 +419,19 @@ export class AuthService {
       accessToken,
       refreshToken,
       user: {
-        id: userTenant.user.id,
-        email: userTenant.user.email,
-        displayName: userTenant.user.displayName,
-        phoneNumber: userTenant.user.phoneNumber,
-        avatarUrl: userTenant.user.avatarUrl,
-        isSuperAdmin: Boolean(userTenant.user.isSuperAdmin),
+        id: user.id,
+        email: user.email,
+        displayName: user.displayName,
+        phoneNumber: user.phoneNumber,
+        avatarUrl: user.avatarUrl,
+        isSuperAdmin: user.isSuperAdmin === true,
       },
       activeTenant: {
-        id: userTenant.tenant.id,
-        code: userTenant.tenant.code,
-        name: userTenant.tenant.name,
-        logoUrl: userTenant.tenant.logoUrl,
-        role: userTenant.role,
+        id: tenant.id,
+        code: tenant.code,
+        name: tenant.name,
+        logoUrl: tenant.logoUrl,
+        role: payload.role,
       },
     };
   }
@@ -637,7 +615,7 @@ export class AuthService {
     }
 
     const activeUserTenant = currentTenantId
-      ? user.userTenants.find((ut) => ut.tenantId === currentTenantId) || user.userTenants[0]
+      ? user.userTenants.find((ut) => ut.tenantId === currentTenantId)
       : user.userTenants[0];
 
     let tenantsList = user.userTenants.map((ut) => ({
@@ -649,6 +627,21 @@ export class AuthService {
       isDefault: ut.isDefault,
     }));
 
+    if (user.isSuperAdmin === true && tenantsList.length === 0) {
+      const allTenants = await this.prisma.tenant.findMany({
+        where: { status: 'ACTIVE', deletedAt: null },
+        orderBy: { name: 'asc' },
+      });
+      tenantsList = allTenants.map((tenant) => ({
+        id: tenant.id,
+        code: tenant.code,
+        name: tenant.name,
+        logoUrl: tenant.logoUrl,
+        role: SUPER_ADMIN_CONTEXT_ROLE,
+        isDefault: false,
+      }));
+    }
+
     let activeTenantData = activeUserTenant
       ? {
           id: activeUserTenant.tenant.id,
@@ -659,35 +652,24 @@ export class AuthService {
         }
       : null;
 
-    if (user.isSuperAdmin) {
-      if (tenantsList.length === 0) {
-        const allTenants = await this.prisma.tenant.findMany({
-          where: { status: 'ACTIVE', deletedAt: null },
-          orderBy: { name: 'asc' },
-        });
-        tenantsList = allTenants.map((t) => ({
-          id: t.id,
-          code: t.code,
-          name: t.name,
-          logoUrl: t.logoUrl,
-          role: 'SUPER_ADMIN',
-          isDefault: t.id === currentTenantId,
-        }));
+    if (!activeTenantData && currentTenantId) {
+      const tenant = user.isSuperAdmin === true
+        ? await this.prisma.tenant.findFirst({
+            where: { id: currentTenantId, status: 'ACTIVE', deletedAt: null },
+          })
+        : null;
+      if (!tenant) {
+        throw new UnauthorizedException('Bạn không còn truy cập vào tổ chức này');
       }
-
-      if (!activeTenantData && currentTenantId) {
-        const tenant = await this.prisma.tenant.findFirst({
-          where: { id: currentTenantId, status: 'ACTIVE', deletedAt: null },
-        });
-        if (tenant) {
-          activeTenantData = {
-            id: tenant.id,
-            code: tenant.code,
-            name: tenant.name,
-            logoUrl: tenant.logoUrl,
-            role: 'OWNER',
-          };
-        }
+      activeTenantData = {
+        id: tenant.id,
+        code: tenant.code,
+        name: tenant.name,
+        logoUrl: tenant.logoUrl,
+        role: SUPER_ADMIN_CONTEXT_ROLE,
+      };
+      if (!tenantsList.some((item) => item.id === tenant.id)) {
+        tenantsList.push({ ...activeTenantData, isDefault: false });
       }
     }
 

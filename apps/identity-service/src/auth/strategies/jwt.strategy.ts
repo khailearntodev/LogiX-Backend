@@ -5,6 +5,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PrismaService } from '../../database/prisma.service.js';
 import { JwtPayload, AuthenticatedUser } from '../interfaces/jwt-payload.interface.js';
 import { RolesService } from '../../iam/services/roles.service.js';
+import { SUPER_ADMIN_CONTEXT_ROLE } from '../auth.constants.js';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -45,7 +46,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       include: {
         userTenants: {
           where: {
-            tenantId: payload.tenantId,
+            tenantId: payload.tenantId || { in: [] },
             status: 'ACTIVE',
             deletedAt: null,
             tenant: { status: 'ACTIVE', deletedAt: null },
@@ -61,23 +62,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const userTenant = user.userTenants[0];
     if (!userTenant || !userTenant.tenant) {
-      if (user.isSuperAdmin) {
+      if (user.isSuperAdmin === true) {
         let tenant = null;
         if (payload.tenantId) {
           tenant = await this.prisma.tenant.findFirst({
             where: { id: payload.tenantId, status: 'ACTIVE', deletedAt: null },
           });
+          if (!tenant) {
+            throw new UnauthorizedException('Bạn không còn truy cập vào tổ chức này');
+          }
         }
         return {
           id: user.id,
           email: user.email,
-          tenantId: tenant?.id || payload.tenantId || '',
+          tenantId: tenant?.id || '',
           displayName: user.displayName,
           phoneNumber: user.phoneNumber,
           avatarUrl: user.avatarUrl,
           tenantName: tenant?.name || 'Platform Admin',
           tenantLogoUrl: tenant?.logoUrl || null,
-          role: 'OWNER',
+          role: SUPER_ADMIN_CONTEXT_ROLE,
           status: user.status,
           isSuperAdmin: true,
           permissions: ['*'],

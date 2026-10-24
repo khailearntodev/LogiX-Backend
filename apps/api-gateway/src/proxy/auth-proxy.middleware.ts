@@ -1,22 +1,27 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Request, Response, NextFunction } from 'express';
-import { createProxyMiddleware, fixRequestBody, Options } from 'http-proxy-middleware';
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
 
 @Injectable()
 export class AuthProxyMiddleware implements NestMiddleware {
-  private readonly proxy: ReturnType<typeof createProxyMiddleware>;
+  private readonly logger = new Logger(AuthProxyMiddleware.name);
+  private readonly proxy: ReturnType<
+    typeof createProxyMiddleware<Request, Response>
+  >;
 
-  constructor() {
-    const target = process.env.IDENTITY_SERVICE_URL || 'http://localhost:3001';
-
-    const options: Options = {
-      target,
+  constructor(@Inject(ConfigService) config: ConfigService) {
+    this.proxy = createProxyMiddleware<Request, Response>({
+      target: config.getOrThrow<string>('IDENTITY_SERVICE_URL'),
       changeOrigin: true,
       secure: false,
       ws: true,
-      pathFilter: (path: string) => path.startsWith('/api/v1/auth') || path.startsWith('/api/v1/iam'),
+      pathFilter: (path: string) =>
+        ['/api/v1/auth', '/api/v1/iam', '/api/v1/admin'].some(
+          (prefix) => path === prefix || path.startsWith(`${prefix}/`),
+        ),
       on: {
-        proxyReq: (proxyReq, req: any) => {
+        proxyReq: (proxyReq, req) => {
           // Preserve client IP and headers
           if (req.ip) {
             proxyReq.setHeader('x-forwarded-for', req.ip);
@@ -24,20 +29,19 @@ export class AuthProxyMiddleware implements NestMiddleware {
           // Re-stream request body parsed by Express body-parser
           fixRequestBody(proxyReq, req);
         },
-        error: (err, _req, res: any) => {
-          console.error('[API Gateway Auth Proxy Error]:', err.message);
-          if (!res.headersSent) {
+        error: (err, _req, res) => {
+          this.logger.error({ message: err.message }, 'Identity proxy failed');
+          if ('status' in res && !res.headersSent) {
             res.status(502).json({
               statusCode: 502,
-              message: 'Dịch vụ xác thực (Identity Service) hiện không phản hồi. Vui lòng thử lại sau.',
+              message:
+                'Dịch vụ xác thực (Identity Service) hiện không phản hồi. Vui lòng thử lại sau.',
               error: 'Bad Gateway',
             });
           }
         },
       },
-    };
-
-    this.proxy = createProxyMiddleware(options);
+    });
   }
 
   use(req: Request, res: Response, next: NextFunction) {

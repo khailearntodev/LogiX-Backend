@@ -51,7 +51,7 @@ export class AppModule implements NestModule {
       { path: 'api/v1/shipments', method: RequestMethod.ALL },
       { path: 'api/v1/shipments/*', method: RequestMethod.ALL },
     );
-    // Chuyển hướng các request /api/v1/auth và /api/v1/iam sang identity-service
+    // Chuyển hướng các request Identity sang identity-service
     consumer
       .apply(AuthProxyMiddleware)
       .forRoutes(
@@ -59,6 +59,8 @@ export class AppModule implements NestModule {
         { path: 'api/v1/auth/*', method: RequestMethod.ALL },
         { path: 'api/v1/iam', method: RequestMethod.ALL },
         { path: 'api/v1/iam/*', method: RequestMethod.ALL },
+        { path: 'api/v1/admin', method: RequestMethod.ALL },
+        { path: 'api/v1/admin/*', method: RequestMethod.ALL },
       );
 
     // Chuyển hướng các request /api/v1/inventory sang inventory-service
