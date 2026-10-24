@@ -56,7 +56,7 @@ Public endpoints through Gateway (`/api/v1` prefix):
 
 | Method/path | Permission | Body |
 | --- | --- | --- |
-| GET /shipments | fulfillment:shipment:read | Query: page/pageSize, warehouseId, orderId, status, createdFrom/createdTo |
+| GET /shipments | fulfillment:shipment:read | Query: page/pageSize, warehouseId, orderId, status **or** statuses, createdFrom/createdTo |
 | GET /shipments/:id | fulfillment:shipment:read | None |
 | POST /shipments/:id/start-picking | fulfillment:shipment:update | version |
 | POST /shipments/:id/mark-ready | fulfillment:shipment:update | version |
@@ -64,6 +64,148 @@ Public endpoints through Gateway (`/api/v1` prefix):
 | POST /shipments/:id/dispatch | fulfillment:shipment:dispatch | version, orderVersion, requestId (UUID), confirmed: true |
 | POST /shipments/:id/mark-delivered | fulfillment:shipment:complete | version, confirmed: true |
 | POST /shipments/:id/mark-failed | fulfillment:shipment:complete | version, confirmed: true, nonblank reason |
+
+### Shipment list filters
+
+`GET /api/v1/shipments` returns `{ items, total, page, pageSize }` unchanged.
+All filters are applied on the server before pagination, including tenant and
+soft-delete scope. Items and total use the same predicate. Sorting remains
+`createdAt DESC, id DESC`.
+
+| Query | Contract |
+| --- | --- |
+| `status` | Existing single shared shipment status; omission preserves all-status behavior |
+| `statuses` | Additive scalar CSV, e.g. `PENDING_PICK,PICKING` for preparation; a single token is also valid |
+| `page` / `pageSize` | Positive integers; default 1 / 20, pageSize max 100, page max 21474836 |
+| `warehouseId` / `orderId` | Optional UUID filters, combined with status/date filters |
+| `createdFrom` / `createdTo` | Optional strict ISO 8601 dates/timestamps, inclusive; reversed range returns 400 |
+
+`status` and `statuses` are mutually exclusive. Empty CSV, empty tokens,
+unknown/case-mismatched statuses, duplicate tokens, surrounding token whitespace,
+or repeated query keys producing an array return 400; no tokens are silently
+trimmed, removed or deduplicated. For the ready pool, use
+`status=READY_TO_SHIP`; canceled/dispatched rows are excluded by that predicate.
+Invalid query input uses the existing HTTP 400 contract, not a new business
+error reason.
+
+Examples (relative to the configured Gateway):
+
+```text
+/api/v1/shipments?statuses=PENDING_PICK,PICKING&page=1&pageSize=20
+/api/v1/shipments?status=READY_TO_SHIP
+/api/v1/shipments?page=2
+```
+
+Database/Gateway integration proof uses the existing Vitest e2e runner:
+
+```text
+pnpm --filter fulfillment-service test:e2e test/pick-pack.query.e2e-spec.ts
+```
+
+Explicitly set `PICK_PACK_QUERY_E2E=1` and `PICK_PACK_GATEWAY_URL` to the approved
+QA Gateway URL. The suite reads Fulfillment `DATABASE_URL`/`JWT_SECRET` from the
+service-local environment, requires a deployed current API, inserts only tagged
+Shipment fixtures for two fresh UUID tenant contexts, and removes only its
+recorded UUIDs with a post-cleanup count assertion. It signs narrow-permission
+test JWTs using the existing local signing configuration; do not run on
+production or without fixture authorization. No Identity users, reservations,
+history or outbox events are created. This proves PostgreSQL list semantics,
+Gateway routing and real JWT/permission guards, **not** Identity login or Order
+confirmation/event delivery. With no opt-in the suite is skipped, not passed.
+Keep this permanent regression suite; it is not a disposable test script.
+
+Alternatively, run this same query suite with `PICK_PACK_STACK_E2E=1` and
+the isolated-stack prerequisites/variables below (build all four services
+first). In that mode no `PICK_PACK_GATEWAY_URL` is needed: the suite explicitly
+creates and cleans its own Gateway/services/PostgreSQL/Kafka resources rather
+than falling back to shared instances. The query matrix includes the Phase 4
+frontend's all/preparation/picking/ready query shapes, page size 20, and combined
+warehouse/order/local-day filters. It proves server filtering, not browser tab
+or router interaction.
+
+No schema change is required for this query extension. If a later change needs
+one, create reviewed SQL with `prisma migrate dev` (or `--create-only`), never
+`prisma db push`; never reset a business database.
+
+### Pick/pack transaction and cancellation regression
+
+Pick/ready keep their existing version-only bodies; neither requires dispatch
+preview, requestId, or a new `confirmed` field. Invalid versions return 400;
+stale versions return 409 / `SHIPMENT_VERSION_CONFLICT`. Invalid transitions
+and pending dispatch return their existing reasons. A committed transition
+increments version and writes one history/outbox atomically; ready also sets
+`readyAt`. Picking/packing never changes inventory quantities.
+
+The frontend Pick List uses `items` and `warehouseSnapshot` from the existing
+detail response, including decimal-string quantities and per-line snapshots;
+it does not read current Inventory availability or save line-level progress.
+After a command it reads detail again before publishing success. A stale
+version, uncertain response or failed follow-up read requires an explicit
+successful reload before further pick/pack commands; it never retries those
+POSTs automatically. Dispatch retains its existing same-request recovery
+contract. The lifecycle suite includes a multi-line pick list with a
+100-character SKU, fractional quantity, authoritative reads after both commands
+and movement between preparation/ready queries. These are API/data proofs,
+not browser rendering or dialog tests.
+
+The permanent suites below exercise **real Gateway, Order, Inventory,
+Fulfillment, PostgreSQL and Kafka**, independently of AI or Transport:
+
+```text
+pnpm --filter fulfillment-service --filter order-service --filter inventory-service --filter api-gateway build
+pnpm --filter fulfillment-service test:e2e test/pick-pack.query.e2e-spec.ts test/pick-pack.lifecycle.e2e-spec.ts test/pick-pack.cancellation.e2e-spec.ts --no-file-parallelism
+```
+
+Before the second command, explicitly set:
+
+| Variable | Requirement |
+| --- | --- |
+| `PICK_PACK_STACK_E2E` | `1`, only after authorizing temporary infrastructure and fixture cleanup |
+| `PICK_PACK_TEST_HOST` | `127.0.0.1`; client URLs use allocated ports on loopback, Docker publishes the test DB on loopback |
+| `PICK_PACK_POSTGRES_IMAGE` | An existing local PostgreSQL image approved for QA; the suite does not pull images |
+
+Docker daemon and the service-local configured Kafka broker must be available.
+The helper reads required settings from local service environments, overrides
+all three business service database URLs to a **new disposable PostgreSQL
+container**, and allocates fresh `qa.pickpack.<UUID>` Kafka topics/groups.
+It applies only committed migrations with `db:migrate:deploy`, using each
+service's schema search-path (`orders`, `inventory`, `fulfillment`). It does
+not run `db push`, reset a database, or generate migrations.
+
+Each suite starts separate compiled service/Gateway processes. Order DRAFT
+and stock fixtures are seeded directly into their owning test schemas; confirm,
+pick, ready and cancel then run through real HTTP. Narrow-permission JWTs use
+random per-suite secrets, not the shared deployment signing key. This proves
+service JWT/RBAC boundaries, **not Identity login, Master Data validation at
+order creation, or full procurement/receiving**. Kafka replay cases include
+synthetic source envelopes and corresponding isolated reservation fixtures.
+Compiled Order/Inventory database clients are used only for test setup/read-back;
+no production service queries another service's database.
+Nest services retain their native listen configuration; using loopback client
+URLs is not a claim that their HTTP listeners bind only to loopback.
+
+Rollback injection uses temporary PostgreSQL triggers only in that disposable
+database. Release-unavailable recovery stops/restarts only that suite's
+Inventory process; the inconsistent-reserved case mutates and restores only
+its deliberate test fixture. Never reproduce these faults on shared data.
+The helper uses IPC to request native Nest shutdown hooks (including Kafka
+LeaveGroup) before deleting its exact consumer groups/topics and container.
+Cleanup failures fail the suite. Container/topics names are printed as ownership
+evidence; no secrets or connection strings should be logged.
+
+Assertions cover concurrent same-version requests, history/outbox rollback,
+immutable snapshots/items, exact decimal quantities, unchanged stock while
+pick/ready, ordered lifecycle projection, duplicate/stale/cancel-before-confirm
+events, one-time release at each pre-dispatch stage, persisted cancellation
+intent/recovery, cancellation races and irrevocable dispatch grants.
+Downstream regression also exercises dispatch preview, unchanged request replay,
+exactly one Inventory ISSUE, removal from the ready query, delivered/failed
+confirmation and Order completion projection. Completion does not issue stock
+again. The final isolated run passed 46 query, 16 lifecycle and 11 cancellation
+cases; these counts do not include unit tests.
+They do not simulate arbitrary future event reordering or production broker
+failure/load, and they are not browser tests. Without explicit opt-in the
+suites are skipped, not passed. Keep the helper and suites as regression assets.
 
 The four permissions are seeded as catalogue entries only, without assigning
 custom roles. Existing OWNER/SuperAdmin authorization policy is unchanged.
@@ -84,6 +226,21 @@ Order API with the frontend so cancellation remains blocked during projection
 lag. Local ignored env files were synchronized in 5C; restart affected services
 to load the new values. No browser acceptance or phase-5D load acceptance is
 claimed (browser checks were explicitly excluded by the user for this batch).
+
+### Pick-and-pack release and recovery
+
+Deploy the backward-compatible Fulfillment query API before the frontend that
+uses `statuses`. On rollback, roll back that frontend first, then the query API.
+This feature adds no schema migration, so there is no database rollback step.
+Any future schema change must use reviewed Prisma Migrate SQL, never `db push`.
+
+Do not undo committed business actions by editing versions, history, events or
+stock balances. Read authoritative detail after an uncertain pick/pack response
+and continue only with the current permitted state/version. Retry cancellation
+through Order's persisted recovery flow. For uncertain dispatch, retain the same
+requestId and payload; do not replace a pending intent. A ready shipment is not
+yet issued stock, and neither packing nor shipment completion creates a trip or
+requests route optimization.
 
 ## Description
 

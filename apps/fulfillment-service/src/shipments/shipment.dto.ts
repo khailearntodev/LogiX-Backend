@@ -1,5 +1,8 @@
 import { Type, Transform } from 'class-transformer';
+import { BadRequestException } from '@nestjs/common';
 import {
+  ArrayNotEmpty,
+  ArrayUnique,
   Equals,
   IsIn,
   IsInt,
@@ -12,7 +15,7 @@ import {
   Min,
   MinLength,
 } from 'class-validator';
-import { SHIPMENT_STATUS } from '@logix/messaging';
+import { SHIPMENT_STATUS, type ShipmentStatus } from '@logix/messaging';
 import {
   MAX_PAGE_SIZE,
   MAX_PAGE_NUMBER,
@@ -55,6 +58,22 @@ export class ShipmentQueryDto {
   @IsOptional() @IsUUID() warehouseId?: string;
   @IsOptional() @IsUUID() orderId?: string;
   @IsOptional() @IsIn(Object.values(SHIPMENT_STATUS)) status?: string;
+  @IsOptional()
+  @Transform(
+    ({ value, obj }: { value: unknown; obj: Record<string, unknown> }) => {
+      if (value === undefined) return undefined;
+      if (typeof value !== 'string' || obj.status !== undefined)
+        throw new BadRequestException(
+          'statuses phải là chuỗi CSV và không được dùng cùng status',
+        );
+      return value.split(',');
+    },
+    { toClassOnly: true },
+  )
+  @ArrayNotEmpty()
+  @ArrayUnique()
+  @IsIn(Object.values(SHIPMENT_STATUS), { each: true })
+  statuses?: ShipmentStatus[];
   @IsOptional() @IsISO8601({ strict: true }) createdFrom?: string;
   @IsOptional() @IsISO8601({ strict: true }) createdTo?: string;
 }

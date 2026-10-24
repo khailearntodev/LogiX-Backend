@@ -22,6 +22,7 @@ export class ShipmentQueryService {
       ...(query.warehouseId && { warehouseId: query.warehouseId }),
       ...(query.orderId && { orderId: query.orderId }),
       ...(query.status && { status: query.status }),
+      ...(query.statuses && { status: { in: query.statuses } }),
       ...((query.createdFrom || query.createdTo) && {
         createdAt: {
           ...(query.createdFrom && { gte: new Date(query.createdFrom) }),
