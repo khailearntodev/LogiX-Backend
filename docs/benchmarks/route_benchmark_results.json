@@ -1,0 +1,38 @@
+[
+  {
+    "stops": 5,
+    "avg_input_order_km": 75.57,
+    "avg_nn_km": 68.45,
+    "avg_ortools_km": 62.58,
+    "avg_savings_vs_input_pct": 17.3,
+    "avg_savings_vs_nn_pct": 8.6,
+    "avg_latency_ms": 5006.93
+  },
+  {
+    "stops": 10,
+    "avg_input_order_km": 148.43,
+    "avg_nn_km": 108.77,
+    "avg_ortools_km": 93.69,
+    "avg_savings_vs_input_pct": 36.69,
+    "avg_savings_vs_nn_pct": 13.73,
+    "avg_latency_ms": 5002.79
+  },
+  {
+    "stops": 15,
+    "avg_input_order_km": 216.13,
+    "avg_nn_km": 140.56,
+    "avg_ortools_km": 122.18,
+    "avg_savings_vs_input_pct": 43.26,
+    "avg_savings_vs_nn_pct": 12.97,
+    "avg_latency_ms": 5001.2
+  },
+  {
+    "stops": 20,
+    "avg_input_order_km": 282.3,
+    "avg_nn_km": 169.6,
+    "avg_ortools_km": 130.27,
+    "avg_savings_vs_input_pct": 53.6,
+    "avg_savings_vs_nn_pct": 23.19,
+    "avg_latency_ms": 5001.12
+  }
+]

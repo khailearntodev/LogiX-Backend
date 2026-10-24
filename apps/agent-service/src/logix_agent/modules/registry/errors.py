@@ -23,6 +23,10 @@ class ToolPermissionError(ToolRegistryError):
     pass
 
 
+class ApprovalRequiredError(ToolRegistryError):
+    """A sensitive tool was invoked without a user approval."""
+
+
 class ToolError(ToolRegistryError):
     """Normalized tool failure (e.g. downstream timeout/4xx/5xx) with a stable code."""
 

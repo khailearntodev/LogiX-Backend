@@ -131,9 +131,7 @@ class RetryingModelGateway:
         try:
             return await self._attempt_profile(fallback, fallback_request, tools)
         except ModelGatewayError as fallback_error:
-            logger.error(
-                "Fallback profile '%s' also failed: %s", fallback_name, fallback_error
-            )
+            logger.error("Fallback profile '%s' also failed: %s", fallback_name, fallback_error)
             raise FallbackExhaustedError(chain, cause=fallback_error) from fallback_error
 
     async def _attempt_profile(

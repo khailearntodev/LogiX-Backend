@@ -1,17 +1,14 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
     DateTime,
-    ForeignKeyConstraint,
     Index,
     Integer,
-    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -20,10 +17,9 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.mutable import MutableDict
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
-from logix_agent.db.base import Base, SCHEMA, TenantMutableMixin
-
+from logix_agent.db.base import SCHEMA, Base, TenantMutableMixin
 
 EMPTY_JSON = text("'{}'::jsonb")
 
@@ -61,9 +57,7 @@ class OutboxEvent(TenantMutableMixin, Base):
         MutableDict.as_mutable(JSONB), nullable=False
     )
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    published_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     attempt_count: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default=text("0")
     )
@@ -71,6 +65,7 @@ class OutboxEvent(TenantMutableMixin, Base):
         DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+
 
 class InboxEvent(TenantMutableMixin, Base):
     __tablename__ = "inbox_events"
@@ -96,4 +91,3 @@ class InboxEvent(TenantMutableMixin, Base):
     )
     outcome: Mapped[str] = mapped_column(String(30), nullable=False)
     error_code: Mapped[str | None] = mapped_column(String(100), nullable=True)
-

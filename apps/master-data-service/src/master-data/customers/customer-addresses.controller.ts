@@ -33,6 +33,15 @@ export class CustomerAddressesController {
     return this.addresses.list(user.tenantId, customerId);
   }
 
+  @Get(':addressId')
+  async getById(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('customerId', ParseUUIDPipe) customerId: string,
+    @Param('addressId', ParseUUIDPipe) addressId: string,
+  ) {
+    return this.addresses.getById(user.tenantId, customerId, addressId);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(

@@ -3,7 +3,8 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from logix_agent.config import AgentSettings, settings as app_settings
+from logix_agent.config import AgentSettings
+from logix_agent.config import settings as app_settings
 from logix_agent.main import app, get_model_gateway
 from logix_agent.modules.ai.adapters.fake_gateway import FakeModelGateway
 from logix_agent.modules.ai.adapters.gemini_gateway import GeminiModelGateway

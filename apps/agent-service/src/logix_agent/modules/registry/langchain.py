@@ -29,10 +29,5 @@ def to_langchain_tool(
     )
 
 
-def tools_for_actor(
-    registry: ToolRegistry, context: ToolContext
-) -> list[StructuredTool]:
-    return [
-        to_langchain_tool(spec, registry, context)
-        for spec in registry.list_for(context.actor)
-    ]
+def tools_for_actor(registry: ToolRegistry, context: ToolContext) -> list[StructuredTool]:
+    return [to_langchain_tool(spec, registry, context) for spec in registry.list_for(context.actor)]

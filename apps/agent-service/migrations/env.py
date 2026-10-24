@@ -8,9 +8,8 @@ from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from logix_agent.db.base import Base
 from logix_agent.db import model_registry  # noqa: F401
-
+from logix_agent.db.base import Base
 
 config = context.config
 

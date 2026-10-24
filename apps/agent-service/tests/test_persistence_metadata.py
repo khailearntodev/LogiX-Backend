@@ -1,9 +1,8 @@
 from sqlalchemy import ForeignKeyConstraint, UniqueConstraint
 from sqlalchemy.orm import configure_mappers
 
-from logix_agent.db.base import Base
 from logix_agent.db import model_registry  # noqa: F401
-
+from logix_agent.db.base import Base
 
 BASE_COLUMNS = {"id", "tenant_id", "created_at", "updated_at", "version", "deleted_at"}
 
@@ -51,8 +50,7 @@ def test_model_call_fallback_cannot_cross_tenant_boundary() -> None:
     table = Base.metadata.tables["agent.agent_model_calls"]
     assert any(
         isinstance(constraint, ForeignKeyConstraint)
-        and {column.name for column in constraint.columns}
-        == {"tenant_id", "fallback_from_call_id"}
+        and {column.name for column in constraint.columns} == {"tenant_id", "fallback_from_call_id"}
         for constraint in table.constraints
     )
 

@@ -7,8 +7,11 @@ from pydantic import BaseModel, ValidationError
 
 from logix_agent.modules.auth import Actor
 from logix_agent.modules.registry import (
+    ApprovalRequiredError,
+    ApprovedAction,
     DuplicateToolError,
     InvalidToolSpecError,
+    PreviewResult,
     RiskLevel,
     ToolContext,
     ToolError,
@@ -53,9 +56,7 @@ def _spec(
 
 
 def _actor(*permissions: str, role: str | None = None) -> Actor:
-    return Actor(
-        user_id="u1", tenant_id="t1", role=role, permissions=frozenset(permissions)
-    )
+    return Actor(user_id="u1", tenant_id="t1", role=role, permissions=frozenset(permissions))
 
 
 def _ctx(actor: Actor) -> ToolContext:
@@ -85,9 +86,7 @@ def test_list_for_filters_by_permission() -> None:
     registry.register(_spec("get_stock", "inventory:stock:read"))
     registry.register(_spec("adjust_stock", "inventory:stock:adjust", RiskLevel.WRITE))
 
-    assert [s.name for s in registry.list_for(_actor("inventory:stock:read"))] == [
-        "get_stock"
-    ]
+    assert [s.name for s in registry.list_for(_actor("inventory:stock:read"))] == ["get_stock"]
     assert registry.list_for(_actor()) == []
 
 
@@ -101,9 +100,7 @@ def test_wildcard_and_owner_see_everything() -> None:
 async def test_invoke_happy_path() -> None:
     registry = ToolRegistry()
     registry.register(_spec())
-    result = await registry.invoke(
-        "get_stock", _ctx(_actor("inventory:stock:read")), {"sku": "A1"}
-    )
+    result = await registry.invoke("get_stock", _ctx(_actor("inventory:stock:read")), {"sku": "A1"})
     assert result == StockOut(sku="A1", quantity=7)
 
 
@@ -195,3 +192,64 @@ async def test_bridge_returns_permission_error_as_output() -> None:
     # Bypass list_for to prove invoke still enforces permission.
     tool = to_langchain_tool(registry.get("get_stock"), registry, _ctx(_actor()))
     assert "Permission denied" in await tool.ainvoke({"sku": "A1"})
+
+
+async def test_sensitive_tool_requires_approval() -> None:
+    registry = ToolRegistry()
+    registry.register(_spec("adjust_stock", "inventory:stock:adjust", RiskLevel.WRITE))
+    ctx = _ctx(_actor("inventory:stock:adjust"))
+
+    with pytest.raises(ApprovalRequiredError):
+        await registry.invoke("adjust_stock", ctx, {"sku": "A1"})
+
+    ctx_with_approval = ToolContext(
+        actor=ctx.actor,
+        correlation_id=ctx.correlation_id,
+        approval=ApprovedAction(
+            approval_id="appr-1",
+            target_type="stock",
+            target_id="A1",
+            target_version=1,
+        ),
+    )
+    result = await registry.invoke("adjust_stock", ctx_with_approval, {"sku": "A1"})
+    assert result == StockOut(sku="A1", quantity=7)
+
+
+async def test_preview_on_sensitive_tool() -> None:
+    async def preview_handler(ctx: ToolContext, args: BaseModel) -> PreviewResult:
+        assert isinstance(args, StockIn)
+        return PreviewResult(
+            target_type="stock",
+            target_id=args.sku,
+            target_version=1,
+            summary={"sku": args.sku, "delta": 5},
+        )
+
+    spec = ToolSpec(
+        name="adjust_stock",
+        description="d",
+        input_model=StockIn,
+        output_model=StockOut,
+        handler=_stock_handler,
+        required_permission="inventory:stock:adjust",
+        risk_level=RiskLevel.WRITE,
+        preview=preview_handler,
+    )
+    registry = ToolRegistry()
+    registry.register(spec)
+
+    ctx = _ctx(_actor("inventory:stock:adjust"))
+    preview = await registry.preview("adjust_stock", ctx, {"sku": "A1"})
+    assert preview.target_type == "stock"
+    assert preview.target_id == "A1"
+    assert preview.target_version == 1
+    assert preview.summary == {"sku": "A1", "delta": 5}
+
+
+async def test_preview_on_tool_without_preview_raises_invalid_spec() -> None:
+    registry = ToolRegistry()
+    registry.register(_spec())
+    ctx = _ctx(_actor("inventory:stock:read"))
+    with pytest.raises(InvalidToolSpecError):
+        await registry.preview("get_stock", ctx, {"sku": "A1"})

@@ -6,12 +6,13 @@ from pydantic import BaseModel
 
 from logix_agent.modules.auth import Actor
 from logix_agent.modules.registry.errors import (
+    ApprovalRequiredError,
     DuplicateToolError,
     InvalidToolSpecError,
     ToolPermissionError,
     UnknownToolError,
 )
-from logix_agent.modules.registry.spec import ToolContext, ToolSpec
+from logix_agent.modules.registry.spec import PreviewResult, ToolContext, ToolSpec
 
 WILDCARD = "*"
 # LangChain reserves these argument names for injected values.
@@ -49,9 +50,7 @@ class ToolRegistry:
 
     def list_for(self, actor: Actor) -> list[ToolSpec]:
         return [
-            spec
-            for spec in self._tools.values()
-            if has_permission(actor, spec.required_permission)
+            spec for spec in self._tools.values() if has_permission(actor, spec.required_permission)
         ]
 
     async def invoke(
@@ -59,11 +58,27 @@ class ToolRegistry:
     ) -> BaseModel:
         """Permission check, input validation, handler call, output validation.
 
-        Does not handle confirmation or audit; callers wrap this.
+        A sensitive tool additionally needs ``context.approval``; the registry
+        refuses to run it without one. Creating and consuming approvals is the
+        confirmation flow's job, as is audit.
         """
         spec = self.get(name)
         if not has_permission(context.actor, spec.required_permission):
             raise ToolPermissionError(f"Permission denied for tool: {name}")
+        if spec.is_sensitive and context.approval is None:
+            raise ApprovalRequiredError(f"Confirmation required for tool: {name}")
         parsed = spec.input_model.model_validate(arguments)
         result = await spec.handler(context, parsed)
         return spec.output_model.model_validate(result.model_dump())
+
+    async def preview(
+        self, name: str, context: ToolContext, arguments: dict[str, object]
+    ) -> PreviewResult:
+        """Authoritative preview of a sensitive tool call; never changes data."""
+        spec = self.get(name)
+        if not has_permission(context.actor, spec.required_permission):
+            raise ToolPermissionError(f"Permission denied for tool: {name}")
+        if not spec.is_sensitive or spec.preview is None:
+            raise InvalidToolSpecError(f"Tool has no preview: {name}")
+        parsed = spec.input_model.model_validate(arguments)
+        return await spec.preview(context, parsed)

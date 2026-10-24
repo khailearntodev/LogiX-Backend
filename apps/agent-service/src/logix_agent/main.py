@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from logix_agent.config import settings
+from logix_agent.db import model_registry  # noqa: F401
 from logix_agent.db.session import create_engine, create_session_factory
 from logix_agent.modules.agent.router import build_official_runtime
 from logix_agent.modules.agent.router import router as official_agent_router
@@ -18,6 +19,11 @@ from logix_agent.modules.agui.router import build_agui_runtime
 from logix_agent.modules.agui.router import router as agui_router
 from logix_agent.modules.ai.factory import create_model_gateway
 from logix_agent.modules.ai.ports import ModelGateway
+from logix_agent.modules.confirmations.service import (
+    ConfirmationService,
+    InMemoryConfirmationStore,
+)
+from logix_agent.modules.planner.checkpointer import create_checkpointer
 from logix_agent.modules.tools.catalog import build_tool_registry
 from logix_agent.modules.tools.http_client import create_service_client
 
@@ -66,6 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         settings.inventory_service_url,
         settings.master_data_service_url,
     )
+    session_factory = None
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:
@@ -76,10 +83,17 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     service_client = create_service_client(settings)
     app.state.tool_registry = build_tool_registry(service_client)
 
+    checkpointer = create_checkpointer(settings)
+    confirmation_store = InMemoryConfirmationStore()
+    app.state.confirmation_service = ConfirmationService(confirmation_store)
+
     try:
         app_model_gateway = create_model_gateway(settings)
         app.state.agui_runtime = build_agui_runtime(
             app_model_gateway,
+            registry=app.state.tool_registry,
+            checkpointer=checkpointer,
+            confirmation_service=app.state.confirmation_service,
             prompt_policy_version=settings.prompt_policy_version,
         )
     except Exception as exc:
@@ -96,6 +110,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.agui_runtime = None
     app.state.official_runtime = None
     app.state.tool_registry = None
+    app.state.confirmation_service = None
     await service_client.aclose()
     if app_engine is not None:
         await app_engine.dispose()
@@ -115,9 +130,7 @@ app.include_router(official_agent_router)
 
 
 @app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(
-    _: Request, exc: StarletteHTTPException
-) -> JSONResponse:
+async def http_exception_handler(_: Request, exc: StarletteHTTPException) -> JSONResponse:
     """Same error body shape as the NestJS services."""
     status_phrase = {
         400: "Bad Request",
@@ -163,7 +176,7 @@ async def readiness() -> dict[str, str]:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Database is not ready: {exc}",
-        )
+        ) from exc
 
 
 @app.get("/health/ai", tags=["Health"])

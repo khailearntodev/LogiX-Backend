@@ -18,9 +18,12 @@ Design reference: ``ai-services-technical-design.md`` §8.5, §20.
 from __future__ import annotations
 
 import asyncio
+import base64
+import json
 import time
 import uuid
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from google import genai
 from google.genai import errors as genai_errors
@@ -44,6 +47,30 @@ from logix_agent.modules.ai.errors import (
 from logix_agent.modules.ai.ports import ModelProfileRegistry
 
 GATEWAY_BACKEND = "gemini_sdk"
+
+
+def _clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
+    """Gemini FunctionDeclaration schema validator forbids $defs, $ref and title."""
+    defs = schema.get("$defs", {})
+
+    def _resolve(node: Any) -> Any:
+        if isinstance(node, dict):
+            if "$ref" in node and isinstance(node["$ref"], str):
+                ref_name = node["$ref"].split("/")[-1]
+                if ref_name in defs:
+                    resolved = _resolve(defs[ref_name].copy())
+                    extra = {k: _resolve(v) for k, v in node.items() if k != "$ref"}
+                    return {**resolved, **extra}
+            return {k: _resolve(v) for k, v in node.items() if k not in ("$defs", "title")}
+        if isinstance(node, list):
+            return [_resolve(item) for item in node]
+        return node
+
+    cleaned = _resolve(schema)
+    if isinstance(cleaned, dict):
+        cleaned.pop("$defs", None)
+        cleaned.pop("title", None)
+    return cleaned
 
 
 class GeminiModelGateway:
@@ -111,8 +138,7 @@ class GeminiModelGateway:
         # Clean model name (strip any 'google/' or 'gemini/' prefix)
         model_name = profile.model
         for prefix in ("google/", "gemini/"):
-            if model_name.startswith(prefix):
-                model_name = model_name[len(prefix) :]
+            model_name = model_name.removeprefix(prefix)
 
         timeout_sec = request.timeout_override or profile.timeout_seconds
 
@@ -143,7 +169,7 @@ class GeminiModelGateway:
                 config=config,
             )
             raw_response = await asyncio.wait_for(call_coro, timeout=timeout_sec)
-        except asyncio.TimeoutError as exc:
+        except TimeoutError as exc:
             raise ModelTimeoutError(
                 f"Gemini call timed out after {timeout_sec}s for model '{model_name}'"
             ) from exc
@@ -181,29 +207,59 @@ class GeminiModelGateway:
                 for tc in msg.get("tool_calls") or []:
                     fn_name = tc.get("function", {}).get("name") or tc.get("name")
                     fn_args = tc.get("function", {}).get("arguments") or tc.get("arguments") or {}
-                    parts.append(types.Part.from_function_call(name=fn_name, args=fn_args))
+                    sig_b64 = tc.get("thought_signature")
+                    sig_bytes: bytes | None = None
+                    if sig_b64:
+                        try:
+                            sig_bytes = base64.b64decode(sig_b64)
+                        except Exception:
+                            sig_bytes = None
+                    if sig_bytes:
+                        parts.append(
+                            types.Part(
+                                function_call=types.FunctionCall(name=fn_name, args=fn_args),
+                                thought_signature=sig_bytes,
+                            )
+                        )
+                    else:
+                        parts.append(types.Part.from_function_call(name=fn_name, args=fn_args))
                 if parts:
                     contents.append(types.Content(role="model", parts=parts))
             elif role in ("tool", "function"):
                 # Tool response message
                 fn_name = msg.get("name") or "tool_result"
                 tool_content = msg.get("content")
-                response_dict = (
-                    {"result": tool_content}
-                    if not isinstance(tool_content, dict)
-                    else tool_content
+                if isinstance(tool_content, str):
+                    try:
+                        response_dict = json.loads(tool_content)
+                    except Exception:
+                        response_dict = {"result": tool_content}
+                elif isinstance(tool_content, dict):
+                    response_dict = tool_content
+                else:
+                    response_dict = {"result": tool_content}
+
+                if not isinstance(response_dict, dict):
+                    response_dict = {"result": response_dict}
+
+                resp_part = types.Part.from_function_response(
+                    name=fn_name,
+                    response=response_dict,
                 )
-                contents.append(
-                    types.Content(
-                        role="user",
-                        parts=[
-                            types.Part.from_function_response(
-                                name=fn_name,
-                                response=response_dict,
-                            )
-                        ],
+                if (
+                    contents
+                    and contents[-1].role == "user"
+                    and contents[-1].parts
+                    and getattr(contents[-1].parts[0], "function_response", None) is not None
+                ):
+                    contents[-1].parts.append(resp_part)
+                else:
+                    contents.append(
+                        types.Content(
+                            role="user",
+                            parts=[resp_part],
+                        )
                     )
-                )
             else:
                 # User message
                 contents.append(
@@ -216,20 +272,23 @@ class GeminiModelGateway:
         system_instruction = "\n\n".join(system_parts) if system_parts else None
         return contents, system_instruction
 
-    def _build_tools(
-        self, tools: Sequence[ToolDefinition]
-    ) -> list[types.Tool] | None:
+    def _build_tools(self, tools: Sequence[ToolDefinition]) -> list[types.Tool] | None:
         """Convert ToolDefinition list to Gemini types.Tool."""
         if not tools:
             return None
 
         declarations: list[types.FunctionDeclaration] = []
         for t in tools:
+            param_schema = (
+                _clean_schema_for_gemini(t.input_schema)
+                if t.input_schema
+                else None
+            )
             declarations.append(
                 types.FunctionDeclaration(
                     name=t.name,
                     description=t.description,
-                    parameters=t.input_schema if t.input_schema else None,
+                    parameters=param_schema,
                 )
             )
 
@@ -246,7 +305,28 @@ class GeminiModelGateway:
         """Map Gemini raw response to normalized ModelResponse."""
         # 1. Tool calls
         tool_calls: list[ModelToolCall] = []
-        if raw.function_calls:
+        candidate = raw.candidates[0] if (hasattr(raw, "candidates") and raw.candidates) else None
+        if candidate and candidate.content and candidate.content.parts:
+            fc_idx = 0
+            for part in candidate.content.parts:
+                if part.function_call:
+                    fc = part.function_call
+                    call_id = getattr(fc, "id", None) or f"call_{fc.name}_{fc_idx}_{uuid.uuid4().hex[:6]}"
+                    args = dict(fc.args) if fc.args else {}
+                    sig = getattr(part, "thought_signature", None)
+                    sig_b64: str | None = None
+                    if sig:
+                        sig_b64 = base64.b64encode(sig).decode("ascii") if isinstance(sig, bytes) else str(sig)
+                    tool_calls.append(
+                        ModelToolCall(
+                            id=call_id,
+                            name=fc.name,
+                            arguments=args,
+                            thought_signature=sig_b64,
+                        )
+                    )
+                    fc_idx += 1
+        elif raw.function_calls:
             for idx, fc in enumerate(raw.function_calls):
                 call_id = getattr(fc, "id", None) or f"call_{fc.name}_{idx}_{uuid.uuid4().hex[:6]}"
                 args = dict(fc.args) if fc.args else {}
@@ -277,9 +357,9 @@ class GeminiModelGateway:
         text_content: str | None = None
         try:
             text_content = raw.text
-        except Exception:
+        except (AttributeError, ValueError):
             # When tool calls are generated, raw.text can raise if no text part
-            pass
+            text_content = None
 
         return ModelResponse(
             provider="gemini",
@@ -307,9 +387,7 @@ class GeminiModelGateway:
                     f"Gemini rate limit exceeded for model '{model_name}': {msg}"
                 )
             if code in (408, 504) or "DEADLINE_EXCEEDED" in msg:
-                return ModelTimeoutError(
-                    f"Gemini timeout for model '{model_name}': {msg}"
-                )
+                return ModelTimeoutError(f"Gemini timeout for model '{model_name}': {msg}")
             if isinstance(exc, genai_errors.ServerError) or (code and code >= 500):
                 return ModelUnavailableError(
                     f"Gemini unavailable ({code}) for model '{model_name}': {msg}"

@@ -10,16 +10,15 @@ Schemas follow the design in ``ai-services-technical-design.md`` §8.5.2.
 from __future__ import annotations
 
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
 
-
 # ── Enums ────────────────────────────────────────────────────────
 
 
-class FinishReason(str, Enum):
+class FinishReason(StrEnum):
     """Why the model stopped generating."""
 
     STOP = "stop"
@@ -28,7 +27,7 @@ class FinishReason(str, Enum):
     ERROR = "error"
 
 
-class ModelCapability(str, Enum):
+class ModelCapability(StrEnum):
     """Capabilities that a model profile may require."""
 
     TOOL_CALLING = "tool_calling"
@@ -138,6 +137,10 @@ class ModelToolCall(BaseModel):
     id: str = Field(..., description="Provider-assigned tool-call identifier.")
     name: str = Field(..., max_length=100)
     arguments: dict[str, Any] = Field(default_factory=dict)
+    thought_signature: str | None = Field(
+        default=None,
+        description="Opaque cryptographic signature for thinking models (e.g. Gemini 2.5/3.0+).",
+    )
 
 
 class ModelUsage(BaseModel):

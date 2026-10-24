@@ -67,9 +67,7 @@ def build_agent(
         system_prompt=SYSTEM_PROMPT,
         checkpointer=checkpointer,
         middleware=[
-            ModelRetryMiddleware(
-                max_retries=2, initial_delay=1.0, on_failure=on_model_failure
-            ),
+            ModelRetryMiddleware(max_retries=2, initial_delay=1.0, on_failure=on_model_failure),
             # Retry sits inside so exhausted retries still reach the error handler.
             ToolErrorMiddleware(on_error=on_tool_error),
             ToolRetryMiddleware(

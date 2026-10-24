@@ -41,9 +41,7 @@ class ScriptedGateway:
         outcome = self._outcomes.pop(0)
         if isinstance(outcome, ModelGatewayError):
             raise outcome
-        return FakeModelGateway.simple_text_response(
-            outcome, model_profile=request.model_profile
-        )
+        return FakeModelGateway.simple_text_response(outcome, model_profile=request.model_profile)
 
 
 async def _no_sleep(_seconds: float) -> None:
@@ -110,9 +108,7 @@ async def test_capability_check_rejects_structured_output_on_incapable_profile(r
     )
 
     with pytest.raises(ModelCapabilityError):
-        await gateway.generate(
-            _request("text-only", structured_response_schema={"type": "object"})
-        )
+        await gateway.generate(_request("text-only", structured_response_schema={"type": "object"}))
 
 
 @pytest.mark.asyncio
@@ -158,9 +154,7 @@ async def test_retry_does_not_retry_non_transient_errors(registry):
 
 @pytest.mark.asyncio
 async def test_fallback_switches_profile_after_bounded_retry(registry):
-    inner = ScriptedGateway(
-        [ModelRateLimitError(), ModelRateLimitError(), "fallback answer"]
-    )
+    inner = ScriptedGateway([ModelRateLimitError(), ModelRateLimitError(), "fallback answer"])
     gateway = RetryingModelGateway(inner, profile_registry=registry, sleep=_no_sleep)
 
     response = await gateway.generate(_request())

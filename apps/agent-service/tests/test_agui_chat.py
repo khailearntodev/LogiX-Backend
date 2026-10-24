@@ -44,10 +44,7 @@ def _body(thread_id: str, *texts: str, **extra: object) -> dict[str, object]:
         "threadId": thread_id,
         "runId": str(uuid.uuid4()),
         "state": {},
-        "messages": [
-            {"id": str(uuid.uuid4()), "role": "user", "content": text}
-            for text in texts
-        ],
+        "messages": [{"id": str(uuid.uuid4()), "role": "user", "content": text} for text in texts],
         "tools": [],
         "context": [],
         "forwardedProps": {},
@@ -63,9 +60,7 @@ def _events(text: str) -> list[dict]:
     ]
 
 
-async def _run(
-    body: dict[str, object], token: str | None = None
-) -> tuple[int, list[dict], dict]:
+async def _run(body: dict[str, object], token: str | None = None) -> tuple[int, list[dict], dict]:
     headers = {"Authorization": f"Bearer {token}"} if token else {}
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -117,9 +112,7 @@ async def test_run_streams_agui_events_and_answer() -> None:
     assert types[0] == "RUN_STARTED"
     assert types[-1] == "RUN_FINISHED"
     assert "RUN_ERROR" not in types
-    streamed = "".join(
-        e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT"
-    )
+    streamed = "".join(e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT")
     assert streamed == "[fake] hello"
 
 
@@ -174,9 +167,7 @@ async def test_client_echoing_full_history_does_not_duplicate_messages() -> None
     assert contents[-1] == "second"
 
 
-@pytest.mark.parametrize(
-    ("user", "tenant"), [("user-2", "tenant-1"), ("user-1", "tenant-2")]
-)
+@pytest.mark.parametrize(("user", "tenant"), [("user-2", "tenant-1"), ("user-1", "tenant-2")])
 async def test_thread_of_another_actor_is_not_found(user: str, tenant: str) -> None:
     _install(FakeModelGateway.echo())
     await _run(_body("thread-aaaa1111", "mine"), _token(user="user-1", tenant="tenant-1"))
