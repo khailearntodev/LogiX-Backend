@@ -180,6 +180,25 @@ throw new ConcurrencyConflictError('SalesOrder', orderId, 3, 5);
 throw new TenantAccessDeniedError();
 ```
 
+## Kiểm chứng thư viện dùng chung
+
+Chạy từ backend root:
+
+```text
+pnpm --filter @logix/common --filter @logix/config --filter @logix/errors --filter @logix/database test
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Oxlint được khai báo ở root để scripts của các thư viện dùng chung tìm được
+đúng linter đã dùng trong workspace, kể cả khi Turbo không có cache.
+Các tests kiểm tra UUID, config hợp lệ/không hợp lệ, domain error contracts
+và Prisma lifecycle/probe/provider alias; không dùng test rỗng hoặc
+`passWithNoTests`. Mock Prisma ở đây chỉ chứng minh lifecycle của thư viện,
+không thay thế integration tests PostgreSQL của service.
+
 ## Tạo service mới
 
 1. Tạo NestJS app mới trong `apps/`
