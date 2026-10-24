@@ -6,10 +6,9 @@ Retry, fallback and capability policy are covered in ``test_gateway_policies``.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -179,8 +178,12 @@ async def test_litellm_gateway_tool_calls():
 async def test_litellm_gateway_multiple_tool_calls():
     """Multiple tool calls in a single response are all normalised."""
     registry = _make_profile_registry()
-    tc1 = _mock_tool_call(name="get_order_status", arguments={"order_id": "ORD-001"}, call_id="call_1")
-    tc2 = _mock_tool_call(name="get_inventory_availability", arguments={"sku_id": "SKU-01"}, call_id="call_2")
+    tc1 = _mock_tool_call(
+        name="get_order_status", arguments={"order_id": "ORD-001"}, call_id="call_1"
+    )
+    tc2 = _mock_tool_call(
+        name="get_inventory_availability", arguments={"sku_id": "SKU-01"}, call_id="call_2"
+    )
     mock_response = _mock_litellm_response(
         content=None,
         tool_calls=[tc1, tc2],
@@ -228,7 +231,9 @@ async def test_litellm_gateway_resolves_fallback_profile_model():
 
 def test_extract_provider_with_prefix():
     assert LiteLLMModelGateway._extract_provider("openai/gpt-4o") == "openai"
-    assert LiteLLMModelGateway._extract_provider("anthropic/claude-sonnet-4-20250514") == "anthropic"
+    assert (
+        LiteLLMModelGateway._extract_provider("anthropic/claude-sonnet-4-20250514") == "anthropic"
+    )
     assert LiteLLMModelGateway._extract_provider("azure/gpt-4-deployment") == "azure"
     assert LiteLLMModelGateway._extract_provider("ollama/llama3") == "ollama"
 
@@ -267,6 +272,7 @@ def test_build_tools_converts_to_openai_format():
 def test_map_error_rate_limit():
     """RateLimitError maps to retryable ModelRateLimitError."""
     import litellm as real_litellm
+
     exc = real_litellm.RateLimitError(
         message="Rate limit exceeded",
         llm_provider="openai",
@@ -280,6 +286,7 @@ def test_map_error_rate_limit():
 def test_map_error_timeout():
     """Timeout maps to retryable ModelTimeoutError."""
     import litellm as real_litellm
+
     exc = real_litellm.Timeout(
         message="Request timed out",
         llm_provider="openai",
@@ -293,6 +300,7 @@ def test_map_error_timeout():
 def test_map_error_service_unavailable():
     """ServiceUnavailableError maps to retryable ModelUnavailableError."""
     import litellm as real_litellm
+
     exc = real_litellm.ServiceUnavailableError(
         message="Service unavailable",
         llm_provider="openai",
@@ -306,6 +314,7 @@ def test_map_error_service_unavailable():
 def test_map_error_bad_request():
     """BadRequestError maps to non-retryable ModelGatewayError."""
     import litellm as real_litellm
+
     exc = real_litellm.BadRequestError(
         message="Invalid request",
         llm_provider="openai",
@@ -319,6 +328,7 @@ def test_map_error_bad_request():
 def test_map_error_authentication():
     """AuthenticationError maps to non-retryable ModelGatewayError."""
     import litellm as real_litellm
+
     exc = real_litellm.AuthenticationError(
         message="Invalid API key",
         llm_provider="openai",
@@ -346,7 +356,7 @@ async def test_litellm_gateway_timeout_raises_model_timeout_error():
     registry = _make_profile_registry()
 
     with patch("logix_agent.modules.ai.adapters.litellm_gateway.litellm") as mock_litellm:
-        mock_litellm.acompletion = AsyncMock(side_effect=asyncio.TimeoutError())
+        mock_litellm.acompletion = AsyncMock(side_effect=TimeoutError())
         mock_litellm.suppress_debug_info = True
         mock_litellm.RateLimitError = type("RateLimitError", (Exception,), {})
         mock_litellm.Timeout = type("Timeout", (Exception,), {})
@@ -368,6 +378,7 @@ async def test_litellm_gateway_does_not_retry():
     registry = _make_profile_registry()
 
     import litellm as real_litellm
+
     svc_err = real_litellm.ServiceUnavailableError(
         message="Service unavailable",
         llm_provider="openai",
@@ -426,6 +437,7 @@ def test_factory_error_message_includes_litellm():
     settings = AgentSettings(llm_gateway_backend="nonexistent")
     with pytest.raises(ValueError) as exc_info:
         from logix_agent.modules.ai.factory import create_model_gateway
+
         create_model_gateway(settings)
     assert "litellm_sdk" in str(exc_info.value)
 
@@ -464,6 +476,7 @@ def test_config_litellm_settings_default_none():
 
 def test_resolve_litellm_api_key_openai():
     from logix_agent.modules.ai.factory import _resolve_litellm_api_key
+
     settings = AgentSettings(
         planner_default_model="openai/gpt-4o",
         openai_api_key="sk-openai",
@@ -473,6 +486,7 @@ def test_resolve_litellm_api_key_openai():
 
 def test_resolve_litellm_api_key_anthropic():
     from logix_agent.modules.ai.factory import _resolve_litellm_api_key
+
     settings = AgentSettings(
         planner_default_model="anthropic/claude-sonnet-4-20250514",
         anthropic_api_key="sk-ant",
@@ -482,6 +496,7 @@ def test_resolve_litellm_api_key_anthropic():
 
 def test_resolve_litellm_api_key_azure():
     from logix_agent.modules.ai.factory import _resolve_litellm_api_key
+
     settings = AgentSettings(
         planner_default_model="azure/my-deployment",
         azure_api_key="sk-azure",
@@ -491,6 +506,7 @@ def test_resolve_litellm_api_key_azure():
 
 def test_resolve_litellm_api_key_ollama_returns_none():
     from logix_agent.modules.ai.factory import _resolve_litellm_api_key
+
     settings = AgentSettings(planner_default_model="ollama/llama3")
     assert _resolve_litellm_api_key(settings) is None
 
@@ -498,6 +514,7 @@ def test_resolve_litellm_api_key_ollama_returns_none():
 def test_resolve_litellm_api_key_bare_model_uses_openai():
     """Models without provider prefix default to OpenAI key."""
     from logix_agent.modules.ai.factory import _resolve_litellm_api_key
+
     settings = AgentSettings(
         planner_default_model="gpt-4o-mini",
         openai_api_key="sk-openai",

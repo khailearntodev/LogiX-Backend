@@ -1,29 +1,27 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import (
-    BigInteger,
     CheckConstraint,
     DateTime,
     ForeignKeyConstraint,
     Index,
     Integer,
-    Numeric,
     String,
     Text,
     UniqueConstraint,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
-from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from logix_agent.db.base import Base, SCHEMA, TenantMutableMixin
+from logix_agent.db.base import SCHEMA, Base, TenantMutableMixin
 
+if TYPE_CHECKING:
+    from logix_agent.modules.executions.models import AgentExecution
 
 EMPTY_JSON = text("'{}'::jsonb")
 
@@ -44,16 +42,12 @@ class Conversation(TenantMutableMixin, Base):
 
     user_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
-    status: Mapped[str] = mapped_column(
-        String(20), nullable=False, server_default=text("'ACTIVE'")
-    )
+    status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'ACTIVE'"))
     context_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     last_message_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
-    expires_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     messages: Mapped[list[ConversationMessage]] = relationship(
         back_populates="conversation", cascade="save-update, merge"
@@ -61,6 +55,7 @@ class Conversation(TenantMutableMixin, Base):
     executions: Mapped[list[AgentExecution]] = relationship(
         back_populates="conversation", cascade="save-update, merge"
     )
+
 
 class ConversationMessage(TenantMutableMixin, Base):
     __tablename__ = "conversation_messages"
@@ -100,4 +95,3 @@ class ConversationMessage(TenantMutableMixin, Base):
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
-

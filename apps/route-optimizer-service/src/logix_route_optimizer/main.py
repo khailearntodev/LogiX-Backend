@@ -7,6 +7,7 @@ from fastapi import FastAPI, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
 
+from logix_route_optimizer.api.v1 import v1_router
 from logix_route_optimizer.config import settings
 from logix_route_optimizer.db.session import create_engine, create_session_factory
 
@@ -46,12 +47,31 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         app_session_factory = None
 
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="LogiX Route Optimizer Service",
     description="Route Optimization Service for LogiX B2B Logistics Platform",
     version="0.1.0",
     lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3009",
+        "http://127.0.0.1:3009",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "*",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(v1_router)
+
 
 
 @app.get("/", tags=["Info"])

@@ -55,9 +55,7 @@ class FakeModelGateway:
         self,
         *,
         responses: list[ModelResponse] | None = None,
-        response_factory: Callable[
-            [ModelRequest, Sequence[ToolDefinition]], ModelResponse
-        ]
+        response_factory: Callable[[ModelRequest, Sequence[ToolDefinition]], ModelResponse]
         | None = None,
         error: ModelGatewayError | None = None,
         latency_ms: int = 0,
@@ -114,9 +112,7 @@ class FakeModelGateway:
     # ── Convenience factories ────────────────────────────────────
 
     @staticmethod
-    def simple_text_response(
-        text: str, *, model_profile: str = "planner-default"
-    ) -> ModelResponse:
+    def simple_text_response(text: str, *, model_profile: str = "planner-default") -> ModelResponse:
         """Create a minimal text response for quick test setup."""
         return ModelResponse(
             provider="fake",
@@ -137,9 +133,7 @@ class FakeModelGateway:
     def echo(cls) -> FakeModelGateway:
         """Create a gateway that echoes the last user message (local dev without an LLM key)."""
 
-        def _echo(
-            request: ModelRequest, _tools: Sequence[ToolDefinition]
-        ) -> ModelResponse:
+        def _echo(request: ModelRequest, _tools: Sequence[ToolDefinition]) -> ModelResponse:
             last_user = next(
                 (
                     str(m.get("content", ""))

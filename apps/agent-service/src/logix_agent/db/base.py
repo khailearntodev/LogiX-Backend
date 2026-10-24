@@ -7,7 +7,6 @@ from sqlalchemy import BigInteger, DateTime, MetaData, text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, declared_attr, mapped_column
 
-
 SCHEMA = "agent"
 
 
@@ -25,9 +24,7 @@ class Base(DeclarativeBase):
 
 
 class TenantMutableMixin:
-    id: Mapped[UUID] = mapped_column(
-        PG_UUID(as_uuid=True), primary_key=True, default=uuid4
-    )
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
     tenant_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=text("CURRENT_TIMESTAMP")
@@ -41,11 +38,8 @@ class TenantMutableMixin:
     version: Mapped[int] = mapped_column(
         BigInteger, nullable=False, default=1, server_default=text("1")
     )
-    deleted_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     @declared_attr.directive
     def __mapper_args__(cls) -> dict[str, object]:
         return {"version_id_col": cls.version}
-

@@ -9,6 +9,10 @@ class RouteOptimizerSettings(BaseSettings):
     environment: str = "development"
     database_url: str | None = None
     log_level: str = "INFO"
+    osrm_url: str = "https://router.project-osrm.org"
+    osrm_timeout_seconds: float = 4.0
+    default_vehicle_capacity_weight_kg: float = 1000.0
+    default_vehicle_capacity_volume_m3: float = 8.0
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -18,3 +22,4 @@ class RouteOptimizerSettings(BaseSettings):
 
 
 settings = RouteOptimizerSettings()
+

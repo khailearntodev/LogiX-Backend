@@ -1,6 +1,7 @@
 """Unit tests for AI Pydantic contracts."""
 
 from decimal import Decimal
+
 import pytest
 from pydantic import ValidationError
 
@@ -100,7 +101,9 @@ def test_model_response_serialization():
         gateway_backend="gemini_sdk",
         content="Order cancelled successfully.",
         finish_reason=FinishReason.STOP,
-        usage=ModelUsage(input_tokens=50, output_tokens=10, total_tokens=60, cost_amount=Decimal("0.0001")),
+        usage=ModelUsage(
+            input_tokens=50, output_tokens=10, total_tokens=60, cost_amount=Decimal("0.0001")
+        ),
         latency_ms=320,
     )
     data = resp.model_dump()

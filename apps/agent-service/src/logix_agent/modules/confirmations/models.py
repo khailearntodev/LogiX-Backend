@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from datetime import datetime
-from decimal import Decimal
-from uuid import UUID, uuid4
+from typing import TYPE_CHECKING
+from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
@@ -10,11 +10,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKeyConstraint,
     Index,
-    Integer,
-    Numeric,
     String,
-    Text,
-    UniqueConstraint,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
@@ -22,8 +18,11 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.mutable import MutableDict
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from logix_agent.db.base import Base, SCHEMA, TenantMutableMixin
+from logix_agent.db.base import SCHEMA, Base, TenantMutableMixin
 
+if TYPE_CHECKING:
+    from logix_agent.modules.executions.models import AgentExecution
+    from logix_agent.modules.tools.models import ToolCall
 
 EMPTY_JSON = text("'{}'::jsonb")
 
@@ -87,15 +86,9 @@ class ConfirmationRequest(TenantMutableMixin, Base):
         String(30), nullable=False, server_default=text("'PENDING'")
     )
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    confirmed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    consumed_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
-    decision_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    decision_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     execution: Mapped[AgentExecution] = relationship(
         back_populates="confirmations", overlaps="confirmations,tool_call"
@@ -103,4 +96,3 @@ class ConfirmationRequest(TenantMutableMixin, Base):
     tool_call: Mapped[ToolCall] = relationship(
         back_populates="confirmations", overlaps="confirmations,execution"
     )
-

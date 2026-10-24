@@ -26,7 +26,7 @@ def _resolve_litellm_api_key(settings: AgentSettings) -> str | None:
     here is acceptable when env vars are set directly.
     """
     model = (settings.planner_default_model or "").lower()
-    if model.startswith("anthropic/") or model.startswith("claude"):
+    if model.startswith(("anthropic/", "claude")):
         return settings.anthropic_api_key
     if model.startswith("azure/"):
         return settings.azure_api_key
@@ -85,4 +85,3 @@ def create_model_gateway(
         CapabilityCheckingModelGateway(adapter, profile_registry=registry),
         profile_registry=registry,
     )
-
