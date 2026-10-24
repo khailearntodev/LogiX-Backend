@@ -34,6 +34,15 @@ export class CustomerAddressService {
     return rows.map(toCustomerAddressView);
   }
 
+  async getById(
+    tenantId: string,
+    customerId: string,
+    addressId: string,
+  ): Promise<CustomerAddressView> {
+    const row = await this.requireAddress(tenantId, customerId, addressId);
+    return toCustomerAddressView(row);
+  }
+
   async create(
     tenantId: string,
     customerId: string,
