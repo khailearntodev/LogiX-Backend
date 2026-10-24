@@ -27,7 +27,7 @@ class ORToolsCVRPSolver:
     (weight in kg and volume in m3).
     """
 
-    def __init__(self, time_limit_seconds: int = 5) -> None:
+    def __init__(self, time_limit_seconds: int = 2) -> None:
         self.time_limit_seconds = time_limit_seconds
 
     def solve(
@@ -37,6 +37,7 @@ class ORToolsCVRPSolver:
         demand_volumes_m3: list[float],
         capacity_weight_kg: float,
         capacity_volume_m3: float,
+        time_limit_seconds: int | None = None,
     ) -> SolverResult:
         """
         Solve single-vehicle CVRP.
@@ -139,7 +140,8 @@ class ORToolsCVRPSolver:
         search_parameters.local_search_metaheuristic = (
             routing_enums_pb2.LocalSearchMetaheuristic.GUIDED_LOCAL_SEARCH
         )
-        search_parameters.time_limit.seconds = self.time_limit_seconds
+        limit = time_limit_seconds if time_limit_seconds is not None else self.time_limit_seconds
+        search_parameters.time_limit.seconds = max(1, limit)
 
         # 4. Solve
         solution = routing.SolveWithParameters(search_parameters)
