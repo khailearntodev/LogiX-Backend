@@ -54,6 +54,17 @@ export class MasterDataClient {
     );
   }
 
+  getCustomerAddress(
+    customerId: string,
+    addressId: string,
+    ctx: MasterDataRequestContext,
+  ): Promise<MasterDataCustomerAddress | null> {
+    return this.get<MasterDataCustomerAddress>(
+      `/customers/${encodeURIComponent(customerId)}/addresses/${encodeURIComponent(addressId)}`,
+      ctx,
+    );
+  }
+
   getWarehouse(
     id: string,
     ctx: MasterDataRequestContext,
