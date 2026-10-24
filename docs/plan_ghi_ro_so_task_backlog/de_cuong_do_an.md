@@ -54,6 +54,10 @@ Các mục tiêu cụ thể gồm:
 •	Xây dựng Route Optimizer Agent để xây dựng phương án tuyến đường dựa trên dữ liệu vận chuyển và các ràng buộc nghiệp vụ.
 •	Hạn chế việc Agent tự sinh các kết quả định lượng quan trọng; các tác vụ yêu cầu tính chính xác được thực hiện thông qua mô hình hoặc công cụ có thể kiểm chứng.
 •	Xây dựng tập tình huống kiểm thử phù hợp cho từng Agent và đánh giá khả năng lựa chọn, gọi và phối hợp công cụ.
+•	Nguyên tắc phân định trách nhiệm giữa Agent và công cụ tính toán:
+o	Phạm vi tự quyết của Agent: Agent chịu trách nhiệm đọc hiểu ngữ cảnh, trích xuất và chuẩn hóa tham số đầu vào (JSON schema), quyết định thứ tự gọi công cụ, xử lý ngoại lệ (tự động điều chỉnh tham số hoặc gọi cơ chế fallback khi bài toán vô nghiệm/lỗi dữ liệu) và tổng hợp kết quả định lượng thành khuyến nghị ngôn ngữ tự nhiên cho người dùng.
+o	Phạm vi bắt buộc gọi công cụ kiểm chứng: LLM tuyệt đối không trực tiếp tính toán hay sinh kết quả định lượng. Mọi phép tính dự báo chuỗi thời gian bắt buộc thực thi qua mô hình Prophet, và việc giải bài toán tìm đường đi ngắn nhất bắt buộc thực thi qua bộ giải Google OR-Tools để đảm bảo tính chính xác, nhất quán và có thể kiểm chứng.
+o	Kết quả phải được kiểm tra tính hợp lệ và ràng buộc nghiệp vụ trước khi sử dụng; các thao tác ghi dữ liệu phải tuân thủ quyền truy cập.
 3.5. Kiểm thử và đánh giá hệ thống
 •	Thực hiện kiểm thử chức năng đối với các nghiệp vụ chính và các luồng tích hợp giữa hệ thống với Agentic Layer.
 •	Đánh giá Agentic Layer về khả năng thực thi công cụ, độ trễ xử lý và khả năng thay đổi thành phần AI.
@@ -61,6 +65,14 @@ Các mục tiêu cụ thể gồm:
 •	Đánh giá hiệu quả tối ưu tuyến đường thông qua các chỉ số phù hợp và so sánh với phương pháp đối chứng.
 •	Đánh giá hệ thống về độ trễ xử lý sự kiện, thời gian phản hồi, khả năng mở rộng, độ ổn định và hành vi khi có lỗi.
 •	Thực hiện load test, idempotency test và kiểm tra các cơ chế retry/fallback, isolation và auto-scaling.
+•	Thiết kế dữ liệu và phương pháp đối chứng:
+o	Đối với Demand Forecast Agent: Sử dụng dữ liệu chuỗi thời gian từ tập chuẩn Store Item Demand Forecasting và một tập con các mặt hàng từ M5 Forecasting kết hợp dữ liệu giao dịch phát sinh trên hệ thống; so sánh mô hình Prophet với phương pháp Seasonal Naïve.
+o	Đối với Route Optimizer Agent: Sử dụng dữ liệu tọa độ giao hàng mô phỏng thực tế tại TP.HCM; so sánh Google OR-Tools với thuật toán tham lam Nearest Neighbor và phương pháp chia tuyến thủ công theo khu vực kết hợp thứ tự đơn (FIFO).
+o	Đối với Agentic Layer: Xây dựng bộ kịch bản kiểm thử gồm 50–100 câu lệnh và sự kiện nghiệp vụ đa dạng (truy vấn đơn giản, điều phối đa bước, thiếu tham số hoặc vi phạm ràng buộc); so sánh Planner Agent với phương pháp điều phối theo quy tắc cố định (rule-based workflow).
+•	Tiêu chí đánh giá:
+o	Đối với dự báo nhu cầu: Sử dụng các chỉ số MAE, RMSE và MAPE để đánh giá sai số. Kết luận hệ thống cải thiện hiệu quả khi mô hình Prophet đạt mức sai số MAE, RMSE và MAPE thấp hơn so với baseline (Seasonal Naïve/SMA), đặc biệt trong các chu kỳ có tính mùa vụ.   
+o	Đối với tối ưu tuyến đường: Sử dụng chỉ số tổng quãng đường di chuyển (km), tỷ lệ sử dụng tải trọng xe và tỷ lệ giao hàng đúng khung giờ (Time-window). Kết luận hệ thống cải thiện hiệu quả khi phương án từ Google OR-Tools giúp giảm tổng quãng đường di chuyển so với Nearest Neighbor/FIFO và đáp ứng các ràng buộc  nghiệp vụ.   
+o	Đối với Agentic Layer và Hệ thống: Sử dụng tỷ lệ thực thi công cụ thành công (Tool Calling Accuracy) và khả năng xử lý linh hoạt các yêu cầu biến đổi/ngoại lệ để đánh giá Planner Agent so với rule-based workflow; đồng thời đánh giá event processing latency, response time và đảm bảo các cơ chế Idempotency, Retry/Fallback xử lý an toàn khi quá tải hoặc khi LLM API gặp sự cố.
 3.6. Phân tích kết quả và đối chiếu với mục tiêu
 •	Tổng hợp kết quả thực nghiệm của hệ thống và các AI Agent so với baseline và các yêu cầu đặt ra.
 •	Phân tích mức độ cải thiện về độ chính xác, hiệu quả tối ưu, độ trễ, khả năng mở rộng và độ tin cậy.
@@ -114,7 +126,7 @@ o	Chuẩn hóa interface giữa Agent và hệ thống để hỗ trợ thay đ�
 •	Demand Forecasting: Prophet.
 •	Route Optimization: Google OR-Tools.
 •	Source Control & CI/CD: Git/GitHub và pipeline CI/CD.
-7.Demo dự kiến
+7. Demo dự kiến
 Demo tập trung vào một luồng nghiệp vụ xuyên suốt:
 Người dùng đăng nhập → tạo/cập nhật dữ liệu nghiệp vụ → phát sinh sự kiện → hệ thống kích hoạt chức năng AI phù hợp → kết quả được cập nhật về hệ thống → dashboard và thông báo phản ánh trạng thái xử lý.
 Các kịch bản chính gồm:
@@ -123,20 +135,11 @@ Các kịch bản chính gồm:
 •	Người dùng gửi yêu cầu nghiệp vụ bằng ngôn ngữ tự nhiên, Planner Agent phân tích và điều phối công cụ phù hợp.
 •	Hệ thống hiển thị trạng thái đơn hàng, tồn kho, shipment, kết quả AI, thông báo và các chỉ số vận hành.
 Phương pháp đánh giá dự kiến
-•	Agentic Layer
-o	Đánh giá tỷ lệ thực thi công cụ thành công trên tập kịch bản kiểm thử.
-o	Đánh giá độ trễ xử lý và khả năng thay đổi thành phần AI thông qua interface chuẩn.
-•	Demand Forecast Agent
-o	Đánh giá bằng các chỉ số sai số như MAPE và RMSE.
-o	So sánh với một hoặc một số phương pháp baseline phù hợp.
-•	Route Optimizer Agent
-o	Đánh giá mức độ cải thiện về quãng đường hoặc chi phí vận chuyển.
-o	So sánh với phương pháp đối chứng phù hợp.
-•	System
-o	Đánh giá event processing latency, response time và khả năng chịu tải.
-o	Kiểm tra khả năng auto-scaling dưới tải.
-o	Kiểm thử idempotency, retry/fallback và multi-tenant isolation.
-Các ngưỡng và tập benchmark cụ thể sẽ được xác định sau khi hoàn thiện thiết kế, dữ liệu và môi trường thực nghiệm.
+•	Agentic Layer: Xây dựng bộ kịch bản kiểm thử gồm 50–100 câu lệnh và tình huống nghiệp vụ, bao gồm truy vấn đơn giản, yêu cầu nhiều bước, thiếu tham số và vi phạm ràng buộc. Đánh giá tỷ lệ thực thi công cụ thành công (Tool Calling Accuracy) và độ trễ xử lý của Planner Agent, đồng thời so sánh với phương pháp điều phối theo quy tắc cố định (rule-based workflow). Kiểm chứng khả năng thay đổi thành phần AI thông qua interface chuẩn mà không làm thay đổi đáng kể luồng nghiệp vụ cốt lõi.
+•	Demand Forecast Agent: Sử dụng dữ liệu chuỗi thời gian từ tập chuẩn Store Item Demand Forecasting và một tập con dữ liệu M5 Forecasting để đánh giá Prophet so với phương pháp Seasonal Naïve. Các chỉ số đánh giá gồm MAE, RMSE và MAPE. Kết quả được phân tích để xác định mức chênh lệch sai số giữa hai phương pháp.
+•	Route Optimizer Agent: Sử dụng dữ liệu mô phỏng các điểm giao hàng và ràng buộc vận chuyển, so sánh Google OR-Tools với thuật toán Nearest Neighbor. Chỉ số đánh giá chính là tổng quãng đường di chuyển, với điều kiện phương án đáp ứng các ràng buộc nghiệp vụ đã xác định.
+•	Hệ thống: Đánh giá độ trễ xử lý sự kiện (event processing latency), thời gian phản hồi (response time) và khả năng mở rộng thông qua kiểm thử tải. Kiểm thử tính đúng đắn của các cơ chế Idempotency, Retry/Fallback và Multi-tenant Isolation trong các tình huống giả lập lỗi hoặc tải cao.
+Các phương pháp đối chứng được đánh giá trên cùng dữ liệu đầu vào và điều kiện tương ứng. Kết quả thực nghiệm được dùng để xác định mức độ đáp ứng mục tiêu và mức cải thiện so với baseline trong phạm vi đề tài.
 Hướng phát triển:
 Sau khi hoàn thiện phạm vi của khóa luận, hệ thống có thể tiếp tục được mở rộng theo các hướng sau:
 •	Mở rộng năng lực Agentic AI: bổ sung các Agent mới phục vụ những bài toán logistics khác như dự báo thời gian giao hàng, tư vấn tồn kho, phát hiện bất thường và hỗ trợ lập kế hoạch chuỗi cung ứng.
