@@ -5,6 +5,8 @@ import {
   ConflictException,
   ForbiddenException,
 } from '@nestjs/common';
+import { isUUID } from 'class-validator';
+import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateRoleDto } from '../dto/create-role.dto.js';
 import { UpdateRoleDto } from '../dto/update-role.dto.js';
@@ -15,6 +17,21 @@ export const BLACKLIST_ROLE_CODES = [...SYSTEM_ROLE_CODES, 'SUPER_ADMIN'];
 @Injectable()
 export class RolesService {
   constructor(private readonly prisma: PrismaService) { }
+
+  async resolveTenantId(user: AuthenticatedUser, headerTenantId?: string) {
+    const tenantId = user.isSuperAdmin === true && headerTenantId ? headerTenantId : user.tenantId;
+    if (!isUUID(tenantId)) {
+      throw new BadRequestException('Mã tổ chức không hợp lệ');
+    }
+    const tenant = await this.prisma.tenant.findFirst({
+      where: { id: tenantId, status: 'ACTIVE', deletedAt: null },
+      select: { id: true },
+    });
+    if (!tenant) {
+      throw new NotFoundException('Không tìm thấy tổ chức đang hoạt động');
+    }
+    return tenant.id;
+  }
 
   /**
    * Tự động khởi tạo 3 vai trò hệ thống (OWNER, ADMIN, MEMBER)
@@ -456,6 +473,9 @@ export class RolesService {
     if (validRoles.length !== roleIds.length) {
       throw new BadRequestException('Một hoặc nhiều vai trò không tồn tại trong tổ chức này');
     }
+    if (validRoles.some((role) => role.code === 'SUPER_ADMIN')) {
+      throw new BadRequestException('Không thể gán vai trò SUPER_ADMIN trong tổ chức');
+    }
 
     // 3. Thực hiện thay thế các roles của thành viên
     await this.prisma.$transaction(async (tx) => {
@@ -581,7 +601,7 @@ export class RolesService {
     }
 
     // 1. Nếu là SUPER_ADMIN -> Toàn quyền toàn hệ thống
-    if (user.isSuperAdmin) {
+    if (user.isSuperAdmin === true) {
       return {
         isSuperAdmin: true,
         isOwner: true,

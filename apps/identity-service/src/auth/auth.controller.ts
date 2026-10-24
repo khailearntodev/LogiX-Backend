@@ -153,6 +153,7 @@ export class AuthController {
         displayName: result.user.displayName,
         phoneNumber: result.user.phoneNumber,
         avatarUrl: result.user.avatarUrl,
+        isSuperAdmin: result.user.isSuperAdmin,
       },
       activeTenant: profile.activeTenant,
       tenants: profile.tenants,
@@ -219,7 +220,10 @@ export class AuthController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const hasTenantContext = user.tenantId || (user.isSuperAdmin === true && headerTenantId);
+    const tenantId = hasTenantContext
+      ? await this.rolesService.resolveTenantId(user, headerTenantId)
+      : user.tenantId;
     return this.rolesService.getEffectivePermissions(user.id, tenantId);
   }
 

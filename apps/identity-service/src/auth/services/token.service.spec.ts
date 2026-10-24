@@ -177,9 +177,20 @@ describe('TokenService', () => {
       };
       await tokenService.refreshTokens('refresh');
       expect(jwtService.sign).toHaveBeenNthCalledWith(1,
-        expect.objectContaining({ tenantId: 't1', isSuperAdmin: true, permissions: ['*'] }),
+        expect.objectContaining({ tenantId: 't1', role: 'SUPER_ADMIN', isSuperAdmin: true, permissions: ['*'] }),
         expect.anything(),
       );
+    });
+
+    it('rejects an injected tenant that became unavailable before refresh', async () => {
+      arrangeRefresh();
+      prismaService.user.findFirst.mockResolvedValue({
+        id: 'u1', isSuperAdmin: true, userTenants: [],
+      });
+      prismaService.tenant = { findFirst: vi.fn().mockResolvedValue(null) };
+      await expect(tokenService.refreshTokens('refresh')).rejects.toThrow(UnauthorizedException);
+      expect(jwtService.sign).not.toHaveBeenCalled();
+      expect(prismaService.session.update).not.toHaveBeenCalled();
     });
   });
 

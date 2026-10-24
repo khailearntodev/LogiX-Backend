@@ -40,7 +40,7 @@ export class RolesController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.getRoles(tenantId);
   }
 
@@ -52,7 +52,7 @@ export class RolesController {
     @Body() dto: CreateRoleDto,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.createRole(tenantId, dto, user.id);
   }
 
@@ -63,7 +63,7 @@ export class RolesController {
     @Param('id') id: string,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.getRoleById(tenantId, id);
   }
 
@@ -75,7 +75,7 @@ export class RolesController {
     @Body() dto: UpdateRoleDto,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.updateRole(tenantId, id, dto);
   }
 
@@ -86,7 +86,7 @@ export class RolesController {
     @Param('id') id: string,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.deleteRole(tenantId, id);
   }
 
@@ -98,7 +98,7 @@ export class RolesController {
     @Body() dto: AssignRolePermissionsDto,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.updateRolePermissions(tenantId, id, dto.permissionIds, user.id);
   }
 
@@ -108,7 +108,7 @@ export class RolesController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.getMembers(tenantId);
   }
 
@@ -120,7 +120,7 @@ export class RolesController {
     @Body() dto: AssignMemberRolesDto,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.rolesService.assignMemberRoles(tenantId, targetUserId, dto.roleIds, user.id);
   }
 }

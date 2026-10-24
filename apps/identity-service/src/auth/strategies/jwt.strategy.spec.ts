@@ -8,7 +8,7 @@ import { RolesService } from '../../iam/services/roles.service.js';
 
 describe('Identity JWT strategy', () => {
   const payload = { sub: 'user', email: 'user@example.com', tenantId: 'tenant' };
-  const prisma = { user: { findFirst: vi.fn() } };
+  const prisma = { user: { findFirst: vi.fn() }, tenant: { findFirst: vi.fn() } };
   const roles = { getEffectivePermissions: vi.fn() };
   let strategy: JwtStrategy;
 
@@ -67,5 +67,37 @@ describe('Identity JWT strategy', () => {
       id: 'user', isSuperAdmin: false, userTenants: [],
     });
     await expect(strategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('preserves B without membership and uses a context label, not OWNER', async () => {
+    prisma.user.findFirst.mockResolvedValue({
+      id: 'user', isSuperAdmin: true, userTenants: [],
+    });
+    prisma.tenant.findFirst.mockResolvedValue({ id: 'tenant', name: 'B', logoUrl: null });
+    const result = await strategy.validate({ ...payload, isSuperAdmin: true });
+    expect(result).toMatchObject({ tenantId: 'tenant', role: 'SUPER_ADMIN', isSuperAdmin: true, permissions: ['*'] });
+  });
+
+  it('rejects an invalid/inactive injected tenant instead of returning stale tenantId', async () => {
+    prisma.user.findFirst.mockResolvedValue({
+      id: 'user', isSuperAdmin: true, userTenants: [],
+    });
+    prisma.tenant.findFirst.mockResolvedValue(null);
+    await expect(strategy.validate({ ...payload, isSuperAdmin: true })).rejects.toThrow(UnauthorizedException);
+    expect(prisma.tenant.findFirst).toHaveBeenCalledWith({
+      where: { id: 'tenant', status: 'ACTIVE', deletedAt: null },
+    });
+  });
+
+  it('keeps a platform-only principal tenantless instead of selecting any membership', async () => {
+    prisma.user.findFirst.mockResolvedValue({
+      id: 'user', isSuperAdmin: true, userTenants: [],
+    });
+    const result = await strategy.validate({ ...payload, tenantId: '', isSuperAdmin: true });
+    expect(result).toMatchObject({ tenantId: '', role: 'SUPER_ADMIN', isSuperAdmin: true });
+    expect(prisma.user.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      include: { userTenants: expect.objectContaining({ where: expect.objectContaining({ tenantId: { in: [] } }) }) },
+    }));
+    expect(prisma.tenant.findFirst).not.toHaveBeenCalled();
   });
 });

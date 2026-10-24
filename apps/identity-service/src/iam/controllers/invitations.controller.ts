@@ -17,11 +17,15 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
 import { InvitationsService } from '../services/invitations.service.js';
 import { CreateInvitationDto } from '../dto/create-invitation.dto.js';
+import { RolesService } from '../services/roles.service.js';
 
 @Controller('iam/invitations')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class InvitationsController {
-  constructor(private readonly invitationsService: InvitationsService) {}
+  constructor(
+    private readonly invitationsService: InvitationsService,
+    private readonly rolesService: RolesService,
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -31,7 +35,7 @@ export class InvitationsController {
     @Body() dto: CreateInvitationDto,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.invitationsService.createInvitation(
       tenantId,
       user.id,
@@ -47,7 +51,7 @@ export class InvitationsController {
     @CurrentUser() user: AuthenticatedUser,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.invitationsService.getInvitations(tenantId);
   }
 
@@ -59,7 +63,7 @@ export class InvitationsController {
     @Param('id') id: string,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.invitationsService.resendInvitation(tenantId, id);
   }
 
@@ -71,7 +75,7 @@ export class InvitationsController {
     @Param('id') id: string,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.invitationsService.revokeInvitation(tenantId, id);
   }
 
@@ -83,7 +87,7 @@ export class InvitationsController {
     @Param('id') id: string,
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
-    const tenantId = user.isSuperAdmin && headerTenantId ? headerTenantId : user.tenantId;
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
     return this.invitationsService.deleteInvitation(tenantId, id);
   }
 }

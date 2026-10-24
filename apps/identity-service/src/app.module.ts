@@ -10,6 +10,7 @@ import { AuthModule } from './auth/auth.module.js';
 import { OrganizationsModule } from './organizations/organizations.module.js';
 import { IamModule } from './iam/iam.module.js';
 import { MailModule } from './mail/mail.module.js';
+import { AdminModule } from './admin/admin.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailModule } from './mail/mail.module.js';
     AuthModule,
     OrganizationsModule,
     IamModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
