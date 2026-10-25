@@ -55,6 +55,35 @@ describe('RolesService', () => {
     rolesService = module.get<RolesService>(RolesService);
   });
 
+  describe('initializeTenantRoles', () => {
+    it('does not assign sensitive Driver read permissions to the MEMBER role', async () => {
+      prisma.role.findFirst.mockImplementation(({ where }) =>
+        Promise.resolve({ id: `${where.code.toLowerCase()}-id`, code: where.code }),
+      );
+      prisma.permission.findMany.mockResolvedValue([
+        { id: 'trip-read-id', code: 'transport:trip:read', action: 'read' },
+        { id: 'driver-read-id', code: 'transport:driver:read', action: 'read' },
+        { id: 'profile-read-id', code: 'master-data:driver:read', action: 'read' },
+        { id: 'trip-update-id', code: 'transport:trip:update', action: 'update' },
+      ]);
+      prisma.rolePermission.createMany.mockResolvedValue({ count: 7 });
+
+      await rolesService.initializeTenantRoles('tenant-id');
+
+      const [call] = prisma.rolePermission.createMany.mock.calls;
+      const memberRoleGrants = call[0].data.filter(
+        (grant) => grant.roleId === 'member-id',
+      );
+      expect(memberRoleGrants).toEqual([
+        {
+          tenantId: 'tenant-id',
+          roleId: 'member-id',
+          permissionId: 'trip-read-id',
+        },
+      ]);
+    });
+  });
+
   describe('getRoles', () => {
     it('should return roles sorted with system roles first and omit SUPER_ADMIN', async () => {
       prisma.role.findMany.mockResolvedValue([

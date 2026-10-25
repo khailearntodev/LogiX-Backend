@@ -448,7 +448,8 @@ WHERE status = 'ACTIVE';
 ### 6.6 `drivers`
 
 Các cột: `id`, `tenant_id`, `code`, `user_id` (ID từ Identity, không FK),
-`license_number`, `license_expiry`, `phone`, `status`, cột nền.
+`license_number`, `license_expiry`, `phone`, `status`, `link_locked_at timestamptz NULL`,
+cột nền.
 
 ```sql
 CREATE UNIQUE INDEX ux_drivers_tenant_code ON drivers (tenant_id, code);
@@ -458,6 +459,48 @@ ON drivers (tenant_id, license_number);
 CREATE INDEX ix_drivers_active ON drivers (tenant_id, id)
 WHERE status = 'ACTIVE';
 ```
+
+#### Driver account-link correction
+
+This is a Driver-specific persistence contract, not a generic permission to
+reassign identities on other master records. Business authority and acceptance
+criteria are in [the delivery-trip specification §6.5](../../../delivery-trip-dispatch-spec.vi.md#65-sửa-liên-kết-tài-khoản-driver-bị-chọn-nhầm--bổ-sung-phase-1).
+
+Ordinary update never changes `user_id`. The separate tenant/manage-authorized
+preview/apply flow requires positive safe `version`, exact `expectedUserId`,
+eligible new `userId` and trimmed reason (1..1000). Same-user is rejected.
+Preview only validates/displays; explicit confirmation resends the frozen body
+and revalidates. Unique `(tenant_id,user_id)` includes deleted Driver profiles.
+Super Admin cannot override these business invariants.
+
+Master Data calls Identity and Transport **before**, never during, its local
+transaction. Transport's signed allowlisted history endpoint queries every
+`DeliveryTrip` reference without status/deletion filters and returns a bound
+tenant/driver boolean; failures are explicit, never "unused". Its generated
+nonpartial `(tenant_id,driver_id)` index supports this lookup.
+After external checks, local CAS updates only `user_id` and increments `version`
+when tenant/id/old user/version match and `link_locked_at IS NULL`, then inserts
+standard durable outbox audit evidence in the same transaction. Failures leave
+Driver/version/outbox unchanged. Code/license/phone/status and old trip snapshots
+are not rewritten.
+
+Before *any* future trip reference, including drafts, reassignments and imports,
+Transport must call signed `POST /internal/drivers/:id/link-lock` with expected
+user/version. Master Data locks that same Driver row, validates tenant/binding
+and permanently sets `link_locked_at`; response contains the authoritative
+`driverId,userId,version`. Lock-only metadata does not increment version:
+same-binding retries are idempotent, including lost HTTP responses. Stale
+binding/version yields conflict and requires reread/revalidation, not guessing.
+A failed insertion/cancellation never clears the lock. Lock first => relink CAS
+rejects; relink first => stale lock rejects. No DB transaction spans HTTP.
+
+**Rollout fence:** block legacy/nonconforming writers before enabling relink.
+The history API covers pre-lock existing rows, not physically purged history;
+never fabricate absence from missing modules, outages or unavailable history.
+Lock-before-reference is mandatory for every trip writer. Implementation
+status, migration names and validation evidence belong to the
+[execution record](../plans/active/2026-10-25-delivery-trip-dispatch.md),
+not to this persistence rule.
 
 ### 6.7 `suppliers` (mở rộng, ngoài MVP)
 
@@ -972,6 +1015,163 @@ ON trip_dispatches (tenant_id, idempotency_key);
 
 Transport chỉ phát `TripDispatched` một lần cho dispatch version. Inventory vẫn
 tự deduplicate event trước khi trừ kho.
+
+### 10.8 Transport cross-service persistence contracts
+
+This section specifies domain contracts within the shared database design;
+it does not change persistence ownership for other services. Task progress and
+test evidence are maintained in the
+[execution record](../plans/active/2026-10-25-delivery-trip-dispatch.md).
+
+Runtime boundary schemas and canonical hash helpers live in
+[`@logix/messaging`](../../libs/messaging/src/interfaces/transport.contract.ts);
+they do not establish production persistence or endpoint availability.
+Contracts validate UUIDs, positive safe-integer versions, decimal strings,
+tenant/aggregate identity and request/receipt binding. Event versions and
+rollout are described in [event architecture](event-architecture.md#14-transport-event-and-integration-contracts).
+API errors use the shared `@logix/errors` envelope and approved domain codes;
+domain-specific codes must not be mistaken for system-wide policy.
+
+| Contract | Persistence requirement | Required integration proof |
+|---|---|---|
+| Shipment claim/release | Transport membership intent; Fulfillment row-locked claim mirror; immutable request/receipt replay | Concurrent claim/direct-dispatch/cancel and restart recovery |
+| Eligible-shipment pool | Authority filters before pagination; stable `createdAt DESC,id DESC`, default 20/max 100 | Count/page correctness, pending membership and tenant isolation |
+| Batch Order grant | Sorted Order locks; all grants or none; exact batch replay | Whole-set cancellation race and crash-after-grant recovery |
+| Transport command preview | Persisted single-use record, 300-second expiry, immutable actor/context/version/payload binding | Atomic consumption/replay, stale versions and tenant switch |
+| Result defer | Durable Fulfillment deferred event; no applied Inbox marker before effect | Result-before-dispatch, restart and contradictory terminal events |
+| Optimizer run | Canonical UTF-8 SHA-256 v1; durable tenant/trip/request/version binding and external run ID | Cross-language parity, persistence/idempotency and stale-result rejection |
+
+The targets below resolve the technical choices under the root specification
+§§5.1, 7.1–7.5, 8–10 and the authorized source-fitted implementation scope.
+They define technical contracts, not claims of an external owner's
+acknowledgement or production behavior. Optimizer/Order/Fulfillment
+implementation evidence remains mandatory before using those integrations
+operationally; phase readiness is recorded separately.
+
+#### Membership and pool
+
+- Transport commits an assignment intent and tenant/shipment-unique pending
+  membership before calling Fulfillment. Fulfillment locks its Shipment row,
+  checks active same-tenant `READY_TO_SHIP`, expected Shipment version and no
+  direct-dispatch/dispatch-grant intent, then records the claim/mirror, incremented
+  version and receipt atomically. `expectedTripVersion` is Transport's validated
+  intent binding, not authority for Fulfillment to read a Transport database.
+- Receipt keys are `(tenantId, requestId)` and bind the full original operation,
+  actor, trip, shipment, versions and reason when present. Same key/exact
+  payload replays before current-state/version checks; changed payload is 409.
+  Receipt query/replay is protected by internal caller+tenant authorization.
+  Unknown/timeout remains PENDING and excludes the shipment from all conflicting
+  commands. Transport completes membership/stops using the version-locked
+  Fulfillment immutable snapshots, never current Master Data.
+- Release requires the original claim/trip/shipment binding and must not clear
+  a newer claim or release after a grant. Lock, mirror-clear, version increment
+  and RELEASED receipt commit together. Transport finishes removal only after
+  receipt; definite pre-grant rejection of any add-batch member compensates the
+  accepted claims via persisted release intents. A canceled Shipment tombstone
+  can complete release cleanup without resurrecting readiness; history remains.
+- Direct dispatch and claim share the Fulfillment Shipment lock; Order cancel
+  is rechecked under the later Order grant lock. No distributed TTL release.
+- Pool authority is Fulfillment Shipment state/snapshot. Transport excludes its
+  active/pending/releasing memberships as well as Fulfillment's non-null claims
+  and pending dispatches **before** count/offset/limit, using protected APIs, not
+  a filtered page or a cross-service database read. The internal pool
+  request supplies Transport's exclusion set to the authoritative query.
+  Readiness, tenant, warehouse and soft-delete filters are identical for items
+  and total. Use offset pages, `createdAt DESC,id DESC`, page >= 1, default
+  pageSize 20/max 100, max page 21,474,836 (matching Fulfillment bounds).
+  No cross-request snapshot-isolation guarantee: refresh/revalidate on mutation.
+
+#### Whole-set dispatch grant
+
+The immutable batch binds tenant, request, trip, actor, approvedPlanId,
+inputHash, trip/dispatch versions and the complete shipment/order/reservation
+set with expected versions. Transport allocates one stable child
+`dispatchRequestId` UUID per Shipment before submission; Fulfillment persists
+these unchanged before HTTP. Order locks Order IDs ascending, validates every
+tenant/reservation/version/cancel state first, then commits the parent decision
+and all child grants in one transaction, or a rejection with zero grants.
+Each child retains the existing tenant+dispatchRequestId single-grant receipt
+semantics. Replay reads the original complete decision before changed versions;
+different actor/set/payload with the same key conflicts. A timeout/5xx is not a
+rejection. After any granted decision Fulfillment and Transport recover forward,
+never release/cancel/rebuild the manifest. Shipment lifecycle/history/outbox and
+each existing grant-compatible child receipt commit locally together.
+Inventory ISSUE remains solely driven by `ShipmentDispatched`, not Trip events.
+
+#### Preview and result defer
+
+Preview is a server-created persisted record with `expiresAt = issuedAt + 300s`
+(`TRANSPORT_PREVIEW_TTL_SECONDS`); `now >= expiresAt` is expired. Bind verified
+tenant/principal, assignee, action/target, all relevant trip/stop/plan versions,
+approved-plan/input hash and the normalized full command payload including
+acting/failure reasons. The exported schemas describe trusted stored/internal
+bindings, not permission to accept tenant/actor/admin fields from public bodies.
+Only a backend-verified Super Admin gets the assignee exception; OWNER/wildcard
+alone does not. Admin stop actions require nonblank actingReason (max 1,000).
+At command acceptance, lock the aggregate/preview, recheck authorization,
+state/versions/hash/expiry, consume once and persist the immutable request intent
+or local effect/receipt in the same local transaction. Exact committed retries
+return the original receipt even after expiry; new/changed/expired requests
+cannot refresh or reuse that preview. No database transaction spans HTTP.
+
+Fulfillment validates the complete version-2 result, producer, tenant, aggregate,
+trip/stop/shipment/attempt and persisted dispatch/claim binding. If a valid result
+arrives before its dispatch projection, persist its exact original envelope and
+payload hash in a deferred table unique by `(tenantId,eventId)`; do not mark it
+as applied/ignored in Inbox. Dispatch commit wakes reconciliation; a background
+worker also retries due rows with the existing configured bounded backoff per
+attempt. There is no TTL-based deletion or rejection of a valid waiting result.
+Apply under the Shipment lock once DISPATCHED and binding matches; Inbox,
+result receipt, terminal Shipment/history/outbox and defer completion commit
+together. A second event ID for the same exact business result replays the
+business receipt; opposite terminal outcome/binding conflicts remain observable
+for operator repair, never overwrite history or falsely count as success.
+
+#### Optimizer canonical input and run identity
+
+Canonical hash v1 uses recursively sorted printable ASCII object keys, compact
+JSON without whitespace, UTF-8 without BOM, SHA-256 lowercase hex. Keep Unicode
+string values unchanged (no NFC normalization); escape strings as JSON, retain
+array order, and reject non-JSON values, negative zero and non-safe-integer
+numbers. Measures use decimal strings, never JSON floating point. The exported
+`canonicalizeTransportPayload`/`hashTransportContractPayload` implement this;
+the golden fixture `{"a":1,"b":2}` hashes to
+`43258cff783fe7036d8a43033f830adfc60ec037382473548ac742b888292777`.
+
+The canonical optimizer document contains `contractVersion`, tenantId, tripId,
+tripVersion, warehouseId, vehicleId, depot (name/address/latitude/longitude),
+vehicle (vehicleId/plateNumber/capacityWeight/capacityVolume/version), and the
+full stops array (stopId/shipmentId/addressSnapshot/demandWeight/demandVolume/
+sequence), plus explicit objective, solver/config/provider versions and options.
+Sort stops by input sequence then stopId; exclude routeRequestId, idempotencyKey,
+timestamps, inputHash and result/run IDs. Normalize UUIDs lowercase; domain
+weight strings have 3 decimal places and volume strings 6, snapshot coordinates
+retain their validated decimal-string representation. Snapshot nulls stay null;
+no missing field is replaced with a sample/default location or vehicle.
+The persisted canonical document is the authority: Python verifies these exact
+bytes/hash before converting validated measures to bounded solver numbers at
+the adapter. Do not compare the existing Python engine/persistence hashes as
+though they already implement this contract.
+
+The durable request record binds canonical hash, tenant/trip/version,
+routeRequestId and UUID idempotencyKey before HTTP. The optimizer echoes that
+binding and returns its persisted `optimizationRunId` (the current external
+`route_plan_id`), not Transport's RoutePlan ID. Same key/exact input returns the
+same run; changed input/key binding is 409. ACCEPTED is not a completed plan;
+COMPLETED requires durable result and completion time, FAILED preserves error
+metadata. The adapter must fail closed on missing input, tenant mismatch,
+not-found, persistence or solver failure; timeout means unknown, query/replay
+the original request. Transport rejects stale proposals as current, retains
+history, and never auto-approves. Shared cross-language full-input parity and
+durable run tests are later integration gates, not unresolved product policy.
+
+Permission catalogue provisioning and role grants remain Identity-owned.
+Operational instructions are in the
+[Identity service README](../../apps/identity-service/README.md#internal-driver-identity-lookup);
+provisioning a catalogue must not implicitly create accounts, tenant grants or
+a new built-in Driver role. Permission identifiers are maintained in
+[`@logix/auth`](../../libs/auth/src/permission-codes.ts), rather than duplicated
+as an export inventory in the database design.
 
 ## 11. `notification-service` - `logix_notification`
 

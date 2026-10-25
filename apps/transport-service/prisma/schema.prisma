@@ -45,6 +45,7 @@ model DeliveryTrip {
   @@unique([tenantId, tripNumber], map: "ux_trips_number")
   @@index([tenantId, status, plannedStartAt], map: "ix_trips_status_schedule")
   @@index([tenantId, warehouseId, status, plannedStartAt], map: "ix_trips_warehouse_status")
+  @@index([tenantId, driverId], map: "ix_trips_driver_history")
   @@map("delivery_trips")
   @@schema("transport")
 }

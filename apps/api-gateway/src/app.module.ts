@@ -1,4 +1,9 @@
-import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { LogixConfigModule } from '@logix/config';
@@ -47,10 +52,12 @@ import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(FulfillmentProxyMiddleware).forRoutes(
-      { path: 'api/v1/shipments', method: RequestMethod.ALL },
-      { path: 'api/v1/shipments/*', method: RequestMethod.ALL },
-    );
+    consumer
+      .apply(FulfillmentProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/shipments', method: RequestMethod.ALL },
+        { path: 'api/v1/shipments/*', method: RequestMethod.ALL },
+      );
     // Chuyển hướng các request Identity sang identity-service
     consumer
       .apply(AuthProxyMiddleware)
@@ -81,6 +88,8 @@ export class AppModule implements NestModule {
         { path: 'api/v1/warehouses/*', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles/*', method: RequestMethod.ALL },
+        { path: 'api/v1/drivers', method: RequestMethod.ALL },
+        { path: 'api/v1/drivers/*', method: RequestMethod.ALL },
       );
 
     consumer

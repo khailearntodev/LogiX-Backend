@@ -56,6 +56,8 @@ export {
 } from "./kafka-event-consumer.js";
 export type { OutboxDatabase } from "./prisma-outbox.store.js";
 export * from "./interfaces/shipment.contract.js";
+export * from "./interfaces/transport.contract.js";
+export * from "./interfaces/transport-hash.js";
 export type {
   AuthorizeOrderDispatchRequest,
   OrderDispatchGrant,

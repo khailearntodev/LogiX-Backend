@@ -168,10 +168,38 @@ model Driver {
   updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   version       BigInt    @default(1)
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz(6)
+  linkLockedAt  DateTime? @map("link_locked_at") @db.Timestamptz(6)
 
   @@unique([tenantId, code], map: "ux_drivers_tenant_code")
   @@unique([tenantId, userId], map: "ux_drivers_tenant_user")
   @@unique([tenantId, licenseNumber], map: "ux_drivers_tenant_license")
   @@map("drivers")
+  @@schema("master_data")
+}
+
+model OutboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventType        String    @map("event_type") @db.VarChar(100)
+  eventVersion     Int       @map("event_version")
+  aggregateType    String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId      String    @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt    @map("aggregate_version")
+  correlationId    String    @map("correlation_id") @db.Uuid
+  causationId      String?   @map("causation_id") @db.Uuid
+  payload          Json      @db.JsonB
+  occurredAt       DateTime  @map("occurred_at") @db.Timestamptz(6)
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz(6)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([tenantId, aggregateType, aggregateId, aggregateVersion], map: "ix_outbox_aggregate")
+  @@index([publishedAt, nextAttemptAt], map: "ix_outbox_pending")
+  @@map("outbox_events")
   @@schema("master_data")
 }

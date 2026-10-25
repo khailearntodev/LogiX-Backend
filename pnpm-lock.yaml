@@ -425,6 +425,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0
@@ -694,6 +697,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0
@@ -988,6 +994,9 @@ importers:
 
   apps/transport-service:
     dependencies:
+      '@logix/auth':
+        specifier: workspace:*
+        version: link:../../libs/auth
       '@logix/common':
         specifier: workspace:*
         version: link:../../libs/common
@@ -1021,6 +1030,15 @@ importers:
       '@prisma/client':
         specifier: 7.10.0
         version: 7.10.0(prisma@7.10.0(@types/react@19.2.18)(magicast@0.5.4)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3))(typescript@6.0.3)
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.15.1
+        version: 0.15.1
+      dotenv:
+        specifier: ^17.4.2
+        version: 17.4.2
       pg:
         specifier: ^8.23.0
         version: 8.23.0
@@ -1030,6 +1048,9 @@ importers:
       rxjs:
         specifier: ^7.8.1
         version: 7.8.2
+      zod:
+        specifier: ^3.25.67
+        version: 3.25.76
     devDependencies:
       '@nestjs/cli':
         specifier: ^12.0.0

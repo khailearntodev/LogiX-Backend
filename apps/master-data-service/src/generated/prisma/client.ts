@@ -77,3 +77,8 @@ export type Vehicle = Prisma.VehicleModel
  * 
  */
 export type Driver = Prisma.DriverModel
+/**
+ * Model OutboxEvent
+ *
+ */
+export type OutboxEvent = Prisma.OutboxEventModel

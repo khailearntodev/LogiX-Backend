@@ -16,7 +16,8 @@
     "build": "tsc",
     "lint": "oxlint src/",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.config.integration.ts"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",

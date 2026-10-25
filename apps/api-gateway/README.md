@@ -23,6 +23,13 @@
 
 ## Description
 
+Driver master-data routes `/api/v1/drivers` and child paths proxy to
+`MASTER_DATA_SERVICE_URL`. That origin is now required/validated, with no
+implicit localhost fallback. Existing customer/product/warehouse/vehicle routes
+use the same explicit target. Identity's `/internal/driver-users` routes are
+deliberately not proxied publicly. Driver authentication and authorization remain
+in the owning service; adding a proxy route does not grant permissions.
+
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Project setup

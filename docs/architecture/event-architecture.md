@@ -233,3 +233,73 @@ event ID checks the persisted shipment/request receipt, not only Inbox.
 Stock movements emit `StockIssued`, never `InventoryAdjusted` for ISSUE.
 Permanent malformed events retain the existing observable retry/blocking
 behavior; automatic DLQ and full phase-5 benchmark remain separate work.
+
+## 14. Transport event and integration contracts
+
+The envelope, outbox/Inbox and ownership rules above remain system-wide.
+This section specializes them for Transport; its versions and protocols do not
+silently replace contracts used by other domains. Implementation progress and
+test results belong to the
+[execution record](../plans/active/2026-10-25-delivery-trip-dispatch.md).
+
+Runtime Transport event schemas are owned by
+[`@logix/messaging`](../../libs/messaging/src/interfaces/transport.contract.ts).
+Schema availability does not prove producer, consumer, relay or recovery
+integration. Existing version-1 interfaces remain backward compatible.
+
+The `DeliveryCompleted`/`DeliveryFailed` result envelope schema is event
+version 2 and requires a non-null `actorId`. Its payload binds the tenant and
+trip aggregate and carries `driverId` and `assigneeUserId` separately from the
+acting principal. An authorized user acting for the assignee is valid; the
+envelope actor must not be inferred from, or replaced with, the assignee.
+Event/payload tenant mismatch, payload trip/aggregate mismatch, event/outcome
+mismatch and malformed identity/version values must be rejected.
+
+Related command and receipt contracts cover:
+
+- versioned, idempotency-keyed claim and release request/receipt shapes;
+- READY_TO_SHIP pool page shape, default 20/max 100, stable createdAt/id descending;
+- whole-set batch grant request and all-or-none decision shapes;
+- actor/assignee/target/version/payload-bound preview and confirmation shape;
+- delivery-result defer receipt for `DISPATCH_PROJECTION_NOT_READY`; and
+- optimizer request/run identity bound to tenant, trip, request, and input hash.
+
+The persistence requirements for claim/release locking/replay, pool filtering/pagination,
+whole-set grant persistence/recovery, 300-second single-use preview, durable
+result defer/reconciliation and canonical UTF-8 SHA-256 optimizer run binding
+are recorded in [database design §10.8](database-design.md#108-transport-cross-service-persistence-contracts).
+The existing version-1 minimal `TripDispatched` and delivery event interfaces are
+not silently widened; consumers must opt into the version-2 result contract
+through an explicitly coordinated rollout.
+
+## 15. Domain audit event: Driver account-link correction
+
+This event applies the existing system audit vocabulary to one domain action;
+it does not introduce a second audit authority or a mandatory event shape for
+unrelated business actions.
+
+Master Data owns `outbox_events` rows for `DriverUserRelinked`
+event version 1. Driver CAS and outbox insert are one local transaction; an audit
+insert failure rolls back the user/version change. Preview and all rejected
+commands create no success event. The event carries tenant, Driver aggregate and
+new version, UUID correlation/source-event identity and occurrence time.
+Its payload uses the existing AuditLog vocabulary:
+`actorId` from the authenticated JWT (not new/old assignee or request body),
+`actorType=USER`, `action=driver.relink-user`, `entityType=Driver`, `entityId`,
+`outcome=SUCCESS`, before/after user IDs and versions, `metadata.reason`,
+correlation/causation, source service/event ID and timestamp. It does not copy
+email/display names into the event or log the reason/payload.
+
+This is durable **local pending audit evidence**, not a new audit authority.
+Audit Service remains authoritative for centralized immutable audit queries.
+Local persistence alone does not establish relay or Audit ingestion.
+Delivery status and observed integration evidence belong to the execution
+record, not to this event's ownership contract.
+Existing standard outbox fields (`published_at`, attempts, next-attempt,
+last-error and aggregate ordering index) retain compatibility with the shared
+relay store for that later integration. Operators must retain pending evidence
+until an authorized relay/consumer rollout has been proven.
+
+The separate read-only preview is not the persisted, single-use 300-second Transport
+command preview foundation in §14. Relink uses explicit old-user/version binding
+and full revalidation on confirmation; no token or reservation is issued.

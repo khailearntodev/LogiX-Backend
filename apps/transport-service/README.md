@@ -23,6 +23,44 @@
 
 ## Description
 
+### Driver usage / permanent link-lock integration
+
+`GET /api/v1/internal/drivers/:id/usage` is a service-only read endpoint.
+The shared internal JWT guard requires an allowlisted `master-data-service`
+issuer, Transport audience, valid signature/expiry and UUID tenant. Response:
+`{ tenantId, driverId, used }`. It queries **all** tenant+driver DeliveryTrip rows:
+draft, canceled, completed and soft-deleted history count. It must never return
+unused when the database is unavailable. No cross-service database reads occur.
+The `(tenant_id, driver_id)` nonpartial index supports this historical lookup.
+The application now uses the `/api/v1` prefix and strict validation.
+
+Set the required values in [.env.example](.env.example). Missing/short internal
+secret fails startup; no insecure defaults or usage-disable configuration exist.
+Deploy the usage endpoint and migrations before enabling Master Data relinking.
+
+**Mandatory prerequisite for future trip writers (Phase 2):** before every
+first draft/reference/reassignment/import, call Master Data's signed internal
+`POST /api/v1/internal/drivers/:id/link-lock` with `{ version, expectedUserId }`.
+Use a `transport-service` issuer, `master-data-service` audience and the assignment
+tenant. A successful response `{ driverId, userId, version }` supplies the binding
+to use; mismatched/stale responses or outage must abort assignment. The lock
+is permanent, even if insertion later fails, a trip cancels, or references are
+removed. Same-binding retries are idempotent after lost responses; a stale retry
+requires rereading/revalidating the profile. Never clear a lock or infer failure
+from timeout. Complete this lock call before opening the Transport write
+transaction; do not hold DB locks during HTTP.
+
+Fence all legacy writers before relink rollout. Existing pre-lock history is
+checked through this endpoint; physically purged pre-rollout history cannot be
+reconstructed by it and must not be assumed absent. There are currently no
+production trip mutation APIs; this addition does not create one or implement
+the future assignment flow.
+
+Run `pnpm --filter transport-service test`, `lint`, `build` and
+`pnpm --filter master-data-service test:drivers:integration` from the backend
+root. The latter owns isolated PostgreSQL schemas and real signed HTTP calls,
+including draft/deleted history, lock/relink races, retries and outage.
+
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Project setup
