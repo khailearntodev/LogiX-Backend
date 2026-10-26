@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -170,13 +170,13 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             MethodComparisonItem(
                 method_name="Baseline: Nearest Neighbor Greedy",
                 total_distance_km=route_out.baseline_nearest_neighbor_km,
-                estimated_duration_minutes=max(1, int(round(route_out.total_duration_minutes * 1.1))),
+                estimated_duration_minutes=max(1, round(route_out.total_duration_minutes * 1.1)),
                 difference_from_optimal_km=max(0.0, round(route_out.baseline_nearest_neighbor_km - route_out.total_distance_km, 2)),
             ),
             MethodComparisonItem(
                 method_name="Baseline: Original Input Order",
                 total_distance_km=route_out.baseline_input_order_km,
-                estimated_duration_minutes=max(1, int(round(route_out.total_duration_minutes * 1.25))),
+                estimated_duration_minutes=max(1, round(route_out.total_duration_minutes * 1.25)),
                 difference_from_optimal_km=max(0.0, round(route_out.baseline_input_order_km - route_out.total_distance_km, 2)),
             ),
         ]

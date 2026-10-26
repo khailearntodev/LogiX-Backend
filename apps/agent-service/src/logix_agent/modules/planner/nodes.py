@@ -22,6 +22,7 @@ from logix_agent.modules.ai.errors import (
 )
 from logix_agent.modules.auth import Actor
 from logix_agent.modules.confirmations.service import ConfirmationService
+from logix_agent.modules.planner.prompts import get_planner_system_prompt
 from logix_agent.modules.planner.state import PlannerState
 from logix_agent.modules.registry.errors import (
     ApprovalRequiredError,
@@ -34,16 +35,7 @@ from logix_agent.modules.tools.langchain_adapter import tools_for_actor
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = (
-    "You are LogiX Copilot, an intelligent assistant for a B2B logistics platform. "
-    "Reply in the language the user writes in and keep answers concise. "
-    "Use the available tools to read or update business data; never invent data. "
-    "When asked to plan or optimize delivery routes, use propose_trip_route to analyze "
-    "the optimal stop sequence on the OSRM road network, summarize the distance savings "
-    "compared to baselines, and ask the dispatcher for explicit approval. "
-    "For sensitive actions (such as confirming sales orders or approving delivery routes), "
-    "a confirmation preview will be requested automatically before any modification is executed."
-)
+SYSTEM_PROMPT = get_planner_system_prompt("v1")
 
 _STATUS_MESSAGES = {
     400: "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.",
@@ -134,10 +126,12 @@ def create_agent_node(model: Any, registry: ToolRegistry):
             except NotImplementedError:
                 bound_model = model
 
+        prompt_version = str(config.get("configurable", {}).get("prompt_policy_version", "v1"))
+        active_prompt = get_planner_system_prompt(prompt_version)
         history = list(state.get("messages", []))
         # Ensure system prompt is present at the front of conversation
         if not history or not isinstance(history[0], SystemMessage):
-            history = [SystemMessage(content=SYSTEM_PROMPT), *history]
+            history = [SystemMessage(content=active_prompt), *history]
 
         tool_names = [t.name for t in tools] if tools else []
         logger.info(

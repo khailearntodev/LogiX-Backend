@@ -22,6 +22,7 @@ from logix_agent.modules.ai.ports import ModelGateway
 from logix_agent.modules.confirmations.service import (
     ConfirmationService,
     InMemoryConfirmationStore,
+    SqlAlchemyConfirmationStore,
 )
 from logix_agent.modules.planner.checkpointer import create_checkpointer
 from logix_agent.modules.tools.catalog import build_tool_registry
@@ -84,7 +85,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.tool_registry = build_tool_registry(service_client)
 
     checkpointer = create_checkpointer(settings)
-    confirmation_store = InMemoryConfirmationStore()
+    if session_factory is not None and settings.database_url and settings.environment != "development":
+        try:
+            confirmation_store = SqlAlchemyConfirmationStore(session_factory)
+            logger.info("Using SqlAlchemyConfirmationStore with PostgreSQL persistence.")
+        except Exception as exc:
+            logger.warning("Failed to initialize SqlAlchemyConfirmationStore (%s), falling back to InMemory.", exc)
+            confirmation_store = InMemoryConfirmationStore()
+    else:
+        confirmation_store = InMemoryConfirmationStore()
     app.state.confirmation_service = ConfirmationService(confirmation_store)
 
     try:
