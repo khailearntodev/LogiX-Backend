@@ -1,11 +1,19 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 
 from logix_forecast.engine.baselines import (
     moving_average_7_forecast,
     naive_forecast,
     seasonal_naive_7_forecast,
+)
+from logix_forecast.engine.fallback import check_fallback_condition
+from logix_forecast.engine.metrics import (
+    ZERO_ACTUAL_POLICY_FILTER,
+    compute_mae,
+    compute_mape_with_policy,
+    compute_rmse,
+    evaluate_method_metrics,
 )
 from logix_forecast.engine.preprocessor import fill_missing_dates
 from logix_forecast.engine.schemas import DemandObservationIn
@@ -40,3 +48,84 @@ def test_baselines_naive_ma7_and_seasonal_naive() -> None:
     assert naive == [70.0] * 7
     assert ma7 == [40.0] * 7
     assert snaive == [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0]
+
+
+def test_metrics_zero_actual_policy_and_rmse() -> None:
+    y_true = [0.0, 10.0, 0.0, 20.0]
+    y_pred = [2.0, 12.0, 1.0, 16.0]
+
+    rmse = compute_rmse(y_true, y_pred)
+    mae = compute_mae(y_true, y_pred)
+    mape_res = compute_mape_with_policy(y_true, y_pred)
+
+    assert rmse == 2.5
+    assert mae == 2.25
+    assert mape_res.zero_actual_policy == ZERO_ACTUAL_POLICY_FILTER
+    assert mape_res.total_point_count == 4
+    assert mape_res.eligible_point_count == 2
+    assert mape_res.mape == 20.0
+
+    summary = evaluate_method_metrics(
+        y_true=y_true,
+        y_pred=y_pred,
+        method_name="Meta Prophet",
+        method_type="MODEL",
+        evaluation_start_date=date(2026, 10, 1),
+        evaluation_end_date=date(2026, 10, 4),
+    )
+    assert summary.eligible_point_count == 2
+    assert summary.total_point_count == 4
+    assert summary.mape == 20.0
+
+
+def test_metrics_all_zero_actuals_returns_none_mape_without_error() -> None:
+    y_true = [0.0, 0.0, 0.0]
+    y_pred = [1.0, 2.0, 3.0]
+
+    mape_res = compute_mape_with_policy(y_true, y_pred)
+    assert mape_res.mape is None
+    assert mape_res.eligible_point_count == 0
+    assert mape_res.total_point_count == 3
+    assert compute_rmse(y_true, y_pred) > 0.0
+
+
+def test_fallback_triggers_on_short_history_or_high_sparsity() -> None:
+    # Case 1: Only 10 days (< 14 days threshold)
+    short_obs = [
+        DemandObservationIn(
+            demand_date=date(2026, 10, 1) + timedelta(days=i),
+            fulfilled_quantity=15.0,
+        )
+        for i in range(10)
+    ]
+    short_series = fill_missing_dates(short_obs)
+    short_decision = check_fallback_condition(short_series, min_observations=14)
+    assert short_decision.should_fallback is True
+    assert short_decision.confidence_level == 0.50
+    assert short_decision.reason is not None and "INSUFFICIENT_HISTORY" in short_decision.reason
+
+    # Case 2: 20 days span, but only 2 non-zero days (90% zeros > 85% threshold)
+    sparse_obs = [
+        DemandObservationIn(demand_date=date(2026, 10, 1), fulfilled_quantity=5.0),
+        DemandObservationIn(demand_date=date(2026, 10, 20), fulfilled_quantity=8.0),
+    ]
+    sparse_series = fill_missing_dates(sparse_obs)
+    sparse_decision = check_fallback_condition(sparse_series, min_observations=14)
+    assert sparse_series.total_days == 20
+    assert sparse_decision.should_fallback is True
+    assert sparse_decision.confidence_level == 0.50
+    assert sparse_decision.reason is not None and "EXTREME_ZERO_SPARSITY" in sparse_decision.reason
+
+    # Case 3: Healthy 20-day series
+    healthy_obs = [
+        DemandObservationIn(
+            demand_date=date(2026, 10, 1) + timedelta(days=i),
+            fulfilled_quantity=20.0 + i,
+        )
+        for i in range(20)
+    ]
+    healthy_series = fill_missing_dates(healthy_obs)
+    healthy_decision = check_fallback_condition(healthy_series, min_observations=14)
+    assert healthy_decision.should_fallback is False
+    assert healthy_decision.reason is None
+    assert healthy_decision.confidence_level == 0.80
