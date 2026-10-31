@@ -47,6 +47,7 @@ export type ShipmentDispatchIntentMinAggregateOutputType = {
   actorId: string | null
   correlationId: string | null
   status: string | null
+  batchId: string | null
   rejectionReason: string | null
   attemptCount: number | null
   nextAttemptAt: Date | null
@@ -63,6 +64,7 @@ export type ShipmentDispatchIntentMaxAggregateOutputType = {
   actorId: string | null
   correlationId: string | null
   status: string | null
+  batchId: string | null
   rejectionReason: string | null
   attemptCount: number | null
   nextAttemptAt: Date | null
@@ -79,6 +81,8 @@ export type ShipmentDispatchIntentCountAggregateOutputType = {
   actorId: number
   correlationId: number
   status: number
+  batchId: number
+  grantReceipt: number
   rejectionReason: number
   attemptCount: number
   nextAttemptAt: number
@@ -109,6 +113,7 @@ export type ShipmentDispatchIntentMinAggregateInputType = {
   actorId?: true
   correlationId?: true
   status?: true
+  batchId?: true
   rejectionReason?: true
   attemptCount?: true
   nextAttemptAt?: true
@@ -125,6 +130,7 @@ export type ShipmentDispatchIntentMaxAggregateInputType = {
   actorId?: true
   correlationId?: true
   status?: true
+  batchId?: true
   rejectionReason?: true
   attemptCount?: true
   nextAttemptAt?: true
@@ -141,6 +147,8 @@ export type ShipmentDispatchIntentCountAggregateInputType = {
   actorId?: true
   correlationId?: true
   status?: true
+  batchId?: true
+  grantReceipt?: true
   rejectionReason?: true
   attemptCount?: true
   nextAttemptAt?: true
@@ -244,6 +252,8 @@ export type ShipmentDispatchIntentGroupByOutputType = {
   actorId: string
   correlationId: string
   status: string
+  batchId: string | null
+  grantReceipt: runtime.JsonValue | null
   rejectionReason: string | null
   attemptCount: number
   nextAttemptAt: Date
@@ -283,6 +293,8 @@ export type ShipmentDispatchIntentWhereInput = {
   actorId?: Prisma.UuidFilter<"ShipmentDispatchIntent"> | string
   correlationId?: Prisma.UuidFilter<"ShipmentDispatchIntent"> | string
   status?: Prisma.StringFilter<"ShipmentDispatchIntent"> | string
+  batchId?: Prisma.UuidNullableFilter<"ShipmentDispatchIntent"> | string | null
+  grantReceipt?: Prisma.JsonNullableFilter<"ShipmentDispatchIntent">
   rejectionReason?: Prisma.StringNullableFilter<"ShipmentDispatchIntent"> | string | null
   attemptCount?: Prisma.IntFilter<"ShipmentDispatchIntent"> | number
   nextAttemptAt?: Prisma.DateTimeFilter<"ShipmentDispatchIntent"> | Date | string
@@ -300,6 +312,8 @@ export type ShipmentDispatchIntentOrderByWithRelationInput = {
   actorId?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  batchId?: Prisma.SortOrderInput | Prisma.SortOrder
+  grantReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
   rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
   nextAttemptAt?: Prisma.SortOrder
@@ -320,6 +334,8 @@ export type ShipmentDispatchIntentWhereUniqueInput = Prisma.AtLeast<{
   actorId?: Prisma.UuidFilter<"ShipmentDispatchIntent"> | string
   correlationId?: Prisma.UuidFilter<"ShipmentDispatchIntent"> | string
   status?: Prisma.StringFilter<"ShipmentDispatchIntent"> | string
+  batchId?: Prisma.UuidNullableFilter<"ShipmentDispatchIntent"> | string | null
+  grantReceipt?: Prisma.JsonNullableFilter<"ShipmentDispatchIntent">
   rejectionReason?: Prisma.StringNullableFilter<"ShipmentDispatchIntent"> | string | null
   attemptCount?: Prisma.IntFilter<"ShipmentDispatchIntent"> | number
   nextAttemptAt?: Prisma.DateTimeFilter<"ShipmentDispatchIntent"> | Date | string
@@ -337,6 +353,8 @@ export type ShipmentDispatchIntentOrderByWithAggregationInput = {
   actorId?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  batchId?: Prisma.SortOrderInput | Prisma.SortOrder
+  grantReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
   rejectionReason?: Prisma.SortOrderInput | Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
   nextAttemptAt?: Prisma.SortOrder
@@ -361,6 +379,8 @@ export type ShipmentDispatchIntentScalarWhereWithAggregatesInput = {
   actorId?: Prisma.UuidWithAggregatesFilter<"ShipmentDispatchIntent"> | string
   correlationId?: Prisma.UuidWithAggregatesFilter<"ShipmentDispatchIntent"> | string
   status?: Prisma.StringWithAggregatesFilter<"ShipmentDispatchIntent"> | string
+  batchId?: Prisma.UuidNullableWithAggregatesFilter<"ShipmentDispatchIntent"> | string | null
+  grantReceipt?: Prisma.JsonNullableWithAggregatesFilter<"ShipmentDispatchIntent">
   rejectionReason?: Prisma.StringNullableWithAggregatesFilter<"ShipmentDispatchIntent"> | string | null
   attemptCount?: Prisma.IntWithAggregatesFilter<"ShipmentDispatchIntent"> | number
   nextAttemptAt?: Prisma.DateTimeWithAggregatesFilter<"ShipmentDispatchIntent"> | Date | string
@@ -376,6 +396,8 @@ export type ShipmentDispatchIntentCreateInput = {
   actorId: string
   correlationId: string
   status: string
+  batchId?: string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: string | null
   attemptCount?: number
   nextAttemptAt?: Date | string
@@ -393,6 +415,8 @@ export type ShipmentDispatchIntentUncheckedCreateInput = {
   actorId: string
   correlationId: string
   status: string
+  batchId?: string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: string | null
   attemptCount?: number
   nextAttemptAt?: Date | string
@@ -408,6 +432,8 @@ export type ShipmentDispatchIntentUpdateInput = {
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  batchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -425,6 +451,8 @@ export type ShipmentDispatchIntentUncheckedUpdateInput = {
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  batchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -441,6 +469,8 @@ export type ShipmentDispatchIntentCreateManyInput = {
   actorId: string
   correlationId: string
   status: string
+  batchId?: string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: string | null
   attemptCount?: number
   nextAttemptAt?: Date | string
@@ -456,6 +486,8 @@ export type ShipmentDispatchIntentUpdateManyMutationInput = {
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  batchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -472,6 +504,8 @@ export type ShipmentDispatchIntentUncheckedUpdateManyInput = {
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  batchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -493,6 +527,8 @@ export type ShipmentDispatchIntentCountOrderByAggregateInput = {
   actorId?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  batchId?: Prisma.SortOrder
+  grantReceipt?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
   nextAttemptAt?: Prisma.SortOrder
@@ -515,6 +551,7 @@ export type ShipmentDispatchIntentMaxOrderByAggregateInput = {
   actorId?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  batchId?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
   nextAttemptAt?: Prisma.SortOrder
@@ -531,6 +568,7 @@ export type ShipmentDispatchIntentMinOrderByAggregateInput = {
   actorId?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   status?: Prisma.SortOrder
+  batchId?: Prisma.SortOrder
   rejectionReason?: Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
   nextAttemptAt?: Prisma.SortOrder
@@ -592,6 +630,8 @@ export type ShipmentDispatchIntentCreateWithoutShipmentInput = {
   actorId: string
   correlationId: string
   status: string
+  batchId?: string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: string | null
   attemptCount?: number
   nextAttemptAt?: Date | string
@@ -607,6 +647,8 @@ export type ShipmentDispatchIntentUncheckedCreateWithoutShipmentInput = {
   actorId: string
   correlationId: string
   status: string
+  batchId?: string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: string | null
   attemptCount?: number
   nextAttemptAt?: Date | string
@@ -638,6 +680,8 @@ export type ShipmentDispatchIntentUpdateWithoutShipmentInput = {
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  batchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -653,6 +697,8 @@ export type ShipmentDispatchIntentUncheckedUpdateWithoutShipmentInput = {
   actorId?: Prisma.StringFieldUpdateOperationsInput | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
+  batchId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  grantReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rejectionReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
   nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -671,6 +717,8 @@ export type ShipmentDispatchIntentSelect<ExtArgs extends runtime.Types.Extension
   actorId?: boolean
   correlationId?: boolean
   status?: boolean
+  batchId?: boolean
+  grantReceipt?: boolean
   rejectionReason?: boolean
   attemptCount?: boolean
   nextAttemptAt?: boolean
@@ -688,6 +736,8 @@ export type ShipmentDispatchIntentSelectCreateManyAndReturn<ExtArgs extends runt
   actorId?: boolean
   correlationId?: boolean
   status?: boolean
+  batchId?: boolean
+  grantReceipt?: boolean
   rejectionReason?: boolean
   attemptCount?: boolean
   nextAttemptAt?: boolean
@@ -705,6 +755,8 @@ export type ShipmentDispatchIntentSelectUpdateManyAndReturn<ExtArgs extends runt
   actorId?: boolean
   correlationId?: boolean
   status?: boolean
+  batchId?: boolean
+  grantReceipt?: boolean
   rejectionReason?: boolean
   attemptCount?: boolean
   nextAttemptAt?: boolean
@@ -722,6 +774,8 @@ export type ShipmentDispatchIntentSelectScalar = {
   actorId?: boolean
   correlationId?: boolean
   status?: boolean
+  batchId?: boolean
+  grantReceipt?: boolean
   rejectionReason?: boolean
   attemptCount?: boolean
   nextAttemptAt?: boolean
@@ -729,7 +783,7 @@ export type ShipmentDispatchIntentSelectScalar = {
   updatedAt?: boolean
 }
 
-export type ShipmentDispatchIntentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentId" | "orderVersion" | "shipmentVersion" | "actorId" | "correlationId" | "status" | "rejectionReason" | "attemptCount" | "nextAttemptAt" | "createdAt" | "updatedAt", ExtArgs["result"]["shipmentDispatchIntent"]>
+export type ShipmentDispatchIntentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "shipmentId" | "orderVersion" | "shipmentVersion" | "actorId" | "correlationId" | "status" | "batchId" | "grantReceipt" | "rejectionReason" | "attemptCount" | "nextAttemptAt" | "createdAt" | "updatedAt", ExtArgs["result"]["shipmentDispatchIntent"]>
 export type ShipmentDispatchIntentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   shipment?: boolean | Prisma.ShipmentDefaultArgs<ExtArgs>
 }
@@ -754,6 +808,8 @@ export type $ShipmentDispatchIntentPayload<ExtArgs extends runtime.Types.Extensi
     actorId: string
     correlationId: string
     status: string
+    batchId: string | null
+    grantReceipt: runtime.JsonValue | null
     rejectionReason: string | null
     attemptCount: number
     nextAttemptAt: Date
@@ -1191,6 +1247,8 @@ export interface ShipmentDispatchIntentFieldRefs {
   readonly actorId: Prisma.FieldRef<"ShipmentDispatchIntent", 'String'>
   readonly correlationId: Prisma.FieldRef<"ShipmentDispatchIntent", 'String'>
   readonly status: Prisma.FieldRef<"ShipmentDispatchIntent", 'String'>
+  readonly batchId: Prisma.FieldRef<"ShipmentDispatchIntent", 'String'>
+  readonly grantReceipt: Prisma.FieldRef<"ShipmentDispatchIntent", 'Json'>
   readonly rejectionReason: Prisma.FieldRef<"ShipmentDispatchIntent", 'String'>
   readonly attemptCount: Prisma.FieldRef<"ShipmentDispatchIntent", 'Int'>
   readonly nextAttemptAt: Prisma.FieldRef<"ShipmentDispatchIntent", 'DateTime'>

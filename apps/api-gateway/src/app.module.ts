@@ -18,6 +18,7 @@ import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.
 import { OrderProxyMiddleware } from './proxy/order-proxy.middleware.js';
 import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware.js';
+import { TransportProxyMiddleware } from './proxy/transport-proxy.middleware.js';
 
 @Module({
   imports: [
@@ -52,6 +53,14 @@ import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(TransportProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/trips', method: RequestMethod.ALL },
+        { path: 'api/v1/trips/*', method: RequestMethod.ALL },
+        { path: 'api/v1/driver/trips', method: RequestMethod.ALL },
+        { path: 'api/v1/driver/trips/*', method: RequestMethod.ALL },
+      );
     consumer
       .apply(FulfillmentProxyMiddleware)
       .forRoutes(

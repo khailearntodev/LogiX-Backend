@@ -16,7 +16,7 @@ export interface LogixConfigModuleOptions {
   schema?: ZodObject<ZodRawShape>;
 
   /**
-   * Path(s) to .env files. Defaults to `.env`.
+   * Path(s) to environment files. Defaults to DOTENV_CONFIG_PATH, then `.env`.
    */
   envFilePath?: string | string[];
 }
@@ -52,7 +52,7 @@ export class LogixConfigModule {
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
-          envFilePath: options.envFilePath ?? '.env',
+          envFilePath: options.envFilePath ?? process.env.DOTENV_CONFIG_PATH ?? '.env',
           validate: (config: Record<string, unknown>) => {
             const result = mergedSchema.safeParse(config);
             if (!result.success) {

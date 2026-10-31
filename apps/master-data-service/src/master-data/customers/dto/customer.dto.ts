@@ -1,16 +1,20 @@
 import {
+  IsOptional,
   IsEmail,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateCustomerDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
-  @IsNotEmpty({ message: 'Mã khách hàng không được để trống' })
   @MaxLength(50)
-  code!: string;
+  code?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Tên khách hàng không được để trống' })
@@ -34,6 +38,14 @@ export class CreateCustomerDto {
 }
 
 export class UpdateCustomerDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MaxLength(50)
+  code?: string;
+
   @IsOptional()
   @IsString()
   @IsNotEmpty({ message: 'Tên khách hàng không được để trống' })

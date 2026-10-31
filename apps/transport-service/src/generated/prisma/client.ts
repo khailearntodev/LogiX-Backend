@@ -86,3 +86,8 @@ export type OutboxEvent = Prisma.OutboxEventModel
  * 
  */
 export type InboxEvent = Prisma.InboxEventModel
+/**
+ * Model TripOperation
+ * 
+ */
+export type TripOperation = Prisma.TripOperationModel

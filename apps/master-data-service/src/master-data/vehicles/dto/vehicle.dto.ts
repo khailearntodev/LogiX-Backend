@@ -1,10 +1,11 @@
 import {
-  IsNotEmpty,
   IsOptional,
+  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 /** Decimal(18,3), strictly positive per ck_vehicles_capacity_weight. */
 const CAPACITY_WEIGHT = /^(?!0+(\.0{1,3})?$)\d{1,15}(\.\d{1,3})?$/;
@@ -12,10 +13,13 @@ const CAPACITY_WEIGHT = /^(?!0+(\.0{1,3})?$)\d{1,15}(\.\d{1,3})?$/;
 const CAPACITY_VOLUME = /^(?!0+(\.0{1,6})?$)\d{1,12}(\.\d{1,6})?$/;
 
 export class CreateVehicleDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
-  @IsNotEmpty({ message: 'Mã phương tiện không được để trống' })
   @MaxLength(50)
-  code!: string;
+  code?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Biển số không được để trống' })
@@ -24,18 +28,28 @@ export class CreateVehicleDto {
 
   @IsString()
   @Matches(CAPACITY_WEIGHT, {
-    message: 'capacityWeight phải là chuỗi số lớn hơn 0, tối đa 3 chữ số thập phân',
+    message:
+      'capacityWeight phải là chuỗi số lớn hơn 0, tối đa 3 chữ số thập phân',
   })
   capacityWeight!: string;
 
   @IsString()
   @Matches(CAPACITY_VOLUME, {
-    message: 'capacityVolume phải là chuỗi số lớn hơn 0, tối đa 6 chữ số thập phân',
+    message:
+      'capacityVolume phải là chuỗi số lớn hơn 0, tối đa 6 chữ số thập phân',
   })
   capacityVolume!: string;
 }
 
 export class UpdateVehicleDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MaxLength(50)
+  code?: string;
+
   @IsOptional()
   @IsString()
   @IsNotEmpty({ message: 'Biển số không được để trống' })
@@ -45,14 +59,16 @@ export class UpdateVehicleDto {
   @IsOptional()
   @IsString()
   @Matches(CAPACITY_WEIGHT, {
-    message: 'capacityWeight phải là chuỗi số lớn hơn 0, tối đa 3 chữ số thập phân',
+    message:
+      'capacityWeight phải là chuỗi số lớn hơn 0, tối đa 3 chữ số thập phân',
   })
   capacityWeight?: string;
 
   @IsOptional()
   @IsString()
   @Matches(CAPACITY_VOLUME, {
-    message: 'capacityVolume phải là chuỗi số lớn hơn 0, tối đa 6 chữ số thập phân',
+    message:
+      'capacityVolume phải là chuỗi số lớn hơn 0, tối đa 6 chữ số thập phân',
   })
   capacityVolume?: string;
 }

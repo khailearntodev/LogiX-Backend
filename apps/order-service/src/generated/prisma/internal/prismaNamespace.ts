@@ -398,6 +398,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   SalesOrder: 'SalesOrder',
+  OrderDispatchBatch: 'OrderDispatchBatch',
   OrderNumberSequence: 'OrderNumberSequence',
   OrderLine: 'OrderLine',
   OrderStatusHistory: 'OrderStatusHistory',
@@ -419,7 +420,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "salesOrder" | "orderNumberSequence" | "orderLine" | "orderStatusHistory" | "orderShortage" | "outboxEvent" | "inboxEvent"
+    modelProps: "salesOrder" | "orderDispatchBatch" | "orderNumberSequence" | "orderLine" | "orderStatusHistory" | "orderShortage" | "outboxEvent" | "inboxEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -494,6 +495,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.SalesOrderCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.SalesOrderCountAggregateOutputType> | number
+        }
+      }
+    }
+    OrderDispatchBatch: {
+      payload: Prisma.$OrderDispatchBatchPayload<ExtArgs>
+      fields: Prisma.OrderDispatchBatchFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OrderDispatchBatchFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OrderDispatchBatchFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>
+        }
+        findFirst: {
+          args: Prisma.OrderDispatchBatchFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OrderDispatchBatchFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>
+        }
+        findMany: {
+          args: Prisma.OrderDispatchBatchFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>[]
+        }
+        create: {
+          args: Prisma.OrderDispatchBatchCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>
+        }
+        createMany: {
+          args: Prisma.OrderDispatchBatchCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OrderDispatchBatchCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>[]
+        }
+        delete: {
+          args: Prisma.OrderDispatchBatchDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>
+        }
+        update: {
+          args: Prisma.OrderDispatchBatchUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>
+        }
+        deleteMany: {
+          args: Prisma.OrderDispatchBatchDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OrderDispatchBatchUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OrderDispatchBatchUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>[]
+        }
+        upsert: {
+          args: Prisma.OrderDispatchBatchUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OrderDispatchBatchPayload>
+        }
+        aggregate: {
+          args: Prisma.OrderDispatchBatchAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOrderDispatchBatch>
+        }
+        groupBy: {
+          args: Prisma.OrderDispatchBatchGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderDispatchBatchGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OrderDispatchBatchCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OrderDispatchBatchCountAggregateOutputType> | number
         }
       }
     }
@@ -1026,6 +1101,17 @@ export const SalesOrderScalarFieldEnum = {
 export type SalesOrderScalarFieldEnum = (typeof SalesOrderScalarFieldEnum)[keyof typeof SalesOrderScalarFieldEnum]
 
 
+export const OrderDispatchBatchScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  payload: 'payload',
+  decision: 'decision',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderDispatchBatchScalarFieldEnum = (typeof OrderDispatchBatchScalarFieldEnum)[keyof typeof OrderDispatchBatchScalarFieldEnum]
+
+
 export const OrderNumberSequenceScalarFieldEnum = {
   tenantId: 'tenantId',
   period: 'period',
@@ -1445,6 +1531,7 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   salesOrder?: Prisma.SalesOrderOmit
+  orderDispatchBatch?: Prisma.OrderDispatchBatchOmit
   orderNumberSequence?: Prisma.OrderNumberSequenceOmit
   orderLine?: Prisma.OrderLineOmit
   orderStatusHistory?: Prisma.OrderStatusHistoryOmit

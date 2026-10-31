@@ -38,11 +38,11 @@ export class EligibleDriverUsersQueryDto {
 }
 
 export class CreateDriverDto {
+  @IsOptional()
   @Transform(trimmed)
   @IsString()
-  @Matches(/\S/)
   @MaxLength(50)
-  code!: string;
+  code?: string;
 
   @IsUUID()
   userId!: string;
@@ -88,6 +88,12 @@ export class RelinkDriverUserDto extends DriverLinkLockDto {
 }
 
 export class UpdateDriverDto extends DriverVersionDto {
+  @IsOptional()
+  @Transform(trimmed)
+  @IsString()
+  @MaxLength(50)
+  code?: string;
+
   @ValidateIf((_object, value: unknown) => value !== undefined)
   @Transform(trimmed)
   @IsString()

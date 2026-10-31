@@ -90,6 +90,7 @@ export const shipmentPoolQuerySchema = z
 export const shipmentPoolItemSchema = z
   .object({
     shipmentId: transportUuidSchema,
+    shipmentNumber: z.string().min(1).optional(),
     orderId: transportUuidSchema,
     warehouseId: transportUuidSchema,
     shipmentVersion: transportVersionSchema,
@@ -203,7 +204,12 @@ export const actionPreviewBindingSchema = z
     actingUserId: transportUuidSchema,
     assigneeDriverId: transportUuidSchema,
     assigneeUserId: transportUuidSchema,
-    action: z.enum(['ROUTE_APPROVE', 'TRIP_DISPATCH', 'STOP_ARRIVE', 'STOP_DELIVER', 'STOP_FAIL']),
+    action: z.enum([
+      'ROUTE_APPROVE',
+      'TRIP_DISPATCH',
+      'STOP_DELIVER',
+      'STOP_FAIL',
+    ]),
     targetId: transportUuidSchema,
     expectedVersion: transportVersionSchema,
     tripVersion: transportVersionSchema.optional(),
@@ -216,6 +222,22 @@ export const actionPreviewBindingSchema = z
     expiresAt: timestampSchema,
   })
   .strict();
+
+export const shipmentDispatchBatchReceiptSchema = z.object({
+  tenantId: transportUuidSchema,
+  requestId: transportUuidSchema,
+  tripId: transportUuidSchema,
+  payloadHash: sha256Schema,
+  status: z.enum(['PENDING', 'REJECTED', 'COMPLETED']),
+  stage: z.enum(['PREPARED', 'GRANTED', 'COMPLETED', 'REJECTED']),
+  decision: batchDispatchGrantDecisionSchema.nullable(),
+  shipments: z.array(z.object({
+    shipmentId: transportUuidSchema,
+    dispatchRequestId: transportUuidSchema,
+    shipmentVersion: transportVersionSchema,
+  }).strict()),
+}).strict();
+export type ShipmentDispatchBatchReceipt = z.infer<typeof shipmentDispatchBatchReceiptSchema>;
 
 export const actionConfirmationSchema = z
   .object({

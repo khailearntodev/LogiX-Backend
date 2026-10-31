@@ -79,6 +79,7 @@ export async function startIsolatedKafka() {
         await admin.listTopics();
         return {
           kafka,
+          brokers: [`127.0.0.1:${port}`],
           topic: `logix-test-${suffix}`,
           groupId: `logix-test-group-${suffix}`,
           dispose,

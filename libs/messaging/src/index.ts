@@ -58,6 +58,8 @@ export type { OutboxDatabase } from "./prisma-outbox.store.js";
 export * from "./interfaces/shipment.contract.js";
 export * from "./interfaces/transport.contract.js";
 export * from "./interfaces/transport-hash.js";
+export * from "./interfaces/trip-route.contract.js";
+export * from "./interfaces/trip-dispatch.contract.js";
 export type {
   AuthorizeOrderDispatchRequest,
   OrderDispatchGrant,

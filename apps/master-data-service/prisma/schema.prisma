@@ -177,6 +177,18 @@ model Driver {
   @@schema("master_data")
 }
 
+/// Tenant/type-scoped high-water marks keep generated codes monotonic after edits.
+model MasterDataCodeSequence {
+  tenantId  String   @map("tenant_id") @db.Uuid
+  codeType  String   @map("code_type") @db.VarChar(20)
+  lastValue BigInt   @default(0) @map("last_value")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@id([tenantId, codeType], map: "pk_master_data_code_sequences")
+  @@map("master_data_code_sequences")
+  @@schema("master_data")
+}
+
 model OutboxEvent {
   id               String    @id @default(uuid()) @db.Uuid
   tenantId         String    @map("tenant_id") @db.Uuid

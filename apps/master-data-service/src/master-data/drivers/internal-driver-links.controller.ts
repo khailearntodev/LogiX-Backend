@@ -1,5 +1,6 @@
 import {
   Body,
+  Get,
   Controller,
   Inject,
   Param,
@@ -19,6 +20,7 @@ import { ServiceId } from '@logix/common';
 import { isUUID } from 'class-validator';
 import { DriverLinkService } from './driver-link.service.js';
 import { DriverLinkLockDto } from './dto/driver.dto.js';
+import { DriverService } from './driver.service.js';
 
 @Controller('internal/drivers')
 @UseGuards(InternalServiceGuard)
@@ -26,7 +28,16 @@ import { DriverLinkLockDto } from './dto/driver.dto.js';
 export class InternalDriverLinksController {
   constructor(
     @Inject(DriverLinkService) private readonly links: DriverLinkService,
+    @Inject(DriverService) private readonly drivers: DriverService,
   ) {}
+
+  @Get(':id/trip-eligibility')
+  eligible(
+    @InternalCaller() caller: InternalServiceTokenClaims,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.drivers.eligibleForTrip(caller.tenantId, id);
+  }
 
   @Post(':id/link-lock')
   @HttpCode(200)

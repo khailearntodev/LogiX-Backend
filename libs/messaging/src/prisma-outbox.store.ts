@@ -1,5 +1,5 @@
-import type { ServiceId } from '@logix/common';
-import type { OutboxRelayRecord, OutboxRelayStore } from './outbox-relay.js';
+import type { ServiceId } from "@logix/common";
+import type { OutboxRelayRecord, OutboxRelayStore } from "./outbox-relay.js";
 
 interface OutboxRow {
   id: string;
@@ -12,6 +12,7 @@ interface OutboxRow {
   correlationId: string;
   causationId: string | null;
   payload: unknown;
+  deliveryActorId: string | null;
   occurredAt: Date;
   attemptCount: number;
 }
@@ -31,23 +32,34 @@ export interface OutboxDatabase {
 export class PrismaOutboxStore implements OutboxRelayStore {
   constructor(
     private readonly database: OutboxDatabase,
-    private readonly schema: 'orders' | 'inventory' | 'fulfillment',
+    private readonly schema:
+      "orders" | "inventory" | "fulfillment" | "transport",
     private readonly producer: ServiceId,
     private readonly transactionTimeoutMs: number,
   ) {
     if (
-      !['orders', 'inventory', 'fulfillment'].includes(schema) ||
+      !["orders", "inventory", "fulfillment", "transport"].includes(schema) ||
       !Number.isSafeInteger(transactionTimeoutMs) ||
       transactionTimeoutMs <= 0
     ) {
-      throw new Error('Invalid outbox store configuration');
+      throw new Error("Invalid outbox store configuration");
     }
   }
 
   async withLockedBatch(
     batchSize: number,
-    callback: Parameters<OutboxRelayStore['withLockedBatch']>[1],
+    callback: Parameters<OutboxRelayStore["withLockedBatch"]>[1],
   ): Promise<void> {
+    const deliveryActorSelection =
+      this.schema === "transport"
+        ? `CASE WHEN event.event_type IN ('DeliveryCompleted', 'DeliveryFailed')
+            AND event.event_version = 2 THEN (
+              SELECT attempt.actor_user_id
+              FROM transport.delivery_attempts AS attempt
+              WHERE attempt.tenant_id = event.tenant_id
+                AND attempt.request_id::text = event.payload->>'requestId'
+            ) ELSE NULL::uuid END AS "deliveryActorId"`
+        : 'NULL::uuid AS "deliveryActorId"';
     await this.database.$transaction(
       async (tx) => {
         // Schema is a constructor-validated owner constant; all data is parameterized.
@@ -57,7 +69,8 @@ export class PrismaOutboxStore implements OutboxRelayStore {
           event.event_version AS "eventVersion", event.aggregate_type AS "aggregateType",
           event.aggregate_id AS "aggregateId", event.aggregate_version AS "aggregateVersion",
           event.correlation_id AS "correlationId", event.causation_id AS "causationId",
-          event.payload, event.occurred_at AS "occurredAt", event.attempt_count AS "attemptCount"
+          event.payload, ${deliveryActorSelection},
+          event.occurred_at AS "occurredAt", event.attempt_count AS "attemptCount"
         FROM ${this.schema}.outbox_events AS event
         WHERE event.published_at IS NULL AND event.next_attempt_at <= now()
           AND event.deleted_at IS NULL
@@ -82,11 +95,23 @@ export class PrismaOutboxStore implements OutboxRelayStore {
           }
           const actorId =
             row.payload &&
-            typeof row.payload === 'object' &&
-            'actorId' in row.payload &&
-            typeof row.payload.actorId === 'string'
+            typeof row.payload === "object" &&
+            "actorId" in row.payload &&
+            typeof row.payload.actorId === "string"
               ? row.payload.actorId
-              : null;
+              : (row.deliveryActorId ?? null);
+          const isDeliveryResult =
+            (row.eventType === "DeliveryCompleted" ||
+              row.eventType === "DeliveryFailed") &&
+            row.eventVersion === 2;
+          if (isDeliveryResult && !actorId) {
+            throw new Error(
+              `Delivery result outbox actor receipt missing: ${row.id}`,
+            );
+          }
+          const actorIsEnvelopeMetadata =
+            (row.eventType === "TripDispatched" && row.eventVersion === 2) ||
+            isDeliveryResult;
           return {
             id: row.id,
             attemptCount: row.attemptCount,
@@ -103,7 +128,17 @@ export class PrismaOutboxStore implements OutboxRelayStore {
               aggregateType: row.aggregateType,
               aggregateId: row.aggregateId,
               aggregateVersion,
-              payload: row.payload,
+              payload:
+                actorIsEnvelopeMetadata &&
+                row.payload &&
+                typeof row.payload === "object" &&
+                !Array.isArray(row.payload)
+                  ? Object.fromEntries(
+                      Object.entries(row.payload).filter(
+                        ([key]) => key !== "actorId",
+                      ),
+                    )
+                  : row.payload,
             },
           };
         });

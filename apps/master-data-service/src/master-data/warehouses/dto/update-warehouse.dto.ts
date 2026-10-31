@@ -6,9 +6,18 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
-/** Every field optional; `code` is absent because it is the per-tenant key. */
+/** Every field is optional. */
 export class UpdateWarehouseDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MaxLength(50)
+  code?: string;
+
   @IsOptional()
   @IsString()
   @IsNotEmpty({ message: 'Tên kho không được để trống' })

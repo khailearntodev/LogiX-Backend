@@ -46,7 +46,6 @@ export type RoutePlanMinAggregateOutputType = {
   tripId: string | null
   planVersion: bigint | null
   routeRequestId: string | null
-  status: string | null
   source: string | null
   inputHash: string | null
   solverName: string | null
@@ -54,6 +53,11 @@ export type RoutePlanMinAggregateOutputType = {
   objective: string | null
   totalDistance: runtime.Decimal | null
   estimatedCost: runtime.Decimal | null
+  optimizationRunId: string | null
+  requestActorId: string | null
+  requestHash: string | null
+  approvalRequestId: string | null
+  approvalHash: string | null
   originalPlanId: string | null
   overrideReason: string | null
   approvedBy: string | null
@@ -70,7 +74,6 @@ export type RoutePlanMaxAggregateOutputType = {
   tripId: string | null
   planVersion: bigint | null
   routeRequestId: string | null
-  status: string | null
   source: string | null
   inputHash: string | null
   solverName: string | null
@@ -78,6 +81,11 @@ export type RoutePlanMaxAggregateOutputType = {
   objective: string | null
   totalDistance: runtime.Decimal | null
   estimatedCost: runtime.Decimal | null
+  optimizationRunId: string | null
+  requestActorId: string | null
+  requestHash: string | null
+  approvalRequestId: string | null
+  approvalHash: string | null
   originalPlanId: string | null
   overrideReason: string | null
   approvedBy: string | null
@@ -94,7 +102,6 @@ export type RoutePlanCountAggregateOutputType = {
   tripId: number
   planVersion: number
   routeRequestId: number
-  status: number
   source: number
   inputHash: number
   inputSnapshot: number
@@ -104,6 +111,16 @@ export type RoutePlanCountAggregateOutputType = {
   totalDistance: number
   estimatedCost: number
   metrics: number
+  optimizationRunId: number
+  requestActorId: number
+  requestHash: number
+  optimizerRequest: number
+  optimizerResponse: number
+  vehicleSnapshot: number
+  driverSnapshot: number
+  approvalRequestId: number
+  approvalHash: number
+  approvalReceipt: number
   originalPlanId: number
   overrideReason: number
   approvedBy: number
@@ -136,7 +153,6 @@ export type RoutePlanMinAggregateInputType = {
   tripId?: true
   planVersion?: true
   routeRequestId?: true
-  status?: true
   source?: true
   inputHash?: true
   solverName?: true
@@ -144,6 +160,11 @@ export type RoutePlanMinAggregateInputType = {
   objective?: true
   totalDistance?: true
   estimatedCost?: true
+  optimizationRunId?: true
+  requestActorId?: true
+  requestHash?: true
+  approvalRequestId?: true
+  approvalHash?: true
   originalPlanId?: true
   overrideReason?: true
   approvedBy?: true
@@ -160,7 +181,6 @@ export type RoutePlanMaxAggregateInputType = {
   tripId?: true
   planVersion?: true
   routeRequestId?: true
-  status?: true
   source?: true
   inputHash?: true
   solverName?: true
@@ -168,6 +188,11 @@ export type RoutePlanMaxAggregateInputType = {
   objective?: true
   totalDistance?: true
   estimatedCost?: true
+  optimizationRunId?: true
+  requestActorId?: true
+  requestHash?: true
+  approvalRequestId?: true
+  approvalHash?: true
   originalPlanId?: true
   overrideReason?: true
   approvedBy?: true
@@ -184,7 +209,6 @@ export type RoutePlanCountAggregateInputType = {
   tripId?: true
   planVersion?: true
   routeRequestId?: true
-  status?: true
   source?: true
   inputHash?: true
   inputSnapshot?: true
@@ -194,6 +218,16 @@ export type RoutePlanCountAggregateInputType = {
   totalDistance?: true
   estimatedCost?: true
   metrics?: true
+  optimizationRunId?: true
+  requestActorId?: true
+  requestHash?: true
+  optimizerRequest?: true
+  optimizerResponse?: true
+  vehicleSnapshot?: true
+  driverSnapshot?: true
+  approvalRequestId?: true
+  approvalHash?: true
+  approvalReceipt?: true
   originalPlanId?: true
   overrideReason?: true
   approvedBy?: true
@@ -297,16 +331,25 @@ export type RoutePlanGroupByOutputType = {
   tripId: string
   planVersion: bigint
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: runtime.JsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal
-  estimatedCost: runtime.Decimal
-  metrics: runtime.JsonValue
+  solverName: string | null
+  solverVersion: string | null
+  objective: string | null
+  totalDistance: runtime.Decimal | null
+  estimatedCost: runtime.Decimal | null
+  metrics: runtime.JsonValue | null
+  optimizationRunId: string | null
+  requestActorId: string | null
+  requestHash: string | null
+  optimizerRequest: runtime.JsonValue | null
+  optimizerResponse: runtime.JsonValue | null
+  vehicleSnapshot: runtime.JsonValue | null
+  driverSnapshot: runtime.JsonValue | null
+  approvalRequestId: string | null
+  approvalHash: string | null
+  approvalReceipt: runtime.JsonValue | null
   originalPlanId: string | null
   overrideReason: string | null
   approvedBy: string | null
@@ -346,16 +389,25 @@ export type RoutePlanWhereInput = {
   tripId?: Prisma.UuidFilter<"RoutePlan"> | string
   planVersion?: Prisma.BigIntFilter<"RoutePlan"> | bigint | number
   routeRequestId?: Prisma.UuidFilter<"RoutePlan"> | string
-  status?: Prisma.StringFilter<"RoutePlan"> | string
   source?: Prisma.StringFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringFilter<"RoutePlan"> | string
   inputSnapshot?: Prisma.JsonFilter<"RoutePlan">
-  solverName?: Prisma.StringFilter<"RoutePlan"> | string
-  solverVersion?: Prisma.StringFilter<"RoutePlan"> | string
-  objective?: Prisma.StringFilter<"RoutePlan"> | string
-  totalDistance?: Prisma.DecimalFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonFilter<"RoutePlan">
+  solverName?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  solverVersion?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  objective?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  totalDistance?: Prisma.DecimalNullableFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.DecimalNullableFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.JsonNullableFilter<"RoutePlan">
+  optimizationRunId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  requestActorId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  requestHash?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  optimizerRequest?: Prisma.JsonNullableFilter<"RoutePlan">
+  optimizerResponse?: Prisma.JsonNullableFilter<"RoutePlan">
+  vehicleSnapshot?: Prisma.JsonNullableFilter<"RoutePlan">
+  driverSnapshot?: Prisma.JsonNullableFilter<"RoutePlan">
+  approvalRequestId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  approvalHash?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  approvalReceipt?: Prisma.JsonNullableFilter<"RoutePlan">
   originalPlanId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
   overrideReason?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
   approvedBy?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
@@ -377,16 +429,25 @@ export type RoutePlanOrderByWithRelationInput = {
   tripId?: Prisma.SortOrder
   planVersion?: Prisma.SortOrder
   routeRequestId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
   inputSnapshot?: Prisma.SortOrder
-  solverName?: Prisma.SortOrder
-  solverVersion?: Prisma.SortOrder
-  objective?: Prisma.SortOrder
-  totalDistance?: Prisma.SortOrder
-  estimatedCost?: Prisma.SortOrder
-  metrics?: Prisma.SortOrder
+  solverName?: Prisma.SortOrderInput | Prisma.SortOrder
+  solverVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  objective?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalDistance?: Prisma.SortOrderInput | Prisma.SortOrder
+  estimatedCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  metrics?: Prisma.SortOrderInput | Prisma.SortOrder
+  optimizationRunId?: Prisma.SortOrderInput | Prisma.SortOrder
+  requestActorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  requestHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  optimizerRequest?: Prisma.SortOrderInput | Prisma.SortOrder
+  optimizerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
+  vehicleSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  driverSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
   originalPlanId?: Prisma.SortOrderInput | Prisma.SortOrder
   overrideReason?: Prisma.SortOrderInput | Prisma.SortOrder
   approvedBy?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -413,16 +474,25 @@ export type RoutePlanWhereUniqueInput = Prisma.AtLeast<{
   tripId?: Prisma.UuidFilter<"RoutePlan"> | string
   planVersion?: Prisma.BigIntFilter<"RoutePlan"> | bigint | number
   routeRequestId?: Prisma.UuidFilter<"RoutePlan"> | string
-  status?: Prisma.StringFilter<"RoutePlan"> | string
   source?: Prisma.StringFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringFilter<"RoutePlan"> | string
   inputSnapshot?: Prisma.JsonFilter<"RoutePlan">
-  solverName?: Prisma.StringFilter<"RoutePlan"> | string
-  solverVersion?: Prisma.StringFilter<"RoutePlan"> | string
-  objective?: Prisma.StringFilter<"RoutePlan"> | string
-  totalDistance?: Prisma.DecimalFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonFilter<"RoutePlan">
+  solverName?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  solverVersion?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  objective?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  totalDistance?: Prisma.DecimalNullableFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.DecimalNullableFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.JsonNullableFilter<"RoutePlan">
+  optimizationRunId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  requestActorId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  requestHash?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  optimizerRequest?: Prisma.JsonNullableFilter<"RoutePlan">
+  optimizerResponse?: Prisma.JsonNullableFilter<"RoutePlan">
+  vehicleSnapshot?: Prisma.JsonNullableFilter<"RoutePlan">
+  driverSnapshot?: Prisma.JsonNullableFilter<"RoutePlan">
+  approvalRequestId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  approvalHash?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  approvalReceipt?: Prisma.JsonNullableFilter<"RoutePlan">
   originalPlanId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
   overrideReason?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
   approvedBy?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
@@ -444,16 +514,25 @@ export type RoutePlanOrderByWithAggregationInput = {
   tripId?: Prisma.SortOrder
   planVersion?: Prisma.SortOrder
   routeRequestId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
   inputSnapshot?: Prisma.SortOrder
-  solverName?: Prisma.SortOrder
-  solverVersion?: Prisma.SortOrder
-  objective?: Prisma.SortOrder
-  totalDistance?: Prisma.SortOrder
-  estimatedCost?: Prisma.SortOrder
-  metrics?: Prisma.SortOrder
+  solverName?: Prisma.SortOrderInput | Prisma.SortOrder
+  solverVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  objective?: Prisma.SortOrderInput | Prisma.SortOrder
+  totalDistance?: Prisma.SortOrderInput | Prisma.SortOrder
+  estimatedCost?: Prisma.SortOrderInput | Prisma.SortOrder
+  metrics?: Prisma.SortOrderInput | Prisma.SortOrder
+  optimizationRunId?: Prisma.SortOrderInput | Prisma.SortOrder
+  requestActorId?: Prisma.SortOrderInput | Prisma.SortOrder
+  requestHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  optimizerRequest?: Prisma.SortOrderInput | Prisma.SortOrder
+  optimizerResponse?: Prisma.SortOrderInput | Prisma.SortOrder
+  vehicleSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  driverSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalRequestId?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  approvalReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
   originalPlanId?: Prisma.SortOrderInput | Prisma.SortOrder
   overrideReason?: Prisma.SortOrderInput | Prisma.SortOrder
   approvedBy?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -478,16 +557,25 @@ export type RoutePlanScalarWhereWithAggregatesInput = {
   tripId?: Prisma.UuidWithAggregatesFilter<"RoutePlan"> | string
   planVersion?: Prisma.BigIntWithAggregatesFilter<"RoutePlan"> | bigint | number
   routeRequestId?: Prisma.UuidWithAggregatesFilter<"RoutePlan"> | string
-  status?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   source?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
   inputSnapshot?: Prisma.JsonWithAggregatesFilter<"RoutePlan">
-  solverName?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
-  solverVersion?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
-  objective?: Prisma.StringWithAggregatesFilter<"RoutePlan"> | string
-  totalDistance?: Prisma.DecimalWithAggregatesFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalWithAggregatesFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonWithAggregatesFilter<"RoutePlan">
+  solverName?: Prisma.StringNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  solverVersion?: Prisma.StringNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  objective?: Prisma.StringNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  totalDistance?: Prisma.DecimalNullableWithAggregatesFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.DecimalNullableWithAggregatesFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.JsonNullableWithAggregatesFilter<"RoutePlan">
+  optimizationRunId?: Prisma.UuidNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  requestActorId?: Prisma.UuidNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  requestHash?: Prisma.StringNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  optimizerRequest?: Prisma.JsonNullableWithAggregatesFilter<"RoutePlan">
+  optimizerResponse?: Prisma.JsonNullableWithAggregatesFilter<"RoutePlan">
+  vehicleSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"RoutePlan">
+  driverSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"RoutePlan">
+  approvalRequestId?: Prisma.UuidNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  approvalHash?: Prisma.StringNullableWithAggregatesFilter<"RoutePlan"> | string | null
+  approvalReceipt?: Prisma.JsonNullableWithAggregatesFilter<"RoutePlan">
   originalPlanId?: Prisma.UuidNullableWithAggregatesFilter<"RoutePlan"> | string | null
   overrideReason?: Prisma.StringNullableWithAggregatesFilter<"RoutePlan"> | string | null
   approvedBy?: Prisma.UuidNullableWithAggregatesFilter<"RoutePlan"> | string | null
@@ -503,16 +591,25 @@ export type RoutePlanCreateInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -533,16 +630,25 @@ export type RoutePlanUncheckedCreateInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -561,16 +667,25 @@ export type RoutePlanUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -591,16 +706,25 @@ export type RoutePlanUncheckedUpdateInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -620,16 +744,25 @@ export type RoutePlanCreateManyInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -645,16 +778,25 @@ export type RoutePlanUpdateManyMutationInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -670,16 +812,25 @@ export type RoutePlanUncheckedUpdateManyInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -722,7 +873,6 @@ export type RoutePlanCountOrderByAggregateInput = {
   tripId?: Prisma.SortOrder
   planVersion?: Prisma.SortOrder
   routeRequestId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
   inputSnapshot?: Prisma.SortOrder
@@ -732,6 +882,16 @@ export type RoutePlanCountOrderByAggregateInput = {
   totalDistance?: Prisma.SortOrder
   estimatedCost?: Prisma.SortOrder
   metrics?: Prisma.SortOrder
+  optimizationRunId?: Prisma.SortOrder
+  requestActorId?: Prisma.SortOrder
+  requestHash?: Prisma.SortOrder
+  optimizerRequest?: Prisma.SortOrder
+  optimizerResponse?: Prisma.SortOrder
+  vehicleSnapshot?: Prisma.SortOrder
+  driverSnapshot?: Prisma.SortOrder
+  approvalRequestId?: Prisma.SortOrder
+  approvalHash?: Prisma.SortOrder
+  approvalReceipt?: Prisma.SortOrder
   originalPlanId?: Prisma.SortOrder
   overrideReason?: Prisma.SortOrder
   approvedBy?: Prisma.SortOrder
@@ -755,7 +915,6 @@ export type RoutePlanMaxOrderByAggregateInput = {
   tripId?: Prisma.SortOrder
   planVersion?: Prisma.SortOrder
   routeRequestId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
   solverName?: Prisma.SortOrder
@@ -763,6 +922,11 @@ export type RoutePlanMaxOrderByAggregateInput = {
   objective?: Prisma.SortOrder
   totalDistance?: Prisma.SortOrder
   estimatedCost?: Prisma.SortOrder
+  optimizationRunId?: Prisma.SortOrder
+  requestActorId?: Prisma.SortOrder
+  requestHash?: Prisma.SortOrder
+  approvalRequestId?: Prisma.SortOrder
+  approvalHash?: Prisma.SortOrder
   originalPlanId?: Prisma.SortOrder
   overrideReason?: Prisma.SortOrder
   approvedBy?: Prisma.SortOrder
@@ -779,7 +943,6 @@ export type RoutePlanMinOrderByAggregateInput = {
   tripId?: Prisma.SortOrder
   planVersion?: Prisma.SortOrder
   routeRequestId?: Prisma.SortOrder
-  status?: Prisma.SortOrder
   source?: Prisma.SortOrder
   inputHash?: Prisma.SortOrder
   solverName?: Prisma.SortOrder
@@ -787,6 +950,11 @@ export type RoutePlanMinOrderByAggregateInput = {
   objective?: Prisma.SortOrder
   totalDistance?: Prisma.SortOrder
   estimatedCost?: Prisma.SortOrder
+  optimizationRunId?: Prisma.SortOrder
+  requestActorId?: Prisma.SortOrder
+  requestHash?: Prisma.SortOrder
+  approvalRequestId?: Prisma.SortOrder
+  approvalHash?: Prisma.SortOrder
   originalPlanId?: Prisma.SortOrder
   overrideReason?: Prisma.SortOrder
   approvedBy?: Prisma.SortOrder
@@ -944,16 +1112,25 @@ export type RoutePlanCreateWithoutApprovedForTripsInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -973,16 +1150,25 @@ export type RoutePlanUncheckedCreateWithoutApprovedForTripsInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -1005,16 +1191,25 @@ export type RoutePlanCreateWithoutTripInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -1033,16 +1228,25 @@ export type RoutePlanUncheckedCreateWithoutTripInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -1082,16 +1286,25 @@ export type RoutePlanUpdateWithoutApprovedForTripsInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1111,16 +1324,25 @@ export type RoutePlanUncheckedUpdateWithoutApprovedForTripsInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1158,16 +1380,25 @@ export type RoutePlanScalarWhereInput = {
   tripId?: Prisma.UuidFilter<"RoutePlan"> | string
   planVersion?: Prisma.BigIntFilter<"RoutePlan"> | bigint | number
   routeRequestId?: Prisma.UuidFilter<"RoutePlan"> | string
-  status?: Prisma.StringFilter<"RoutePlan"> | string
   source?: Prisma.StringFilter<"RoutePlan"> | string
   inputHash?: Prisma.StringFilter<"RoutePlan"> | string
   inputSnapshot?: Prisma.JsonFilter<"RoutePlan">
-  solverName?: Prisma.StringFilter<"RoutePlan"> | string
-  solverVersion?: Prisma.StringFilter<"RoutePlan"> | string
-  objective?: Prisma.StringFilter<"RoutePlan"> | string
-  totalDistance?: Prisma.DecimalFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonFilter<"RoutePlan">
+  solverName?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  solverVersion?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  objective?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  totalDistance?: Prisma.DecimalNullableFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.DecimalNullableFilter<"RoutePlan"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.JsonNullableFilter<"RoutePlan">
+  optimizationRunId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  requestActorId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  requestHash?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  optimizerRequest?: Prisma.JsonNullableFilter<"RoutePlan">
+  optimizerResponse?: Prisma.JsonNullableFilter<"RoutePlan">
+  vehicleSnapshot?: Prisma.JsonNullableFilter<"RoutePlan">
+  driverSnapshot?: Prisma.JsonNullableFilter<"RoutePlan">
+  approvalRequestId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
+  approvalHash?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
+  approvalReceipt?: Prisma.JsonNullableFilter<"RoutePlan">
   originalPlanId?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
   overrideReason?: Prisma.StringNullableFilter<"RoutePlan"> | string | null
   approvedBy?: Prisma.UuidNullableFilter<"RoutePlan"> | string | null
@@ -1183,16 +1414,25 @@ export type RoutePlanCreateWithoutOverridesInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -1212,16 +1452,25 @@ export type RoutePlanUncheckedCreateWithoutOverridesInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -1244,16 +1493,25 @@ export type RoutePlanCreateWithoutOriginalPlanInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -1273,16 +1531,25 @@ export type RoutePlanUncheckedCreateWithoutOriginalPlanInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -1321,16 +1588,25 @@ export type RoutePlanUpdateWithoutOverridesInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1350,16 +1626,25 @@ export type RoutePlanUncheckedUpdateWithoutOverridesInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1393,16 +1678,25 @@ export type RoutePlanCreateWithoutStopsInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -1422,16 +1716,25 @@ export type RoutePlanUncheckedCreateWithoutStopsInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -1465,16 +1768,25 @@ export type RoutePlanUpdateWithoutStopsInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1494,16 +1806,25 @@ export type RoutePlanUncheckedUpdateWithoutStopsInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1521,16 +1842,25 @@ export type RoutePlanCreateManyTripInput = {
   tenantId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: string | null
   overrideReason?: string | null
   approvedBy?: string | null
@@ -1546,16 +1876,25 @@ export type RoutePlanUpdateWithoutTripInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1574,16 +1913,25 @@ export type RoutePlanUncheckedUpdateWithoutTripInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1602,16 +1950,25 @@ export type RoutePlanUncheckedUpdateManyWithoutTripInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   originalPlanId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1628,16 +1985,25 @@ export type RoutePlanCreateManyOriginalPlanInput = {
   tripId: string
   planVersion: bigint | number
   routeRequestId: string
-  status: string
   source: string
   inputHash: string
   inputSnapshot: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName: string
-  solverVersion: string
-  objective: string
-  totalDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost: runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: string | null
+  solverVersion?: string | null
+  objective?: string | null
+  totalDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: string | null
+  requestActorId?: string | null
+  requestHash?: string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: string | null
+  approvalHash?: string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: string | null
   approvedBy?: string | null
   approvedAt?: Date | string | null
@@ -1652,16 +2018,25 @@ export type RoutePlanUpdateWithoutOriginalPlanInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1681,16 +2056,25 @@ export type RoutePlanUncheckedUpdateWithoutOriginalPlanInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1709,16 +2093,25 @@ export type RoutePlanUncheckedUpdateManyWithoutOriginalPlanInput = {
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   planVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   routeRequestId?: Prisma.StringFieldUpdateOperationsInput | string
-  status?: Prisma.StringFieldUpdateOperationsInput | string
   source?: Prisma.StringFieldUpdateOperationsInput | string
   inputHash?: Prisma.StringFieldUpdateOperationsInput | string
   inputSnapshot?: Prisma.JsonNullValueInput | runtime.InputJsonValue
-  solverName?: Prisma.StringFieldUpdateOperationsInput | string
-  solverVersion?: Prisma.StringFieldUpdateOperationsInput | string
-  objective?: Prisma.StringFieldUpdateOperationsInput | string
-  totalDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedCost?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  metrics?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  solverName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  solverVersion?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  objective?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  totalDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedCost?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  metrics?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizationRunId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestActorId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  requestHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  optimizerRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  optimizerResponse?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  vehicleSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  driverSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  approvalRequestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  approvalReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   overrideReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   approvedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -1783,7 +2176,6 @@ export type RoutePlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   tripId?: boolean
   planVersion?: boolean
   routeRequestId?: boolean
-  status?: boolean
   source?: boolean
   inputHash?: boolean
   inputSnapshot?: boolean
@@ -1793,6 +2185,16 @@ export type RoutePlanSelect<ExtArgs extends runtime.Types.Extensions.InternalArg
   totalDistance?: boolean
   estimatedCost?: boolean
   metrics?: boolean
+  optimizationRunId?: boolean
+  requestActorId?: boolean
+  requestHash?: boolean
+  optimizerRequest?: boolean
+  optimizerResponse?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
+  approvalRequestId?: boolean
+  approvalHash?: boolean
+  approvalReceipt?: boolean
   originalPlanId?: boolean
   overrideReason?: boolean
   approvedBy?: boolean
@@ -1815,7 +2217,6 @@ export type RoutePlanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   tripId?: boolean
   planVersion?: boolean
   routeRequestId?: boolean
-  status?: boolean
   source?: boolean
   inputHash?: boolean
   inputSnapshot?: boolean
@@ -1825,6 +2226,16 @@ export type RoutePlanSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ext
   totalDistance?: boolean
   estimatedCost?: boolean
   metrics?: boolean
+  optimizationRunId?: boolean
+  requestActorId?: boolean
+  requestHash?: boolean
+  optimizerRequest?: boolean
+  optimizerResponse?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
+  approvalRequestId?: boolean
+  approvalHash?: boolean
+  approvalReceipt?: boolean
   originalPlanId?: boolean
   overrideReason?: boolean
   approvedBy?: boolean
@@ -1843,7 +2254,6 @@ export type RoutePlanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   tripId?: boolean
   planVersion?: boolean
   routeRequestId?: boolean
-  status?: boolean
   source?: boolean
   inputHash?: boolean
   inputSnapshot?: boolean
@@ -1853,6 +2263,16 @@ export type RoutePlanSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ext
   totalDistance?: boolean
   estimatedCost?: boolean
   metrics?: boolean
+  optimizationRunId?: boolean
+  requestActorId?: boolean
+  requestHash?: boolean
+  optimizerRequest?: boolean
+  optimizerResponse?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
+  approvalRequestId?: boolean
+  approvalHash?: boolean
+  approvalReceipt?: boolean
   originalPlanId?: boolean
   overrideReason?: boolean
   approvedBy?: boolean
@@ -1871,7 +2291,6 @@ export type RoutePlanSelectScalar = {
   tripId?: boolean
   planVersion?: boolean
   routeRequestId?: boolean
-  status?: boolean
   source?: boolean
   inputHash?: boolean
   inputSnapshot?: boolean
@@ -1881,6 +2300,16 @@ export type RoutePlanSelectScalar = {
   totalDistance?: boolean
   estimatedCost?: boolean
   metrics?: boolean
+  optimizationRunId?: boolean
+  requestActorId?: boolean
+  requestHash?: boolean
+  optimizerRequest?: boolean
+  optimizerResponse?: boolean
+  vehicleSnapshot?: boolean
+  driverSnapshot?: boolean
+  approvalRequestId?: boolean
+  approvalHash?: boolean
+  approvalReceipt?: boolean
   originalPlanId?: boolean
   overrideReason?: boolean
   approvedBy?: boolean
@@ -1891,7 +2320,7 @@ export type RoutePlanSelectScalar = {
   deletedAt?: boolean
 }
 
-export type RoutePlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "planVersion" | "routeRequestId" | "status" | "source" | "inputHash" | "inputSnapshot" | "solverName" | "solverVersion" | "objective" | "totalDistance" | "estimatedCost" | "metrics" | "originalPlanId" | "overrideReason" | "approvedBy" | "approvedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["routePlan"]>
+export type RoutePlanOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "planVersion" | "routeRequestId" | "source" | "inputHash" | "inputSnapshot" | "solverName" | "solverVersion" | "objective" | "totalDistance" | "estimatedCost" | "metrics" | "optimizationRunId" | "requestActorId" | "requestHash" | "optimizerRequest" | "optimizerResponse" | "vehicleSnapshot" | "driverSnapshot" | "approvalRequestId" | "approvalHash" | "approvalReceipt" | "originalPlanId" | "overrideReason" | "approvedBy" | "approvedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["routePlan"]>
 export type RoutePlanInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
   approvedForTrips?: boolean | Prisma.RoutePlan$approvedForTripsArgs<ExtArgs>
@@ -1924,19 +2353,28 @@ export type $RoutePlanPayload<ExtArgs extends runtime.Types.Extensions.InternalA
     tripId: string
     planVersion: bigint
     routeRequestId: string
-    status: string
     source: string
     inputHash: string
     /**
      * Exact solver input (depot, stops, coordinates, capacities) hashed into inputHash.
      */
     inputSnapshot: runtime.JsonValue
-    solverName: string
-    solverVersion: string
-    objective: string
-    totalDistance: runtime.Decimal
-    estimatedCost: runtime.Decimal
-    metrics: runtime.JsonValue
+    solverName: string | null
+    solverVersion: string | null
+    objective: string | null
+    totalDistance: runtime.Decimal | null
+    estimatedCost: runtime.Decimal | null
+    metrics: runtime.JsonValue | null
+    optimizationRunId: string | null
+    requestActorId: string | null
+    requestHash: string | null
+    optimizerRequest: runtime.JsonValue | null
+    optimizerResponse: runtime.JsonValue | null
+    vehicleSnapshot: runtime.JsonValue | null
+    driverSnapshot: runtime.JsonValue | null
+    approvalRequestId: string | null
+    approvalHash: string | null
+    approvalReceipt: runtime.JsonValue | null
     originalPlanId: string | null
     overrideReason: string | null
     approvedBy: string | null
@@ -2378,7 +2816,6 @@ export interface RoutePlanFieldRefs {
   readonly tripId: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly planVersion: Prisma.FieldRef<"RoutePlan", 'BigInt'>
   readonly routeRequestId: Prisma.FieldRef<"RoutePlan", 'String'>
-  readonly status: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly source: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly inputHash: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly inputSnapshot: Prisma.FieldRef<"RoutePlan", 'Json'>
@@ -2388,6 +2825,16 @@ export interface RoutePlanFieldRefs {
   readonly totalDistance: Prisma.FieldRef<"RoutePlan", 'Decimal'>
   readonly estimatedCost: Prisma.FieldRef<"RoutePlan", 'Decimal'>
   readonly metrics: Prisma.FieldRef<"RoutePlan", 'Json'>
+  readonly optimizationRunId: Prisma.FieldRef<"RoutePlan", 'String'>
+  readonly requestActorId: Prisma.FieldRef<"RoutePlan", 'String'>
+  readonly requestHash: Prisma.FieldRef<"RoutePlan", 'String'>
+  readonly optimizerRequest: Prisma.FieldRef<"RoutePlan", 'Json'>
+  readonly optimizerResponse: Prisma.FieldRef<"RoutePlan", 'Json'>
+  readonly vehicleSnapshot: Prisma.FieldRef<"RoutePlan", 'Json'>
+  readonly driverSnapshot: Prisma.FieldRef<"RoutePlan", 'Json'>
+  readonly approvalRequestId: Prisma.FieldRef<"RoutePlan", 'String'>
+  readonly approvalHash: Prisma.FieldRef<"RoutePlan", 'String'>
+  readonly approvalReceipt: Prisma.FieldRef<"RoutePlan", 'Json'>
   readonly originalPlanId: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly overrideReason: Prisma.FieldRef<"RoutePlan", 'String'>
   readonly approvedBy: Prisma.FieldRef<"RoutePlan", 'String'>

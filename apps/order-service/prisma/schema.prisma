@@ -68,6 +68,18 @@ model SalesOrder {
 }
 
 /// Per-tenant daily counter for order numbers (SO-YYYYMMDD-000001); incremented with UPDATE ... RETURNING.
+model OrderDispatchBatch {
+  id        String   @id @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  payload   Json
+  decision  Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, id], map: "ux_order_dispatch_batch_request")
+  @@map("order_dispatch_batches")
+  @@schema("orders")
+}
+
 model OrderNumberSequence {
   tenantId  String   @map("tenant_id") @db.Uuid
   period    String   @db.Char(8)

@@ -42,9 +42,15 @@ export type DeliveryAttemptMinAggregateOutputType = {
   tripStopId: string | null
   shipmentId: string | null
   attemptNumber: number | null
+  requestId: string | null
   status: string | null
   reason: string | null
   actorDriverId: string | null
+  actorUserId: string | null
+  assigneeUserId: string | null
+  actorMode: string | null
+  actingReason: string | null
+  payloadHash: string | null
   occurredAt: Date | null
   correlationId: string | null
   createdAt: Date | null
@@ -59,9 +65,15 @@ export type DeliveryAttemptMaxAggregateOutputType = {
   tripStopId: string | null
   shipmentId: string | null
   attemptNumber: number | null
+  requestId: string | null
   status: string | null
   reason: string | null
   actorDriverId: string | null
+  actorUserId: string | null
+  assigneeUserId: string | null
+  actorMode: string | null
+  actingReason: string | null
+  payloadHash: string | null
   occurredAt: Date | null
   correlationId: string | null
   createdAt: Date | null
@@ -76,9 +88,16 @@ export type DeliveryAttemptCountAggregateOutputType = {
   tripStopId: number
   shipmentId: number
   attemptNumber: number
+  requestId: number
   status: number
   reason: number
   actorDriverId: number
+  actorUserId: number
+  assigneeUserId: number
+  actorMode: number
+  actingReason: number
+  payloadHash: number
+  receipt: number
   occurredAt: number
   correlationId: number
   createdAt: number
@@ -105,9 +124,15 @@ export type DeliveryAttemptMinAggregateInputType = {
   tripStopId?: true
   shipmentId?: true
   attemptNumber?: true
+  requestId?: true
   status?: true
   reason?: true
   actorDriverId?: true
+  actorUserId?: true
+  assigneeUserId?: true
+  actorMode?: true
+  actingReason?: true
+  payloadHash?: true
   occurredAt?: true
   correlationId?: true
   createdAt?: true
@@ -122,9 +147,15 @@ export type DeliveryAttemptMaxAggregateInputType = {
   tripStopId?: true
   shipmentId?: true
   attemptNumber?: true
+  requestId?: true
   status?: true
   reason?: true
   actorDriverId?: true
+  actorUserId?: true
+  assigneeUserId?: true
+  actorMode?: true
+  actingReason?: true
+  payloadHash?: true
   occurredAt?: true
   correlationId?: true
   createdAt?: true
@@ -139,9 +170,16 @@ export type DeliveryAttemptCountAggregateInputType = {
   tripStopId?: true
   shipmentId?: true
   attemptNumber?: true
+  requestId?: true
   status?: true
   reason?: true
   actorDriverId?: true
+  actorUserId?: true
+  assigneeUserId?: true
+  actorMode?: true
+  actingReason?: true
+  payloadHash?: true
+  receipt?: true
   occurredAt?: true
   correlationId?: true
   createdAt?: true
@@ -243,9 +281,16 @@ export type DeliveryAttemptGroupByOutputType = {
   tripStopId: string
   shipmentId: string
   attemptNumber: number
+  requestId: string | null
   status: string
   reason: string | null
   actorDriverId: string
+  actorUserId: string | null
+  assigneeUserId: string | null
+  actorMode: string | null
+  actingReason: string | null
+  payloadHash: string | null
+  receipt: runtime.JsonValue | null
   occurredAt: Date
   correlationId: string
   createdAt: Date
@@ -283,9 +328,16 @@ export type DeliveryAttemptWhereInput = {
   tripStopId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   shipmentId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   attemptNumber?: Prisma.IntFilter<"DeliveryAttempt"> | number
+  requestId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
   status?: Prisma.StringFilter<"DeliveryAttempt"> | string
   reason?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
   actorDriverId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
+  actorUserId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
+  assigneeUserId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
+  actorMode?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  actingReason?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  payloadHash?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  receipt?: Prisma.JsonNullableFilter<"DeliveryAttempt">
   occurredAt?: Prisma.DateTimeFilter<"DeliveryAttempt"> | Date | string
   correlationId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   createdAt?: Prisma.DateTimeFilter<"DeliveryAttempt"> | Date | string
@@ -301,9 +353,16 @@ export type DeliveryAttemptOrderByWithRelationInput = {
   tripStopId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
   attemptNumber?: Prisma.SortOrder
+  requestId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   actorDriverId?: Prisma.SortOrder
+  actorUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  assigneeUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  actorMode?: Prisma.SortOrderInput | Prisma.SortOrder
+  actingReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  payloadHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  receipt?: Prisma.SortOrderInput | Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -316,6 +375,8 @@ export type DeliveryAttemptOrderByWithRelationInput = {
 export type DeliveryAttemptWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   tenantId_tripStopId_attemptNumber?: Prisma.DeliveryAttemptTenantIdTripStopIdAttemptNumberCompoundUniqueInput
+  tenantId_requestId?: Prisma.DeliveryAttemptTenantIdRequestIdCompoundUniqueInput
+  tenantId_tripStopId?: Prisma.DeliveryAttemptTenantIdTripStopIdCompoundUniqueInput
   AND?: Prisma.DeliveryAttemptWhereInput | Prisma.DeliveryAttemptWhereInput[]
   OR?: Prisma.DeliveryAttemptWhereInput[]
   NOT?: Prisma.DeliveryAttemptWhereInput | Prisma.DeliveryAttemptWhereInput[]
@@ -323,9 +384,16 @@ export type DeliveryAttemptWhereUniqueInput = Prisma.AtLeast<{
   tripStopId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   shipmentId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   attemptNumber?: Prisma.IntFilter<"DeliveryAttempt"> | number
+  requestId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
   status?: Prisma.StringFilter<"DeliveryAttempt"> | string
   reason?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
   actorDriverId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
+  actorUserId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
+  assigneeUserId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
+  actorMode?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  actingReason?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  payloadHash?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  receipt?: Prisma.JsonNullableFilter<"DeliveryAttempt">
   occurredAt?: Prisma.DateTimeFilter<"DeliveryAttempt"> | Date | string
   correlationId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   createdAt?: Prisma.DateTimeFilter<"DeliveryAttempt"> | Date | string
@@ -333,7 +401,7 @@ export type DeliveryAttemptWhereUniqueInput = Prisma.AtLeast<{
   version?: Prisma.BigIntFilter<"DeliveryAttempt"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"DeliveryAttempt"> | Date | string | null
   tripStop?: Prisma.XOR<Prisma.TripStopScalarRelationFilter, Prisma.TripStopWhereInput>
-}, "id" | "tenantId_tripStopId_attemptNumber">
+}, "id" | "tenantId_tripStopId_attemptNumber" | "tenantId_requestId" | "tenantId_tripStopId">
 
 export type DeliveryAttemptOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -341,9 +409,16 @@ export type DeliveryAttemptOrderByWithAggregationInput = {
   tripStopId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
   attemptNumber?: Prisma.SortOrder
+  requestId?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
   reason?: Prisma.SortOrderInput | Prisma.SortOrder
   actorDriverId?: Prisma.SortOrder
+  actorUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  assigneeUserId?: Prisma.SortOrderInput | Prisma.SortOrder
+  actorMode?: Prisma.SortOrderInput | Prisma.SortOrder
+  actingReason?: Prisma.SortOrderInput | Prisma.SortOrder
+  payloadHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  receipt?: Prisma.SortOrderInput | Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -366,9 +441,16 @@ export type DeliveryAttemptScalarWhereWithAggregatesInput = {
   tripStopId?: Prisma.UuidWithAggregatesFilter<"DeliveryAttempt"> | string
   shipmentId?: Prisma.UuidWithAggregatesFilter<"DeliveryAttempt"> | string
   attemptNumber?: Prisma.IntWithAggregatesFilter<"DeliveryAttempt"> | number
+  requestId?: Prisma.UuidNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
   status?: Prisma.StringWithAggregatesFilter<"DeliveryAttempt"> | string
   reason?: Prisma.StringNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
   actorDriverId?: Prisma.UuidWithAggregatesFilter<"DeliveryAttempt"> | string
+  actorUserId?: Prisma.UuidNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
+  assigneeUserId?: Prisma.UuidNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
+  actorMode?: Prisma.StringNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
+  actingReason?: Prisma.StringNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
+  payloadHash?: Prisma.StringNullableWithAggregatesFilter<"DeliveryAttempt"> | string | null
+  receipt?: Prisma.JsonNullableWithAggregatesFilter<"DeliveryAttempt">
   occurredAt?: Prisma.DateTimeWithAggregatesFilter<"DeliveryAttempt"> | Date | string
   correlationId?: Prisma.UuidWithAggregatesFilter<"DeliveryAttempt"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"DeliveryAttempt"> | Date | string
@@ -382,9 +464,16 @@ export type DeliveryAttemptCreateInput = {
   tenantId: string
   shipmentId: string
   attemptNumber: number
+  requestId?: string | null
   status: string
   reason?: string | null
   actorDriverId: string
+  actorUserId?: string | null
+  assigneeUserId?: string | null
+  actorMode?: string | null
+  actingReason?: string | null
+  payloadHash?: string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt: Date | string
   correlationId: string
   createdAt?: Date | string
@@ -400,9 +489,16 @@ export type DeliveryAttemptUncheckedCreateInput = {
   tripStopId: string
   shipmentId: string
   attemptNumber: number
+  requestId?: string | null
   status: string
   reason?: string | null
   actorDriverId: string
+  actorUserId?: string | null
+  assigneeUserId?: string | null
+  actorMode?: string | null
+  actingReason?: string | null
+  payloadHash?: string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt: Date | string
   correlationId: string
   createdAt?: Date | string
@@ -416,9 +512,16 @@ export type DeliveryAttemptUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -434,9 +537,16 @@ export type DeliveryAttemptUncheckedUpdateInput = {
   tripStopId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -451,9 +561,16 @@ export type DeliveryAttemptCreateManyInput = {
   tripStopId: string
   shipmentId: string
   attemptNumber: number
+  requestId?: string | null
   status: string
   reason?: string | null
   actorDriverId: string
+  actorUserId?: string | null
+  assigneeUserId?: string | null
+  actorMode?: string | null
+  actingReason?: string | null
+  payloadHash?: string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt: Date | string
   correlationId: string
   createdAt?: Date | string
@@ -467,9 +584,16 @@ export type DeliveryAttemptUpdateManyMutationInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -484,9 +608,16 @@ export type DeliveryAttemptUncheckedUpdateManyInput = {
   tripStopId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -511,15 +642,32 @@ export type DeliveryAttemptTenantIdTripStopIdAttemptNumberCompoundUniqueInput = 
   attemptNumber: number
 }
 
+export type DeliveryAttemptTenantIdRequestIdCompoundUniqueInput = {
+  tenantId: string
+  requestId: string
+}
+
+export type DeliveryAttemptTenantIdTripStopIdCompoundUniqueInput = {
+  tenantId: string
+  tripStopId: string
+}
+
 export type DeliveryAttemptCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   tenantId?: Prisma.SortOrder
   tripStopId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
   attemptNumber?: Prisma.SortOrder
+  requestId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   actorDriverId?: Prisma.SortOrder
+  actorUserId?: Prisma.SortOrder
+  assigneeUserId?: Prisma.SortOrder
+  actorMode?: Prisma.SortOrder
+  actingReason?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  receipt?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -539,9 +687,15 @@ export type DeliveryAttemptMaxOrderByAggregateInput = {
   tripStopId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
   attemptNumber?: Prisma.SortOrder
+  requestId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   actorDriverId?: Prisma.SortOrder
+  actorUserId?: Prisma.SortOrder
+  assigneeUserId?: Prisma.SortOrder
+  actorMode?: Prisma.SortOrder
+  actingReason?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -556,9 +710,15 @@ export type DeliveryAttemptMinOrderByAggregateInput = {
   tripStopId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
   attemptNumber?: Prisma.SortOrder
+  requestId?: Prisma.SortOrder
   status?: Prisma.SortOrder
   reason?: Prisma.SortOrder
   actorDriverId?: Prisma.SortOrder
+  actorUserId?: Prisma.SortOrder
+  assigneeUserId?: Prisma.SortOrder
+  actorMode?: Prisma.SortOrder
+  actingReason?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
   occurredAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -619,9 +779,16 @@ export type DeliveryAttemptCreateWithoutTripStopInput = {
   tenantId: string
   shipmentId: string
   attemptNumber: number
+  requestId?: string | null
   status: string
   reason?: string | null
   actorDriverId: string
+  actorUserId?: string | null
+  assigneeUserId?: string | null
+  actorMode?: string | null
+  actingReason?: string | null
+  payloadHash?: string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt: Date | string
   correlationId: string
   createdAt?: Date | string
@@ -635,9 +802,16 @@ export type DeliveryAttemptUncheckedCreateWithoutTripStopInput = {
   tenantId: string
   shipmentId: string
   attemptNumber: number
+  requestId?: string | null
   status: string
   reason?: string | null
   actorDriverId: string
+  actorUserId?: string | null
+  assigneeUserId?: string | null
+  actorMode?: string | null
+  actingReason?: string | null
+  payloadHash?: string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt: Date | string
   correlationId: string
   createdAt?: Date | string
@@ -681,9 +855,16 @@ export type DeliveryAttemptScalarWhereInput = {
   tripStopId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   shipmentId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   attemptNumber?: Prisma.IntFilter<"DeliveryAttempt"> | number
+  requestId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
   status?: Prisma.StringFilter<"DeliveryAttempt"> | string
   reason?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
   actorDriverId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
+  actorUserId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
+  assigneeUserId?: Prisma.UuidNullableFilter<"DeliveryAttempt"> | string | null
+  actorMode?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  actingReason?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  payloadHash?: Prisma.StringNullableFilter<"DeliveryAttempt"> | string | null
+  receipt?: Prisma.JsonNullableFilter<"DeliveryAttempt">
   occurredAt?: Prisma.DateTimeFilter<"DeliveryAttempt"> | Date | string
   correlationId?: Prisma.UuidFilter<"DeliveryAttempt"> | string
   createdAt?: Prisma.DateTimeFilter<"DeliveryAttempt"> | Date | string
@@ -697,9 +878,16 @@ export type DeliveryAttemptCreateManyTripStopInput = {
   tenantId: string
   shipmentId: string
   attemptNumber: number
+  requestId?: string | null
   status: string
   reason?: string | null
   actorDriverId: string
+  actorUserId?: string | null
+  assigneeUserId?: string | null
+  actorMode?: string | null
+  actingReason?: string | null
+  payloadHash?: string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt: Date | string
   correlationId: string
   createdAt?: Date | string
@@ -713,9 +901,16 @@ export type DeliveryAttemptUpdateWithoutTripStopInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -729,9 +924,16 @@ export type DeliveryAttemptUncheckedUpdateWithoutTripStopInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -745,9 +947,16 @@ export type DeliveryAttemptUncheckedUpdateManyWithoutTripStopInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
   attemptNumber?: Prisma.IntFieldUpdateOperationsInput | number
+  requestId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.StringFieldUpdateOperationsInput | string
   reason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   actorDriverId?: Prisma.StringFieldUpdateOperationsInput | string
+  actorUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  assigneeUserId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actorMode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  actingReason?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   occurredAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -764,9 +973,16 @@ export type DeliveryAttemptSelect<ExtArgs extends runtime.Types.Extensions.Inter
   tripStopId?: boolean
   shipmentId?: boolean
   attemptNumber?: boolean
+  requestId?: boolean
   status?: boolean
   reason?: boolean
   actorDriverId?: boolean
+  actorUserId?: boolean
+  assigneeUserId?: boolean
+  actorMode?: boolean
+  actingReason?: boolean
+  payloadHash?: boolean
+  receipt?: boolean
   occurredAt?: boolean
   correlationId?: boolean
   createdAt?: boolean
@@ -782,9 +998,16 @@ export type DeliveryAttemptSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
   tripStopId?: boolean
   shipmentId?: boolean
   attemptNumber?: boolean
+  requestId?: boolean
   status?: boolean
   reason?: boolean
   actorDriverId?: boolean
+  actorUserId?: boolean
+  assigneeUserId?: boolean
+  actorMode?: boolean
+  actingReason?: boolean
+  payloadHash?: boolean
+  receipt?: boolean
   occurredAt?: boolean
   correlationId?: boolean
   createdAt?: boolean
@@ -800,9 +1023,16 @@ export type DeliveryAttemptSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
   tripStopId?: boolean
   shipmentId?: boolean
   attemptNumber?: boolean
+  requestId?: boolean
   status?: boolean
   reason?: boolean
   actorDriverId?: boolean
+  actorUserId?: boolean
+  assigneeUserId?: boolean
+  actorMode?: boolean
+  actingReason?: boolean
+  payloadHash?: boolean
+  receipt?: boolean
   occurredAt?: boolean
   correlationId?: boolean
   createdAt?: boolean
@@ -818,9 +1048,16 @@ export type DeliveryAttemptSelectScalar = {
   tripStopId?: boolean
   shipmentId?: boolean
   attemptNumber?: boolean
+  requestId?: boolean
   status?: boolean
   reason?: boolean
   actorDriverId?: boolean
+  actorUserId?: boolean
+  assigneeUserId?: boolean
+  actorMode?: boolean
+  actingReason?: boolean
+  payloadHash?: boolean
+  receipt?: boolean
   occurredAt?: boolean
   correlationId?: boolean
   createdAt?: boolean
@@ -829,7 +1066,7 @@ export type DeliveryAttemptSelectScalar = {
   deletedAt?: boolean
 }
 
-export type DeliveryAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripStopId" | "shipmentId" | "attemptNumber" | "status" | "reason" | "actorDriverId" | "occurredAt" | "correlationId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["deliveryAttempt"]>
+export type DeliveryAttemptOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripStopId" | "shipmentId" | "attemptNumber" | "requestId" | "status" | "reason" | "actorDriverId" | "actorUserId" | "assigneeUserId" | "actorMode" | "actingReason" | "payloadHash" | "receipt" | "occurredAt" | "correlationId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["deliveryAttempt"]>
 export type DeliveryAttemptInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tripStop?: boolean | Prisma.TripStopDefaultArgs<ExtArgs>
 }
@@ -851,9 +1088,19 @@ export type $DeliveryAttemptPayload<ExtArgs extends runtime.Types.Extensions.Int
     tripStopId: string
     shipmentId: string
     attemptNumber: number
+    requestId: string | null
+    /**
+     * Terminal outcome only: DELIVERED or FAILED.
+     */
     status: string
     reason: string | null
     actorDriverId: string
+    actorUserId: string | null
+    assigneeUserId: string | null
+    actorMode: string | null
+    actingReason: string | null
+    payloadHash: string | null
+    receipt: runtime.JsonValue | null
     occurredAt: Date
     correlationId: string
     createdAt: Date
@@ -1289,9 +1536,16 @@ export interface DeliveryAttemptFieldRefs {
   readonly tripStopId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
   readonly shipmentId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
   readonly attemptNumber: Prisma.FieldRef<"DeliveryAttempt", 'Int'>
+  readonly requestId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
   readonly status: Prisma.FieldRef<"DeliveryAttempt", 'String'>
   readonly reason: Prisma.FieldRef<"DeliveryAttempt", 'String'>
   readonly actorDriverId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
+  readonly actorUserId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
+  readonly assigneeUserId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
+  readonly actorMode: Prisma.FieldRef<"DeliveryAttempt", 'String'>
+  readonly actingReason: Prisma.FieldRef<"DeliveryAttempt", 'String'>
+  readonly payloadHash: Prisma.FieldRef<"DeliveryAttempt", 'String'>
+  readonly receipt: Prisma.FieldRef<"DeliveryAttempt", 'Json'>
   readonly occurredAt: Prisma.FieldRef<"DeliveryAttempt", 'DateTime'>
   readonly correlationId: Prisma.FieldRef<"DeliveryAttempt", 'String'>
   readonly createdAt: Prisma.FieldRef<"DeliveryAttempt", 'DateTime'>

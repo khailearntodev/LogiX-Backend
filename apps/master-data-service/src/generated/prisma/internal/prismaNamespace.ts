@@ -404,6 +404,7 @@ export const ModelName = {
   Warehouse: 'Warehouse',
   Vehicle: 'Vehicle',
   Driver: 'Driver',
+  MasterDataCodeSequence: 'MasterDataCodeSequence',
   OutboxEvent: 'OutboxEvent'
 } as const
 
@@ -420,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "customer" | "customerAddress" | "supplier" | "product" | "warehouse" | "vehicle" | "driver" | "outboxEvent"
+    modelProps: "customer" | "customerAddress" | "supplier" | "product" | "warehouse" | "vehicle" | "driver" | "masterDataCodeSequence" | "outboxEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -942,6 +943,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    MasterDataCodeSequence: {
+      payload: Prisma.$MasterDataCodeSequencePayload<ExtArgs>
+      fields: Prisma.MasterDataCodeSequenceFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MasterDataCodeSequenceFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MasterDataCodeSequenceFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>
+        }
+        findFirst: {
+          args: Prisma.MasterDataCodeSequenceFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MasterDataCodeSequenceFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>
+        }
+        findMany: {
+          args: Prisma.MasterDataCodeSequenceFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>[]
+        }
+        create: {
+          args: Prisma.MasterDataCodeSequenceCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>
+        }
+        createMany: {
+          args: Prisma.MasterDataCodeSequenceCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MasterDataCodeSequenceCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>[]
+        }
+        delete: {
+          args: Prisma.MasterDataCodeSequenceDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>
+        }
+        update: {
+          args: Prisma.MasterDataCodeSequenceUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>
+        }
+        deleteMany: {
+          args: Prisma.MasterDataCodeSequenceDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MasterDataCodeSequenceUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MasterDataCodeSequenceUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>[]
+        }
+        upsert: {
+          args: Prisma.MasterDataCodeSequenceUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MasterDataCodeSequencePayload>
+        }
+        aggregate: {
+          args: Prisma.MasterDataCodeSequenceAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMasterDataCodeSequence>
+        }
+        groupBy: {
+          args: Prisma.MasterDataCodeSequenceGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MasterDataCodeSequenceGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MasterDataCodeSequenceCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MasterDataCodeSequenceCountAggregateOutputType> | number
+        }
+      }
+    }
     OutboxEvent: {
       payload: Prisma.$OutboxEventPayload<ExtArgs>
       fields: Prisma.OutboxEventFieldRefs
@@ -1202,6 +1277,16 @@ export const DriverScalarFieldEnum = {
 } as const
 
 export type DriverScalarFieldEnum = (typeof DriverScalarFieldEnum)[keyof typeof DriverScalarFieldEnum]
+
+
+export const MasterDataCodeSequenceScalarFieldEnum = {
+  tenantId: 'tenantId',
+  codeType: 'codeType',
+  lastValue: 'lastValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MasterDataCodeSequenceScalarFieldEnum = (typeof MasterDataCodeSequenceScalarFieldEnum)[keyof typeof MasterDataCodeSequenceScalarFieldEnum]
 
 
 export const OutboxEventScalarFieldEnum = {
@@ -1537,6 +1622,7 @@ export type GlobalOmitConfig = {
   warehouse?: Prisma.WarehouseOmit
   vehicle?: Prisma.VehicleOmit
   driver?: Prisma.DriverOmit
+  masterDataCodeSequence?: Prisma.MasterDataCodeSequenceOmit
   outboxEvent?: Prisma.OutboxEventOmit
 }
 

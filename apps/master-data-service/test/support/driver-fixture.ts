@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { InternalTripResourcesController } from '../../src/master-data/internal-trip-resources.controller.js';
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { ConfigService } from '@nestjs/config';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
@@ -27,8 +28,14 @@ import { DriverUsageService } from '../../../transport-service/src/drivers/drive
 import { DriverLinkService } from '../../src/master-data/drivers/driver-link.service.js';
 import { InternalDriverLinksController } from '../../src/master-data/drivers/internal-driver-links.controller.js';
 import { TransportDriverClient } from '../../src/master-data/drivers/transport-driver.client.js';
+import { WarehousesController } from '../../src/master-data/warehouses/warehouses.controller.js';
+import { WarehouseService } from '../../src/master-data/warehouses/services/warehouse.service.js';
+import { VehiclesController } from '../../src/master-data/vehicles/vehicles.controller.js';
+import { VehicleService } from '../../src/master-data/vehicles/services/vehicle.service.js';
 
-export async function driverFixture() {
+export async function driverFixture(
+  options: { masterResources?: boolean } = {},
+) {
   const databaseUrl = process.env.DRIVER_TEST_DATABASE_URL;
   if (
     !databaseUrl ||
@@ -149,8 +156,23 @@ export async function driverFixture() {
     );
     const masterModule = await Test.createTestingModule({
       imports: [PassportModule.register({ defaultStrategy: 'jwt' })],
-      controllers: [DriversController, InternalDriverLinksController],
+      controllers: [
+        DriversController,
+        InternalDriverLinksController,
+        ...(options.masterResources
+          ? [WarehousesController, VehiclesController, InternalTripResourcesController]
+          : []),
+      ],
       providers: [
+        ...(options.masterResources
+          ? [
+              {
+                provide: WarehouseService,
+                useValue: new WarehouseService(master),
+              },
+              { provide: VehicleService, useValue: new VehicleService(master) },
+            ]
+          : []),
         { provide: DriverService, useValue: new DriverService(master, client) },
         { provide: IdentityDriverClient, useValue: client },
         {
@@ -181,6 +203,7 @@ export async function driverFixture() {
       IDENTITY_SERVICE_URL: identityUrl,
       ORDER_SERVICE_URL: masterUrl,
       FULFILLMENT_SERVICE_URL: masterUrl,
+      TRANSPORT_SERVICE_URL: transportUrl,
     });
     const { AppModule } =
       await import('../../../api-gateway/src/app.module.js');
@@ -194,6 +217,7 @@ export async function driverFixture() {
           IDENTITY_SERVICE_URL: identityUrl,
           ORDER_SERVICE_URL: masterUrl,
           FULFILLMENT_SERVICE_URL: masterUrl,
+          TRANSPORT_SERVICE_URL: transportUrl,
         }),
       )
       .compile();
@@ -265,6 +289,14 @@ export async function driverFixture() {
         await master.driver.deleteMany({
           where: { tenantId: { in: [tenantId, otherTenantId] } },
         });
+        if (options.masterResources) {
+          await master.warehouse.deleteMany({
+            where: { tenantId: { in: [tenantId, otherTenantId] } },
+          });
+          await master.vehicle.deleteMany({
+            where: { tenantId: { in: [tenantId, otherTenantId] } },
+          });
+        }
         await identity.userTenant.deleteMany({
           where: { tenantId: { in: [tenantId, otherTenantId] } },
         });

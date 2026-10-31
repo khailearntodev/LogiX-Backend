@@ -4,8 +4,8 @@ import hashlib
 import json
 import logging
 import uuid
+from decimal import Decimal
 from typing import Any
-from uuid import UUID
 
 from logix_route_optimizer.modules.distance.service import (
     ResilientDistanceService,
@@ -83,8 +83,8 @@ class RouteEngine:
         vehicle = request.vehicle or DEFAULT_VEHICLE
 
         # Check vehicle capacity constraints
-        total_demand_weight = sum(s.demand_weight_kg for s in stops)
-        total_demand_volume = sum(s.demand_volume_m3 for s in stops)
+        total_demand_weight = float(sum(Decimal(str(s.demand_weight_kg)) for s in stops))
+        total_demand_volume = float(sum(Decimal(str(s.demand_volume_m3)) for s in stops))
 
         feasibility_status = "FEASIBLE"
         feasibility_note = "Tải trọng và thể tích xe đáp ứng tốt toàn bộ đơn hàng."

@@ -59,7 +59,8 @@ export const ModelName = {
   DeliveryAttempt: 'DeliveryAttempt',
   TripDispatch: 'TripDispatch',
   OutboxEvent: 'OutboxEvent',
-  InboxEvent: 'InboxEvent'
+  InboxEvent: 'InboxEvent',
+  TripOperation: 'TripOperation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -85,6 +86,8 @@ export const DeliveryTripScalarFieldEnum = {
   warehouseId: 'warehouseId',
   vehicleId: 'vehicleId',
   driverId: 'driverId',
+  driverUserId: 'driverUserId',
+  driverVersion: 'driverVersion',
   depotSnapshot: 'depotSnapshot',
   vehicleSnapshot: 'vehicleSnapshot',
   driverSnapshot: 'driverSnapshot',
@@ -113,9 +116,20 @@ export const TripShipmentScalarFieldEnum = {
   tenantId: 'tenantId',
   tripId: 'tripId',
   shipmentId: 'shipmentId',
+  orderId: 'orderId',
   warehouseId: 'warehouseId',
+  operationId: 'operationId',
+  state: 'state',
   weight: 'weight',
   volume: 'volume',
+  expectedShipmentVersion: 'expectedShipmentVersion',
+  shipmentVersion: 'shipmentVersion',
+  orderVersion: 'orderVersion',
+  claimRequest: 'claimRequest',
+  claimReceipt: 'claimReceipt',
+  releaseRequest: 'releaseRequest',
+  releaseReceipt: 'releaseReceipt',
+  shipmentSnapshot: 'shipmentSnapshot',
   assignedAt: 'assignedAt',
   removedAt: 'removedAt',
   createdAt: 'createdAt',
@@ -157,7 +171,6 @@ export const RoutePlanScalarFieldEnum = {
   tripId: 'tripId',
   planVersion: 'planVersion',
   routeRequestId: 'routeRequestId',
-  status: 'status',
   source: 'source',
   inputHash: 'inputHash',
   inputSnapshot: 'inputSnapshot',
@@ -167,6 +180,16 @@ export const RoutePlanScalarFieldEnum = {
   totalDistance: 'totalDistance',
   estimatedCost: 'estimatedCost',
   metrics: 'metrics',
+  optimizationRunId: 'optimizationRunId',
+  requestActorId: 'requestActorId',
+  requestHash: 'requestHash',
+  optimizerRequest: 'optimizerRequest',
+  optimizerResponse: 'optimizerResponse',
+  vehicleSnapshot: 'vehicleSnapshot',
+  driverSnapshot: 'driverSnapshot',
+  approvalRequestId: 'approvalRequestId',
+  approvalHash: 'approvalHash',
+  approvalReceipt: 'approvalReceipt',
   originalPlanId: 'originalPlanId',
   overrideReason: 'overrideReason',
   approvedBy: 'approvedBy',
@@ -189,6 +212,7 @@ export const RoutePlanStopScalarFieldEnum = {
   distanceFromPrevious: 'distanceFromPrevious',
   cumulativeDistance: 'cumulativeDistance',
   estimatedArrivalAt: 'estimatedArrivalAt',
+  legDurationSeconds: 'legDurationSeconds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   version: 'version',
@@ -204,9 +228,16 @@ export const DeliveryAttemptScalarFieldEnum = {
   tripStopId: 'tripStopId',
   shipmentId: 'shipmentId',
   attemptNumber: 'attemptNumber',
+  requestId: 'requestId',
   status: 'status',
   reason: 'reason',
   actorDriverId: 'actorDriverId',
+  actorUserId: 'actorUserId',
+  assigneeUserId: 'assigneeUserId',
+  actorMode: 'actorMode',
+  actingReason: 'actingReason',
+  payloadHash: 'payloadHash',
+  receipt: 'receipt',
   occurredAt: 'occurredAt',
   correlationId: 'correlationId',
   createdAt: 'createdAt',
@@ -226,6 +257,15 @@ export const TripDispatchScalarFieldEnum = {
   idempotencyKey: 'idempotencyKey',
   status: 'status',
   requestedBy: 'requestedBy',
+  stage: 'stage',
+  payloadHash: 'payloadHash',
+  command: 'command',
+  payload: 'payload',
+  receipt: 'receipt',
+  result: 'result',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
   requestedAt: 'requestedAt',
   completedAt: 'completedAt',
   correlationId: 'correlationId',
@@ -281,6 +321,30 @@ export const InboxEventScalarFieldEnum = {
 } as const
 
 export type InboxEventScalarFieldEnum = (typeof InboxEventScalarFieldEnum)[keyof typeof InboxEventScalarFieldEnum]
+
+
+export const TripOperationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tripId: 'tripId',
+  requestId: 'requestId',
+  actorId: 'actorId',
+  kind: 'kind',
+  status: 'status',
+  payloadHash: 'payloadHash',
+  payload: 'payload',
+  result: 'result',
+  activeLock: 'activeLock',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lockedUntil: 'lockedUntil',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  version: 'version'
+} as const
+
+export type TripOperationScalarFieldEnum = (typeof TripOperationScalarFieldEnum)[keyof typeof TripOperationScalarFieldEnum]
 
 
 export const SortOrder = {

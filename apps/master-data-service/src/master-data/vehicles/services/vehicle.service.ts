@@ -5,20 +5,17 @@ import {
   DEFAULT_PAGE_SIZE,
   RecordStatus,
 } from '../../common/master-data.constants.js';
+import {
+  allocateNextMasterDataCode,
+  syncMasterDataCodeSequence,
+} from '../../common/master-data-code.js';
 import { toVehicleView } from '../../common/master-data.mappers.js';
 import { isUniqueViolation, toConflict } from '../../common/prisma-error.js';
-import type {
-  Paginated,
-  VehicleView,
-} from '../../common/master-data.types.js';
+import type { Paginated, VehicleView } from '../../common/master-data.types.js';
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
-import type {
-  CreateVehicleDto,
-  UpdateVehicleDto,
-} from '../dto/vehicle.dto.js';
+import type { CreateVehicleDto, UpdateVehicleDto } from '../dto/vehicle.dto.js';
 
-const DUPLICATE =
-  'Mã phương tiện hoặc biển số đã tồn tại trong tổ chức này';
+const DUPLICATE = 'Mã phương tiện hoặc biển số đã tồn tại trong tổ chức này';
 
 @Injectable()
 export class VehicleService {
@@ -26,15 +23,35 @@ export class VehicleService {
 
   async create(tenantId: string, dto: CreateVehicleDto): Promise<VehicleView> {
     try {
-      const row = await this.prisma.vehicle.create({
-        data: {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const manualCode = dto.code?.trim();
+        const existingCodes = (
+          await tx.vehicle.findMany({
+            where: { tenantId },
+            select: { code: true },
+          })
+        ).map((vehicle) => vehicle.code);
+        await syncMasterDataCodeSequence(
+          tx,
           tenantId,
-          code: dto.code,
-          licensePlate: dto.licensePlate,
-          capacityWeight: new Prisma.Decimal(dto.capacityWeight),
-          capacityVolume: new Prisma.Decimal(dto.capacityVolume),
-          status: RecordStatus.ACTIVE,
-        },
+          'vehicle',
+          existingCodes,
+          manualCode,
+        );
+        const code =
+          manualCode ??
+          (await allocateNextMasterDataCode(tx, tenantId, 'vehicle'));
+
+        return tx.vehicle.create({
+          data: {
+            tenantId,
+            code,
+            licensePlate: dto.licensePlate,
+            capacityWeight: new Prisma.Decimal(dto.capacityWeight),
+            capacityVolume: new Prisma.Decimal(dto.capacityVolume),
+            status: RecordStatus.ACTIVE,
+          },
+        });
       });
 
       return toVehicleView(row);
@@ -89,20 +106,28 @@ export class VehicleService {
     await this.requireVehicle(tenantId, id);
 
     try {
-      const row = await this.prisma.vehicle.update({
-        where: { id },
-        data: {
-          ...(dto.licensePlate === undefined
-            ? {}
-            : { licensePlate: dto.licensePlate }),
-          ...(dto.capacityWeight === undefined
-            ? {}
-            : { capacityWeight: new Prisma.Decimal(dto.capacityWeight) }),
-          ...(dto.capacityVolume === undefined
-            ? {}
-            : { capacityVolume: new Prisma.Decimal(dto.capacityVolume) }),
-          version: { increment: 1 },
-        },
+      const row = await this.prisma.$transaction(async (tx) => {
+        const code = dto.code?.trim();
+        if (code) {
+          await syncMasterDataCodeSequence(tx, tenantId, 'vehicle', [], code);
+        }
+
+        return tx.vehicle.update({
+          where: { id },
+          data: {
+            ...(code ? { code } : {}),
+            ...(dto.licensePlate === undefined
+              ? {}
+              : { licensePlate: dto.licensePlate }),
+            ...(dto.capacityWeight === undefined
+              ? {}
+              : { capacityWeight: new Prisma.Decimal(dto.capacityWeight) }),
+            ...(dto.capacityVolume === undefined
+              ? {}
+              : { capacityVolume: new Prisma.Decimal(dto.capacityVolume) }),
+            version: { increment: 1 },
+          },
+        });
       });
 
       return toVehicleView(row);

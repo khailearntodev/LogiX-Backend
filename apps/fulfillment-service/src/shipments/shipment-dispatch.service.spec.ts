@@ -25,6 +25,8 @@ function setup() {
     warehouseId: randomUUID(),
     status: 'READY_TO_SHIP',
     version: 3n,
+    assignedTripId: null as string | null,
+    tripClaimId: null as string | null,
     dispatchIntent: null as Record<string, unknown> | null,
   };
   const tx = {
@@ -86,6 +88,42 @@ describe('Persisted shipment dispatch', () => {
     await expect(
       s.service.dispatch(s.shipment.id, { ...s.dto, orderVersion: 9 }, s.ctx),
     ).rejects.toMatchObject({ httpStatus: 409 });
+    expect(s.tx.shipmentDispatchIntent.create).not.toHaveBeenCalled();
+    expect(s.orders.authorize).not.toHaveBeenCalled();
+  });
+  it('rejects direct preview and dispatch for a claimed shipment', async () => {
+    const s = setup();
+    s.shipment.assignedTripId = randomUUID();
+    s.shipment.tripClaimId = randomUUID();
+
+    await expect(s.service.preview(s.shipment.id, s.ctx)).rejects.toMatchObject(
+      {
+        reason: 'SHIPMENT_TRIP_CLAIM_CONFLICT',
+      },
+    );
+    await expect(
+      s.service.dispatch(s.shipment.id, s.dto, s.ctx),
+    ).rejects.toMatchObject({ reason: 'SHIPMENT_TRIP_CLAIM_CONFLICT' });
+    expect(s.tx.shipmentDispatchIntent.create).not.toHaveBeenCalled();
+    expect(s.orders.authorize).not.toHaveBeenCalled();
+  });
+  it('rejects a claim that wins after dispatch preflight under the shipment lock', async () => {
+    const s = setup();
+    s.orders.snapshot.mockImplementationOnce(async () => {
+      s.shipment.assignedTripId = randomUUID();
+      s.shipment.tripClaimId = randomUUID();
+      return {
+        id: s.shipment.orderId,
+        status: 'READY_TO_SHIP',
+        version: 8,
+        cancellationRequestedAt: null,
+        reservationGroupId: s.shipment.reservationGroupId,
+      };
+    });
+
+    await expect(
+      s.service.dispatch(s.shipment.id, s.dto, s.ctx),
+    ).rejects.toMatchObject({ reason: 'SHIPMENT_TRIP_CLAIM_CONFLICT' });
     expect(s.tx.shipmentDispatchIntent.create).not.toHaveBeenCalled();
     expect(s.orders.authorize).not.toHaveBeenCalled();
   });

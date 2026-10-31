@@ -11,6 +11,10 @@ import {
   DEFAULT_PAGE_SIZE,
   RecordStatus,
 } from '../common/master-data.constants.js';
+import {
+  allocateNextMasterDataCode,
+  syncMasterDataCodeSequence,
+} from '../common/master-data-code.js';
 import { isUniqueViolation } from '../common/prisma-error.js';
 import type { PaginationQueryDto } from '../common/dto/pagination-query.dto.js';
 import type { CreateDriverDto, UpdateDriverDto } from './dto/driver.dto.js';
@@ -51,13 +55,34 @@ export class DriverService {
   async create(tenantId: string, dto: CreateDriverDto) {
     const user = await this.identity.eligible(tenantId, dto.userId);
     try {
-      const row = await this.prisma.driver.create({
-        data: {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const manualCode = dto.code?.trim();
+        const existingCodes = (
+          await tx.driver.findMany({
+            where: { tenantId },
+            select: { code: true },
+          })
+        ).map((driver) => driver.code);
+        await syncMasterDataCodeSequence(
+          tx,
           tenantId,
-          ...dto,
-          licenseExpiry: new Date(dto.licenseExpiry),
-          status: RecordStatus.ACTIVE,
-        },
+          'driver',
+          existingCodes,
+          manualCode,
+        );
+        const code =
+          manualCode ??
+          (await allocateNextMasterDataCode(tx, tenantId, 'driver'));
+
+        return tx.driver.create({
+          data: {
+            tenantId,
+            ...dto,
+            code,
+            licenseExpiry: new Date(dto.licenseExpiry),
+            status: RecordStatus.ACTIVE,
+          },
+        });
       });
       return driverView(row, user);
     } catch (error) {
@@ -118,6 +143,13 @@ export class DriverService {
     return driverView(row, user);
   }
 
+  async eligibleForTrip(tenantId: string, id: string) {
+    const row = await this.require(tenantId, id);
+    if (row.status !== RecordStatus.ACTIVE)
+      throw new ConflictException('DRIVER_MUST_BE_ACTIVE');
+    return driverView(row, await this.identity.eligible(tenantId, row.userId));
+  }
+
   async update(tenantId: string, id: string, dto: UpdateDriverDto) {
     const current = await this.require(tenantId, id);
     const [user] = await this.identity.resolve(tenantId, [current.userId]);
@@ -126,7 +158,12 @@ export class DriverService {
         'Không thể đối chiếu người dùng tài xế',
       );
     try {
+      const code = dto.code?.trim();
       const row = await this.prisma.$transaction(async (tx) => {
+        if (code) {
+          await syncMasterDataCodeSequence(tx, tenantId, 'driver', [], code);
+        }
+
         const result = await tx.driver.updateMany({
           where: {
             id,
@@ -138,6 +175,7 @@ export class DriverService {
             },
           },
           data: {
+            ...(code ? { code } : {}),
             ...(dto.licenseNumber !== undefined
               ? { licenseNumber: dto.licenseNumber }
               : {}),

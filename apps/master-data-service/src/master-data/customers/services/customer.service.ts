@@ -5,6 +5,10 @@ import {
   DEFAULT_PAGE_SIZE,
   RecordStatus,
 } from '../../common/master-data.constants.js';
+import {
+  allocateNextMasterDataCode,
+  syncMasterDataCodeSequence,
+} from '../../common/master-data-code.js';
 import { toCustomerView } from '../../common/master-data.mappers.js';
 import { toConflict } from '../../common/prisma-error.js';
 import type {
@@ -28,16 +32,36 @@ export class CustomerService {
     dto: CreateCustomerDto,
   ): Promise<CustomerView> {
     try {
-      const row = await this.prisma.customer.create({
-        data: {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const manualCode = dto.code?.trim();
+        const existingCodes = (
+          await tx.customer.findMany({
+            where: { tenantId },
+            select: { code: true },
+          })
+        ).map((customer) => customer.code);
+        await syncMasterDataCodeSequence(
+          tx,
           tenantId,
-          code: dto.code,
-          name: dto.name,
-          taxCode: dto.taxCode ?? null,
-          phone: dto.phone ?? null,
-          email: dto.email ?? null,
-          status: RecordStatus.ACTIVE,
-        },
+          'customer',
+          existingCodes,
+          manualCode,
+        );
+        const code =
+          manualCode ??
+          (await allocateNextMasterDataCode(tx, tenantId, 'customer'));
+
+        return tx.customer.create({
+          data: {
+            tenantId,
+            code,
+            name: dto.name,
+            taxCode: dto.taxCode ?? null,
+            phone: dto.phone ?? null,
+            email: dto.email ?? null,
+            status: RecordStatus.ACTIVE,
+          },
+        });
       });
 
       return toCustomerView(row);
@@ -92,18 +116,30 @@ export class CustomerService {
   ): Promise<CustomerView> {
     await this.requireCustomer(tenantId, id);
 
-    const row = await this.prisma.customer.update({
-      where: { id },
-      data: {
-        ...(dto.name === undefined ? {} : { name: dto.name }),
-        ...(dto.taxCode === undefined ? {} : { taxCode: dto.taxCode }),
-        ...(dto.phone === undefined ? {} : { phone: dto.phone }),
-        ...(dto.email === undefined ? {} : { email: dto.email }),
-        version: { increment: 1 },
-      },
-    });
+    try {
+      const code = dto.code?.trim();
+      const row = await this.prisma.$transaction(async (tx) => {
+        if (code) {
+          await syncMasterDataCodeSequence(tx, tenantId, 'customer', [], code);
+        }
 
-    return toCustomerView(row);
+        return tx.customer.update({
+          where: { id },
+          data: {
+            ...(code ? { code } : {}),
+            ...(dto.name === undefined ? {} : { name: dto.name }),
+            ...(dto.taxCode === undefined ? {} : { taxCode: dto.taxCode }),
+            ...(dto.phone === undefined ? {} : { phone: dto.phone }),
+            ...(dto.email === undefined ? {} : { email: dto.email }),
+            version: { increment: 1 },
+          },
+        });
+      });
+
+      return toCustomerView(row);
+    } catch (error) {
+      toConflict(error, DUPLICATE_CODE);
+    }
   }
 
   /**

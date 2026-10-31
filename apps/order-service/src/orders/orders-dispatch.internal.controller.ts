@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Headers,
   Param,
   ParseUUIDPipe,
@@ -20,12 +21,25 @@ import {
 } from '@logix/auth';
 import { AuthorizeDispatchDto } from './dto/authorize-dispatch.dto.js';
 import { OrderDispatchService } from './services/order-dispatch.service.js';
+import { batchDispatchGrantRequestSchema } from '@logix/messaging';
+import { OrderDispatchBatchService } from './services/order-dispatch-batch.service.js';
 
 @Controller('internal/orders')
 @UseGuards(InternalServiceGuard)
 @AllowInternalCallers(ServiceId.FULFILLMENT_SERVICE)
 export class OrdersDispatchInternalController {
-  constructor(private readonly dispatch: OrderDispatchService) {}
+  constructor(
+    private readonly dispatch: OrderDispatchService,
+    private readonly batches: OrderDispatchBatchService,
+  ) {}
+
+  @Post('authorize-dispatch-batch')
+  authorizeBatch(@Body() body: unknown, @InternalCaller() caller: InternalServiceTokenClaims) {
+    const parsed = batchDispatchGrantRequestSchema.safeParse(body);
+    if (!parsed.success) throw new BadRequestException('Yêu cầu dispatch batch không hợp lệ');
+    if (parsed.data.tenantId !== caller.tenantId) throw new ForbiddenException();
+    return this.batches.authorize(parsed.data);
+  }
 
   @Post(':orderId/authorize-dispatch')
   authorize(

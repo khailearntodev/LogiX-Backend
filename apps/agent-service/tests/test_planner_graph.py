@@ -114,7 +114,9 @@ def _token(
     return jwt.encode(payload, SECRET, algorithm="HS256")
 
 
-def _build_test_registry(order_version_tracker: dict[str, int]) -> ToolRegistry:
+def _build_test_registry(order_version_tracker: dict[str, int], *,
+                         backend_tokens: list[str] | None = None,
+                         observed_bindings: list[object] | None = None) -> ToolRegistry:
     registry = ToolRegistry()
 
     async def h_read(ctx: ToolContext, inp: ReadInput) -> ReadOutput:
@@ -122,14 +124,21 @@ def _build_test_registry(order_version_tracker: dict[str, int]) -> ToolRegistry:
 
     async def p_confirm(ctx: ToolContext, inp: ConfirmInput) -> PreviewResult:
         cur_version = order_version_tracker.get(inp.order_id, 1)
+        binding = None
+        if backend_tokens is not None:
+            backend_tokens.append(str(uuid.uuid4()))
+            binding = {"previewToken": backend_tokens[-1]}
         return PreviewResult(
             target_type="sales_order",
             target_id=inp.order_id,
             target_version=cur_version,
             summary={"order_id": inp.order_id, "amount": 1000, "version": cur_version},
+            execution_binding=binding,
         )
 
     async def h_confirm(ctx: ToolContext, inp: ConfirmInput) -> ConfirmOutput:
+        if observed_bindings is not None:
+            observed_bindings.append(ctx.approval.execution_binding if ctx.approval else None)
         # Sensitive tool: context.approval is mandatory
         cur_version = order_version_tracker.get(inp.order_id, 1)
         order_version_tracker[inp.order_id] = cur_version + 1
@@ -234,7 +243,9 @@ async def test_read_only_tool_execution_loop():
 async def test_sensitive_tool_interrupts_and_resumes_on_approval():
     order_id = str(uuid.uuid4())
     order_versions = {order_id: 1}
-    registry = _build_test_registry(order_versions)
+    backend_tokens: list[str] = []
+    observed_bindings: list[object] = []
+    registry = _build_test_registry(order_versions, backend_tokens=backend_tokens, observed_bindings=observed_bindings)
     confirmation_service = ConfirmationService(InMemoryConfirmationStore())
     checkpointer = InMemorySaver()
 
@@ -284,6 +295,7 @@ async def test_sensitive_tool_interrupts_and_resumes_on_approval():
     assert interrupt_payload["action"] == "confirm_order"
     assert interrupt_payload["target_id"] == order_id
     assert interrupt_payload["target_version"] == 1
+    assert "execution_binding" not in interrupt_payload
     approval_id = interrupt_payload["approval_id"]
 
     # Order has not been modified yet!
@@ -297,6 +309,8 @@ async def test_sensitive_tool_interrupts_and_resumes_on_approval():
 
     # Order was confirmed and updated to version 2!
     assert order_versions[order_id] == 2
+    assert len(backend_tokens) == 2
+    assert observed_bindings == [{"previewToken": backend_tokens[0]}]
     assert res["messages"][-1].content == "Đơn hàng đã được xác nhận thành công!"
 
     # Confirmation record is now CONSUMED

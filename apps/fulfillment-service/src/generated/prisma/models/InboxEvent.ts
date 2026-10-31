@@ -28,11 +28,13 @@ export type AggregateInboxEvent = {
 
 export type InboxEventAvgAggregateOutputType = {
   aggregateVersion: number | null
+  attemptCount: number | null
   version: number | null
 }
 
 export type InboxEventSumAggregateOutputType = {
   aggregateVersion: bigint | null
+  attemptCount: number | null
   version: bigint | null
 }
 
@@ -44,6 +46,11 @@ export type InboxEventMinAggregateOutputType = {
   eventType: string | null
   aggregateId: string | null
   aggregateVersion: bigint | null
+  payloadHash: string | null
+  semanticKey: string | null
+  attemptCount: number | null
+  nextAttemptAt: Date | null
+  lastError: string | null
   processedAt: Date | null
   outcome: string | null
   errorCode: string | null
@@ -61,6 +68,11 @@ export type InboxEventMaxAggregateOutputType = {
   eventType: string | null
   aggregateId: string | null
   aggregateVersion: bigint | null
+  payloadHash: string | null
+  semanticKey: string | null
+  attemptCount: number | null
+  nextAttemptAt: Date | null
+  lastError: string | null
   processedAt: Date | null
   outcome: string | null
   errorCode: string | null
@@ -78,6 +90,12 @@ export type InboxEventCountAggregateOutputType = {
   eventType: number
   aggregateId: number
   aggregateVersion: number
+  eventPayload: number
+  payloadHash: number
+  semanticKey: number
+  attemptCount: number
+  nextAttemptAt: number
+  lastError: number
   processedAt: number
   outcome: number
   errorCode: number
@@ -91,11 +109,13 @@ export type InboxEventCountAggregateOutputType = {
 
 export type InboxEventAvgAggregateInputType = {
   aggregateVersion?: true
+  attemptCount?: true
   version?: true
 }
 
 export type InboxEventSumAggregateInputType = {
   aggregateVersion?: true
+  attemptCount?: true
   version?: true
 }
 
@@ -107,6 +127,11 @@ export type InboxEventMinAggregateInputType = {
   eventType?: true
   aggregateId?: true
   aggregateVersion?: true
+  payloadHash?: true
+  semanticKey?: true
+  attemptCount?: true
+  nextAttemptAt?: true
+  lastError?: true
   processedAt?: true
   outcome?: true
   errorCode?: true
@@ -124,6 +149,11 @@ export type InboxEventMaxAggregateInputType = {
   eventType?: true
   aggregateId?: true
   aggregateVersion?: true
+  payloadHash?: true
+  semanticKey?: true
+  attemptCount?: true
+  nextAttemptAt?: true
+  lastError?: true
   processedAt?: true
   outcome?: true
   errorCode?: true
@@ -141,6 +171,12 @@ export type InboxEventCountAggregateInputType = {
   eventType?: true
   aggregateId?: true
   aggregateVersion?: true
+  eventPayload?: true
+  payloadHash?: true
+  semanticKey?: true
+  attemptCount?: true
+  nextAttemptAt?: true
+  lastError?: true
   processedAt?: true
   outcome?: true
   errorCode?: true
@@ -245,6 +281,12 @@ export type InboxEventGroupByOutputType = {
   eventType: string
   aggregateId: string | null
   aggregateVersion: bigint | null
+  eventPayload: runtime.JsonValue | null
+  payloadHash: string | null
+  semanticKey: string | null
+  attemptCount: number
+  nextAttemptAt: Date
+  lastError: string | null
   processedAt: Date
   outcome: string
   errorCode: string | null
@@ -285,6 +327,12 @@ export type InboxEventWhereInput = {
   eventType?: Prisma.StringFilter<"InboxEvent"> | string
   aggregateId?: Prisma.UuidNullableFilter<"InboxEvent"> | string | null
   aggregateVersion?: Prisma.BigIntNullableFilter<"InboxEvent"> | bigint | number | null
+  eventPayload?: Prisma.JsonNullableFilter<"InboxEvent">
+  payloadHash?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
+  semanticKey?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
+  attemptCount?: Prisma.IntFilter<"InboxEvent"> | number
+  nextAttemptAt?: Prisma.DateTimeFilter<"InboxEvent"> | Date | string
+  lastError?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
   processedAt?: Prisma.DateTimeFilter<"InboxEvent"> | Date | string
   outcome?: Prisma.StringFilter<"InboxEvent"> | string
   errorCode?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
@@ -302,6 +350,12 @@ export type InboxEventOrderByWithRelationInput = {
   eventType?: Prisma.SortOrder
   aggregateId?: Prisma.SortOrderInput | Prisma.SortOrder
   aggregateVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  eventPayload?: Prisma.SortOrderInput | Prisma.SortOrder
+  payloadHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  semanticKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrderInput | Prisma.SortOrder
   processedAt?: Prisma.SortOrder
   outcome?: Prisma.SortOrder
   errorCode?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -323,6 +377,12 @@ export type InboxEventWhereUniqueInput = Prisma.AtLeast<{
   eventType?: Prisma.StringFilter<"InboxEvent"> | string
   aggregateId?: Prisma.UuidNullableFilter<"InboxEvent"> | string | null
   aggregateVersion?: Prisma.BigIntNullableFilter<"InboxEvent"> | bigint | number | null
+  eventPayload?: Prisma.JsonNullableFilter<"InboxEvent">
+  payloadHash?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
+  semanticKey?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
+  attemptCount?: Prisma.IntFilter<"InboxEvent"> | number
+  nextAttemptAt?: Prisma.DateTimeFilter<"InboxEvent"> | Date | string
+  lastError?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
   processedAt?: Prisma.DateTimeFilter<"InboxEvent"> | Date | string
   outcome?: Prisma.StringFilter<"InboxEvent"> | string
   errorCode?: Prisma.StringNullableFilter<"InboxEvent"> | string | null
@@ -340,6 +400,12 @@ export type InboxEventOrderByWithAggregationInput = {
   eventType?: Prisma.SortOrder
   aggregateId?: Prisma.SortOrderInput | Prisma.SortOrder
   aggregateVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  eventPayload?: Prisma.SortOrderInput | Prisma.SortOrder
+  payloadHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  semanticKey?: Prisma.SortOrderInput | Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrderInput | Prisma.SortOrder
   processedAt?: Prisma.SortOrder
   outcome?: Prisma.SortOrder
   errorCode?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -365,6 +431,12 @@ export type InboxEventScalarWhereWithAggregatesInput = {
   eventType?: Prisma.StringWithAggregatesFilter<"InboxEvent"> | string
   aggregateId?: Prisma.UuidNullableWithAggregatesFilter<"InboxEvent"> | string | null
   aggregateVersion?: Prisma.BigIntNullableWithAggregatesFilter<"InboxEvent"> | bigint | number | null
+  eventPayload?: Prisma.JsonNullableWithAggregatesFilter<"InboxEvent">
+  payloadHash?: Prisma.StringNullableWithAggregatesFilter<"InboxEvent"> | string | null
+  semanticKey?: Prisma.StringNullableWithAggregatesFilter<"InboxEvent"> | string | null
+  attemptCount?: Prisma.IntWithAggregatesFilter<"InboxEvent"> | number
+  nextAttemptAt?: Prisma.DateTimeWithAggregatesFilter<"InboxEvent"> | Date | string
+  lastError?: Prisma.StringNullableWithAggregatesFilter<"InboxEvent"> | string | null
   processedAt?: Prisma.DateTimeWithAggregatesFilter<"InboxEvent"> | Date | string
   outcome?: Prisma.StringWithAggregatesFilter<"InboxEvent"> | string
   errorCode?: Prisma.StringNullableWithAggregatesFilter<"InboxEvent"> | string | null
@@ -382,6 +454,12 @@ export type InboxEventCreateInput = {
   eventType: string
   aggregateId?: string | null
   aggregateVersion?: bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: string | null
+  semanticKey?: string | null
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   processedAt?: Date | string
   outcome: string
   errorCode?: string | null
@@ -399,6 +477,12 @@ export type InboxEventUncheckedCreateInput = {
   eventType: string
   aggregateId?: string | null
   aggregateVersion?: bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: string | null
+  semanticKey?: string | null
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   processedAt?: Date | string
   outcome: string
   errorCode?: string | null
@@ -416,6 +500,12 @@ export type InboxEventUpdateInput = {
   eventType?: Prisma.StringFieldUpdateOperationsInput | string
   aggregateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   aggregateVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  semanticKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   processedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outcome?: Prisma.StringFieldUpdateOperationsInput | string
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -433,6 +523,12 @@ export type InboxEventUncheckedUpdateInput = {
   eventType?: Prisma.StringFieldUpdateOperationsInput | string
   aggregateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   aggregateVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  semanticKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   processedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outcome?: Prisma.StringFieldUpdateOperationsInput | string
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -450,6 +546,12 @@ export type InboxEventCreateManyInput = {
   eventType: string
   aggregateId?: string | null
   aggregateVersion?: bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: string | null
+  semanticKey?: string | null
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   processedAt?: Date | string
   outcome: string
   errorCode?: string | null
@@ -467,6 +569,12 @@ export type InboxEventUpdateManyMutationInput = {
   eventType?: Prisma.StringFieldUpdateOperationsInput | string
   aggregateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   aggregateVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  semanticKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   processedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outcome?: Prisma.StringFieldUpdateOperationsInput | string
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -484,6 +592,12 @@ export type InboxEventUncheckedUpdateManyInput = {
   eventType?: Prisma.StringFieldUpdateOperationsInput | string
   aggregateId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   aggregateVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  eventPayload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  semanticKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   processedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   outcome?: Prisma.StringFieldUpdateOperationsInput | string
   errorCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -506,6 +620,12 @@ export type InboxEventCountOrderByAggregateInput = {
   eventType?: Prisma.SortOrder
   aggregateId?: Prisma.SortOrder
   aggregateVersion?: Prisma.SortOrder
+  eventPayload?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  semanticKey?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   processedAt?: Prisma.SortOrder
   outcome?: Prisma.SortOrder
   errorCode?: Prisma.SortOrder
@@ -517,6 +637,7 @@ export type InboxEventCountOrderByAggregateInput = {
 
 export type InboxEventAvgOrderByAggregateInput = {
   aggregateVersion?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -528,6 +649,11 @@ export type InboxEventMaxOrderByAggregateInput = {
   eventType?: Prisma.SortOrder
   aggregateId?: Prisma.SortOrder
   aggregateVersion?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  semanticKey?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   processedAt?: Prisma.SortOrder
   outcome?: Prisma.SortOrder
   errorCode?: Prisma.SortOrder
@@ -545,6 +671,11 @@ export type InboxEventMinOrderByAggregateInput = {
   eventType?: Prisma.SortOrder
   aggregateId?: Prisma.SortOrder
   aggregateVersion?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  semanticKey?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   processedAt?: Prisma.SortOrder
   outcome?: Prisma.SortOrder
   errorCode?: Prisma.SortOrder
@@ -556,6 +687,7 @@ export type InboxEventMinOrderByAggregateInput = {
 
 export type InboxEventSumOrderByAggregateInput = {
   aggregateVersion?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -577,6 +709,12 @@ export type InboxEventSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   eventType?: boolean
   aggregateId?: boolean
   aggregateVersion?: boolean
+  eventPayload?: boolean
+  payloadHash?: boolean
+  semanticKey?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   processedAt?: boolean
   outcome?: boolean
   errorCode?: boolean
@@ -594,6 +732,12 @@ export type InboxEventSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   eventType?: boolean
   aggregateId?: boolean
   aggregateVersion?: boolean
+  eventPayload?: boolean
+  payloadHash?: boolean
+  semanticKey?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   processedAt?: boolean
   outcome?: boolean
   errorCode?: boolean
@@ -611,6 +755,12 @@ export type InboxEventSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   eventType?: boolean
   aggregateId?: boolean
   aggregateVersion?: boolean
+  eventPayload?: boolean
+  payloadHash?: boolean
+  semanticKey?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   processedAt?: boolean
   outcome?: boolean
   errorCode?: boolean
@@ -628,6 +778,12 @@ export type InboxEventSelectScalar = {
   eventType?: boolean
   aggregateId?: boolean
   aggregateVersion?: boolean
+  eventPayload?: boolean
+  payloadHash?: boolean
+  semanticKey?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   processedAt?: boolean
   outcome?: boolean
   errorCode?: boolean
@@ -637,7 +793,7 @@ export type InboxEventSelectScalar = {
   deletedAt?: boolean
 }
 
-export type InboxEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "eventId" | "consumerName" | "eventType" | "aggregateId" | "aggregateVersion" | "processedAt" | "outcome" | "errorCode" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["inboxEvent"]>
+export type InboxEventOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "eventId" | "consumerName" | "eventType" | "aggregateId" | "aggregateVersion" | "eventPayload" | "payloadHash" | "semanticKey" | "attemptCount" | "nextAttemptAt" | "lastError" | "processedAt" | "outcome" | "errorCode" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["inboxEvent"]>
 
 export type $InboxEventPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InboxEvent"
@@ -650,6 +806,12 @@ export type $InboxEventPayload<ExtArgs extends runtime.Types.Extensions.Internal
     eventType: string
     aggregateId: string | null
     aggregateVersion: bigint | null
+    eventPayload: runtime.JsonValue | null
+    payloadHash: string | null
+    semanticKey: string | null
+    attemptCount: number
+    nextAttemptAt: Date
+    lastError: string | null
     processedAt: Date
     outcome: string
     errorCode: string | null
@@ -1087,6 +1249,12 @@ export interface InboxEventFieldRefs {
   readonly eventType: Prisma.FieldRef<"InboxEvent", 'String'>
   readonly aggregateId: Prisma.FieldRef<"InboxEvent", 'String'>
   readonly aggregateVersion: Prisma.FieldRef<"InboxEvent", 'BigInt'>
+  readonly eventPayload: Prisma.FieldRef<"InboxEvent", 'Json'>
+  readonly payloadHash: Prisma.FieldRef<"InboxEvent", 'String'>
+  readonly semanticKey: Prisma.FieldRef<"InboxEvent", 'String'>
+  readonly attemptCount: Prisma.FieldRef<"InboxEvent", 'Int'>
+  readonly nextAttemptAt: Prisma.FieldRef<"InboxEvent", 'DateTime'>
+  readonly lastError: Prisma.FieldRef<"InboxEvent", 'String'>
   readonly processedAt: Prisma.FieldRef<"InboxEvent", 'DateTime'>
   readonly outcome: Prisma.FieldRef<"InboxEvent", 'String'>
   readonly errorCode: Prisma.FieldRef<"InboxEvent", 'String'>

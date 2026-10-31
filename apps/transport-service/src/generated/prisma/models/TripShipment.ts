@@ -29,12 +29,18 @@ export type AggregateTripShipment = {
 export type TripShipmentAvgAggregateOutputType = {
   weight: runtime.Decimal | null
   volume: runtime.Decimal | null
+  expectedShipmentVersion: number | null
+  shipmentVersion: number | null
+  orderVersion: number | null
   version: number | null
 }
 
 export type TripShipmentSumAggregateOutputType = {
   weight: runtime.Decimal | null
   volume: runtime.Decimal | null
+  expectedShipmentVersion: bigint | null
+  shipmentVersion: bigint | null
+  orderVersion: bigint | null
   version: bigint | null
 }
 
@@ -43,9 +49,15 @@ export type TripShipmentMinAggregateOutputType = {
   tenantId: string | null
   tripId: string | null
   shipmentId: string | null
+  orderId: string | null
   warehouseId: string | null
+  operationId: string | null
+  state: string | null
   weight: runtime.Decimal | null
   volume: runtime.Decimal | null
+  expectedShipmentVersion: bigint | null
+  shipmentVersion: bigint | null
+  orderVersion: bigint | null
   assignedAt: Date | null
   removedAt: Date | null
   createdAt: Date | null
@@ -59,9 +71,15 @@ export type TripShipmentMaxAggregateOutputType = {
   tenantId: string | null
   tripId: string | null
   shipmentId: string | null
+  orderId: string | null
   warehouseId: string | null
+  operationId: string | null
+  state: string | null
   weight: runtime.Decimal | null
   volume: runtime.Decimal | null
+  expectedShipmentVersion: bigint | null
+  shipmentVersion: bigint | null
+  orderVersion: bigint | null
   assignedAt: Date | null
   removedAt: Date | null
   createdAt: Date | null
@@ -75,9 +93,20 @@ export type TripShipmentCountAggregateOutputType = {
   tenantId: number
   tripId: number
   shipmentId: number
+  orderId: number
   warehouseId: number
+  operationId: number
+  state: number
   weight: number
   volume: number
+  expectedShipmentVersion: number
+  shipmentVersion: number
+  orderVersion: number
+  claimRequest: number
+  claimReceipt: number
+  releaseRequest: number
+  releaseReceipt: number
+  shipmentSnapshot: number
   assignedAt: number
   removedAt: number
   createdAt: number
@@ -91,12 +120,18 @@ export type TripShipmentCountAggregateOutputType = {
 export type TripShipmentAvgAggregateInputType = {
   weight?: true
   volume?: true
+  expectedShipmentVersion?: true
+  shipmentVersion?: true
+  orderVersion?: true
   version?: true
 }
 
 export type TripShipmentSumAggregateInputType = {
   weight?: true
   volume?: true
+  expectedShipmentVersion?: true
+  shipmentVersion?: true
+  orderVersion?: true
   version?: true
 }
 
@@ -105,9 +140,15 @@ export type TripShipmentMinAggregateInputType = {
   tenantId?: true
   tripId?: true
   shipmentId?: true
+  orderId?: true
   warehouseId?: true
+  operationId?: true
+  state?: true
   weight?: true
   volume?: true
+  expectedShipmentVersion?: true
+  shipmentVersion?: true
+  orderVersion?: true
   assignedAt?: true
   removedAt?: true
   createdAt?: true
@@ -121,9 +162,15 @@ export type TripShipmentMaxAggregateInputType = {
   tenantId?: true
   tripId?: true
   shipmentId?: true
+  orderId?: true
   warehouseId?: true
+  operationId?: true
+  state?: true
   weight?: true
   volume?: true
+  expectedShipmentVersion?: true
+  shipmentVersion?: true
+  orderVersion?: true
   assignedAt?: true
   removedAt?: true
   createdAt?: true
@@ -137,9 +184,20 @@ export type TripShipmentCountAggregateInputType = {
   tenantId?: true
   tripId?: true
   shipmentId?: true
+  orderId?: true
   warehouseId?: true
+  operationId?: true
+  state?: true
   weight?: true
   volume?: true
+  expectedShipmentVersion?: true
+  shipmentVersion?: true
+  orderVersion?: true
+  claimRequest?: true
+  claimReceipt?: true
+  releaseRequest?: true
+  releaseReceipt?: true
+  shipmentSnapshot?: true
   assignedAt?: true
   removedAt?: true
   createdAt?: true
@@ -240,9 +298,20 @@ export type TripShipmentGroupByOutputType = {
   tenantId: string
   tripId: string
   shipmentId: string
+  orderId: string | null
   warehouseId: string
+  operationId: string | null
+  state: string
   weight: runtime.Decimal
   volume: runtime.Decimal
+  expectedShipmentVersion: bigint | null
+  shipmentVersion: bigint | null
+  orderVersion: bigint | null
+  claimRequest: runtime.JsonValue | null
+  claimReceipt: runtime.JsonValue | null
+  releaseRequest: runtime.JsonValue | null
+  releaseReceipt: runtime.JsonValue | null
+  shipmentSnapshot: runtime.JsonValue | null
   assignedAt: Date
   removedAt: Date | null
   createdAt: Date
@@ -279,9 +348,20 @@ export type TripShipmentWhereInput = {
   tenantId?: Prisma.UuidFilter<"TripShipment"> | string
   tripId?: Prisma.UuidFilter<"TripShipment"> | string
   shipmentId?: Prisma.UuidFilter<"TripShipment"> | string
+  orderId?: Prisma.UuidNullableFilter<"TripShipment"> | string | null
   warehouseId?: Prisma.UuidFilter<"TripShipment"> | string
+  operationId?: Prisma.UuidNullableFilter<"TripShipment"> | string | null
+  state?: Prisma.StringFilter<"TripShipment"> | string
   weight?: Prisma.DecimalFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  shipmentVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  orderVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  claimRequest?: Prisma.JsonNullableFilter<"TripShipment">
+  claimReceipt?: Prisma.JsonNullableFilter<"TripShipment">
+  releaseRequest?: Prisma.JsonNullableFilter<"TripShipment">
+  releaseReceipt?: Prisma.JsonNullableFilter<"TripShipment">
+  shipmentSnapshot?: Prisma.JsonNullableFilter<"TripShipment">
   assignedAt?: Prisma.DateTimeFilter<"TripShipment"> | Date | string
   removedAt?: Prisma.DateTimeNullableFilter<"TripShipment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"TripShipment"> | Date | string
@@ -289,6 +369,7 @@ export type TripShipmentWhereInput = {
   version?: Prisma.BigIntFilter<"TripShipment"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"TripShipment"> | Date | string | null
   trip?: Prisma.XOR<Prisma.DeliveryTripScalarRelationFilter, Prisma.DeliveryTripWhereInput>
+  operation?: Prisma.XOR<Prisma.TripOperationNullableScalarRelationFilter, Prisma.TripOperationWhereInput> | null
 }
 
 export type TripShipmentOrderByWithRelationInput = {
@@ -296,9 +377,20 @@ export type TripShipmentOrderByWithRelationInput = {
   tenantId?: Prisma.SortOrder
   tripId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
+  orderId?: Prisma.SortOrderInput | Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  operationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  state?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  orderVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimRequest?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
+  releaseRequest?: Prisma.SortOrderInput | Prisma.SortOrder
+  releaseReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
+  shipmentSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedAt?: Prisma.SortOrder
   removedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -306,6 +398,7 @@ export type TripShipmentOrderByWithRelationInput = {
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   trip?: Prisma.DeliveryTripOrderByWithRelationInput
+  operation?: Prisma.TripOperationOrderByWithRelationInput
 }
 
 export type TripShipmentWhereUniqueInput = Prisma.AtLeast<{
@@ -316,9 +409,20 @@ export type TripShipmentWhereUniqueInput = Prisma.AtLeast<{
   tenantId?: Prisma.UuidFilter<"TripShipment"> | string
   tripId?: Prisma.UuidFilter<"TripShipment"> | string
   shipmentId?: Prisma.UuidFilter<"TripShipment"> | string
+  orderId?: Prisma.UuidNullableFilter<"TripShipment"> | string | null
   warehouseId?: Prisma.UuidFilter<"TripShipment"> | string
+  operationId?: Prisma.UuidNullableFilter<"TripShipment"> | string | null
+  state?: Prisma.StringFilter<"TripShipment"> | string
   weight?: Prisma.DecimalFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  shipmentVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  orderVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  claimRequest?: Prisma.JsonNullableFilter<"TripShipment">
+  claimReceipt?: Prisma.JsonNullableFilter<"TripShipment">
+  releaseRequest?: Prisma.JsonNullableFilter<"TripShipment">
+  releaseReceipt?: Prisma.JsonNullableFilter<"TripShipment">
+  shipmentSnapshot?: Prisma.JsonNullableFilter<"TripShipment">
   assignedAt?: Prisma.DateTimeFilter<"TripShipment"> | Date | string
   removedAt?: Prisma.DateTimeNullableFilter<"TripShipment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"TripShipment"> | Date | string
@@ -326,6 +430,7 @@ export type TripShipmentWhereUniqueInput = Prisma.AtLeast<{
   version?: Prisma.BigIntFilter<"TripShipment"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"TripShipment"> | Date | string | null
   trip?: Prisma.XOR<Prisma.DeliveryTripScalarRelationFilter, Prisma.DeliveryTripWhereInput>
+  operation?: Prisma.XOR<Prisma.TripOperationNullableScalarRelationFilter, Prisma.TripOperationWhereInput> | null
 }, "id">
 
 export type TripShipmentOrderByWithAggregationInput = {
@@ -333,9 +438,20 @@ export type TripShipmentOrderByWithAggregationInput = {
   tenantId?: Prisma.SortOrder
   tripId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
+  orderId?: Prisma.SortOrderInput | Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  operationId?: Prisma.SortOrderInput | Prisma.SortOrder
+  state?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  orderVersion?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimRequest?: Prisma.SortOrderInput | Prisma.SortOrder
+  claimReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
+  releaseRequest?: Prisma.SortOrderInput | Prisma.SortOrder
+  releaseReceipt?: Prisma.SortOrderInput | Prisma.SortOrder
+  shipmentSnapshot?: Prisma.SortOrderInput | Prisma.SortOrder
   assignedAt?: Prisma.SortOrder
   removedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -357,9 +473,20 @@ export type TripShipmentScalarWhereWithAggregatesInput = {
   tenantId?: Prisma.UuidWithAggregatesFilter<"TripShipment"> | string
   tripId?: Prisma.UuidWithAggregatesFilter<"TripShipment"> | string
   shipmentId?: Prisma.UuidWithAggregatesFilter<"TripShipment"> | string
+  orderId?: Prisma.UuidNullableWithAggregatesFilter<"TripShipment"> | string | null
   warehouseId?: Prisma.UuidWithAggregatesFilter<"TripShipment"> | string
+  operationId?: Prisma.UuidNullableWithAggregatesFilter<"TripShipment"> | string | null
+  state?: Prisma.StringWithAggregatesFilter<"TripShipment"> | string
   weight?: Prisma.DecimalWithAggregatesFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalWithAggregatesFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.BigIntNullableWithAggregatesFilter<"TripShipment"> | bigint | number | null
+  shipmentVersion?: Prisma.BigIntNullableWithAggregatesFilter<"TripShipment"> | bigint | number | null
+  orderVersion?: Prisma.BigIntNullableWithAggregatesFilter<"TripShipment"> | bigint | number | null
+  claimRequest?: Prisma.JsonNullableWithAggregatesFilter<"TripShipment">
+  claimReceipt?: Prisma.JsonNullableWithAggregatesFilter<"TripShipment">
+  releaseRequest?: Prisma.JsonNullableWithAggregatesFilter<"TripShipment">
+  releaseReceipt?: Prisma.JsonNullableWithAggregatesFilter<"TripShipment">
+  shipmentSnapshot?: Prisma.JsonNullableWithAggregatesFilter<"TripShipment">
   assignedAt?: Prisma.DateTimeWithAggregatesFilter<"TripShipment"> | Date | string
   removedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TripShipment"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TripShipment"> | Date | string
@@ -372,9 +499,19 @@ export type TripShipmentCreateInput = {
   id?: string
   tenantId: string
   shipmentId: string
+  orderId?: string | null
   warehouseId: string
+  state?: string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Date | string
   removedAt?: Date | string | null
   createdAt?: Date | string
@@ -382,6 +519,7 @@ export type TripShipmentCreateInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   trip: Prisma.DeliveryTripCreateNestedOneWithoutShipmentsInput
+  operation?: Prisma.TripOperationCreateNestedOneWithoutMembershipsInput
 }
 
 export type TripShipmentUncheckedCreateInput = {
@@ -389,9 +527,20 @@ export type TripShipmentUncheckedCreateInput = {
   tenantId: string
   tripId: string
   shipmentId: string
+  orderId?: string | null
   warehouseId: string
+  operationId?: string | null
+  state?: string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Date | string
   removedAt?: Date | string | null
   createdAt?: Date | string
@@ -404,9 +553,19 @@ export type TripShipmentUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -414,6 +573,7 @@ export type TripShipmentUpdateInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   trip?: Prisma.DeliveryTripUpdateOneRequiredWithoutShipmentsNestedInput
+  operation?: Prisma.TripOperationUpdateOneWithoutMembershipsNestedInput
 }
 
 export type TripShipmentUncheckedUpdateInput = {
@@ -421,9 +581,20 @@ export type TripShipmentUncheckedUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  operationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -437,9 +608,20 @@ export type TripShipmentCreateManyInput = {
   tenantId: string
   tripId: string
   shipmentId: string
+  orderId?: string | null
   warehouseId: string
+  operationId?: string | null
+  state?: string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Date | string
   removedAt?: Date | string | null
   createdAt?: Date | string
@@ -452,9 +634,19 @@ export type TripShipmentUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -468,9 +660,20 @@ export type TripShipmentUncheckedUpdateManyInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   tripId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  operationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -494,9 +697,20 @@ export type TripShipmentCountOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   tripId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
+  orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  operationId?: Prisma.SortOrder
+  state?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrder
+  orderVersion?: Prisma.SortOrder
+  claimRequest?: Prisma.SortOrder
+  claimReceipt?: Prisma.SortOrder
+  releaseRequest?: Prisma.SortOrder
+  releaseReceipt?: Prisma.SortOrder
+  shipmentSnapshot?: Prisma.SortOrder
   assignedAt?: Prisma.SortOrder
   removedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -508,6 +722,9 @@ export type TripShipmentCountOrderByAggregateInput = {
 export type TripShipmentAvgOrderByAggregateInput = {
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrder
+  orderVersion?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -516,9 +733,15 @@ export type TripShipmentMaxOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   tripId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
+  orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  operationId?: Prisma.SortOrder
+  state?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrder
+  orderVersion?: Prisma.SortOrder
   assignedAt?: Prisma.SortOrder
   removedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -532,9 +755,15 @@ export type TripShipmentMinOrderByAggregateInput = {
   tenantId?: Prisma.SortOrder
   tripId?: Prisma.SortOrder
   shipmentId?: Prisma.SortOrder
+  orderId?: Prisma.SortOrder
   warehouseId?: Prisma.SortOrder
+  operationId?: Prisma.SortOrder
+  state?: Prisma.SortOrder
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrder
+  orderVersion?: Prisma.SortOrder
   assignedAt?: Prisma.SortOrder
   removedAt?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -546,6 +775,9 @@ export type TripShipmentMinOrderByAggregateInput = {
 export type TripShipmentSumOrderByAggregateInput = {
   weight?: Prisma.SortOrder
   volume?: Prisma.SortOrder
+  expectedShipmentVersion?: Prisma.SortOrder
+  shipmentVersion?: Prisma.SortOrder
+  orderVersion?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -591,28 +823,92 @@ export type TripShipmentUncheckedUpdateManyWithoutTripNestedInput = {
   deleteMany?: Prisma.TripShipmentScalarWhereInput | Prisma.TripShipmentScalarWhereInput[]
 }
 
+export type TripShipmentCreateNestedManyWithoutOperationInput = {
+  create?: Prisma.XOR<Prisma.TripShipmentCreateWithoutOperationInput, Prisma.TripShipmentUncheckedCreateWithoutOperationInput> | Prisma.TripShipmentCreateWithoutOperationInput[] | Prisma.TripShipmentUncheckedCreateWithoutOperationInput[]
+  connectOrCreate?: Prisma.TripShipmentCreateOrConnectWithoutOperationInput | Prisma.TripShipmentCreateOrConnectWithoutOperationInput[]
+  createMany?: Prisma.TripShipmentCreateManyOperationInputEnvelope
+  connect?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+}
+
+export type TripShipmentUncheckedCreateNestedManyWithoutOperationInput = {
+  create?: Prisma.XOR<Prisma.TripShipmentCreateWithoutOperationInput, Prisma.TripShipmentUncheckedCreateWithoutOperationInput> | Prisma.TripShipmentCreateWithoutOperationInput[] | Prisma.TripShipmentUncheckedCreateWithoutOperationInput[]
+  connectOrCreate?: Prisma.TripShipmentCreateOrConnectWithoutOperationInput | Prisma.TripShipmentCreateOrConnectWithoutOperationInput[]
+  createMany?: Prisma.TripShipmentCreateManyOperationInputEnvelope
+  connect?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+}
+
+export type TripShipmentUpdateManyWithoutOperationNestedInput = {
+  create?: Prisma.XOR<Prisma.TripShipmentCreateWithoutOperationInput, Prisma.TripShipmentUncheckedCreateWithoutOperationInput> | Prisma.TripShipmentCreateWithoutOperationInput[] | Prisma.TripShipmentUncheckedCreateWithoutOperationInput[]
+  connectOrCreate?: Prisma.TripShipmentCreateOrConnectWithoutOperationInput | Prisma.TripShipmentCreateOrConnectWithoutOperationInput[]
+  upsert?: Prisma.TripShipmentUpsertWithWhereUniqueWithoutOperationInput | Prisma.TripShipmentUpsertWithWhereUniqueWithoutOperationInput[]
+  createMany?: Prisma.TripShipmentCreateManyOperationInputEnvelope
+  set?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  disconnect?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  delete?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  connect?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  update?: Prisma.TripShipmentUpdateWithWhereUniqueWithoutOperationInput | Prisma.TripShipmentUpdateWithWhereUniqueWithoutOperationInput[]
+  updateMany?: Prisma.TripShipmentUpdateManyWithWhereWithoutOperationInput | Prisma.TripShipmentUpdateManyWithWhereWithoutOperationInput[]
+  deleteMany?: Prisma.TripShipmentScalarWhereInput | Prisma.TripShipmentScalarWhereInput[]
+}
+
+export type TripShipmentUncheckedUpdateManyWithoutOperationNestedInput = {
+  create?: Prisma.XOR<Prisma.TripShipmentCreateWithoutOperationInput, Prisma.TripShipmentUncheckedCreateWithoutOperationInput> | Prisma.TripShipmentCreateWithoutOperationInput[] | Prisma.TripShipmentUncheckedCreateWithoutOperationInput[]
+  connectOrCreate?: Prisma.TripShipmentCreateOrConnectWithoutOperationInput | Prisma.TripShipmentCreateOrConnectWithoutOperationInput[]
+  upsert?: Prisma.TripShipmentUpsertWithWhereUniqueWithoutOperationInput | Prisma.TripShipmentUpsertWithWhereUniqueWithoutOperationInput[]
+  createMany?: Prisma.TripShipmentCreateManyOperationInputEnvelope
+  set?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  disconnect?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  delete?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  connect?: Prisma.TripShipmentWhereUniqueInput | Prisma.TripShipmentWhereUniqueInput[]
+  update?: Prisma.TripShipmentUpdateWithWhereUniqueWithoutOperationInput | Prisma.TripShipmentUpdateWithWhereUniqueWithoutOperationInput[]
+  updateMany?: Prisma.TripShipmentUpdateManyWithWhereWithoutOperationInput | Prisma.TripShipmentUpdateManyWithWhereWithoutOperationInput[]
+  deleteMany?: Prisma.TripShipmentScalarWhereInput | Prisma.TripShipmentScalarWhereInput[]
+}
+
 export type TripShipmentCreateWithoutTripInput = {
   id?: string
   tenantId: string
   shipmentId: string
+  orderId?: string | null
   warehouseId: string
+  state?: string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Date | string
   removedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  operation?: Prisma.TripOperationCreateNestedOneWithoutMembershipsInput
 }
 
 export type TripShipmentUncheckedCreateWithoutTripInput = {
   id?: string
   tenantId: string
   shipmentId: string
+  orderId?: string | null
   warehouseId: string
+  operationId?: string | null
+  state?: string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Date | string
   removedAt?: Date | string | null
   createdAt?: Date | string
@@ -655,9 +951,20 @@ export type TripShipmentScalarWhereInput = {
   tenantId?: Prisma.UuidFilter<"TripShipment"> | string
   tripId?: Prisma.UuidFilter<"TripShipment"> | string
   shipmentId?: Prisma.UuidFilter<"TripShipment"> | string
+  orderId?: Prisma.UuidNullableFilter<"TripShipment"> | string | null
   warehouseId?: Prisma.UuidFilter<"TripShipment"> | string
+  operationId?: Prisma.UuidNullableFilter<"TripShipment"> | string | null
+  state?: Prisma.StringFilter<"TripShipment"> | string
   weight?: Prisma.DecimalFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFilter<"TripShipment"> | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  shipmentVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  orderVersion?: Prisma.BigIntNullableFilter<"TripShipment"> | bigint | number | null
+  claimRequest?: Prisma.JsonNullableFilter<"TripShipment">
+  claimReceipt?: Prisma.JsonNullableFilter<"TripShipment">
+  releaseRequest?: Prisma.JsonNullableFilter<"TripShipment">
+  releaseReceipt?: Prisma.JsonNullableFilter<"TripShipment">
+  shipmentSnapshot?: Prisma.JsonNullableFilter<"TripShipment">
   assignedAt?: Prisma.DateTimeFilter<"TripShipment"> | Date | string
   removedAt?: Prisma.DateTimeNullableFilter<"TripShipment"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"TripShipment"> | Date | string
@@ -666,13 +973,102 @@ export type TripShipmentScalarWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"TripShipment"> | Date | string | null
 }
 
+export type TripShipmentCreateWithoutOperationInput = {
+  id?: string
+  tenantId: string
+  shipmentId: string
+  orderId?: string | null
+  warehouseId: string
+  state?: string
+  weight: runtime.Decimal | runtime.DecimalJsLike | number | string
+  volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  assignedAt?: Date | string
+  removedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  trip: Prisma.DeliveryTripCreateNestedOneWithoutShipmentsInput
+}
+
+export type TripShipmentUncheckedCreateWithoutOperationInput = {
+  id?: string
+  tenantId: string
+  tripId: string
+  shipmentId: string
+  orderId?: string | null
+  warehouseId: string
+  state?: string
+  weight: runtime.Decimal | runtime.DecimalJsLike | number | string
+  volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  assignedAt?: Date | string
+  removedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+}
+
+export type TripShipmentCreateOrConnectWithoutOperationInput = {
+  where: Prisma.TripShipmentWhereUniqueInput
+  create: Prisma.XOR<Prisma.TripShipmentCreateWithoutOperationInput, Prisma.TripShipmentUncheckedCreateWithoutOperationInput>
+}
+
+export type TripShipmentCreateManyOperationInputEnvelope = {
+  data: Prisma.TripShipmentCreateManyOperationInput | Prisma.TripShipmentCreateManyOperationInput[]
+  skipDuplicates?: boolean
+}
+
+export type TripShipmentUpsertWithWhereUniqueWithoutOperationInput = {
+  where: Prisma.TripShipmentWhereUniqueInput
+  update: Prisma.XOR<Prisma.TripShipmentUpdateWithoutOperationInput, Prisma.TripShipmentUncheckedUpdateWithoutOperationInput>
+  create: Prisma.XOR<Prisma.TripShipmentCreateWithoutOperationInput, Prisma.TripShipmentUncheckedCreateWithoutOperationInput>
+}
+
+export type TripShipmentUpdateWithWhereUniqueWithoutOperationInput = {
+  where: Prisma.TripShipmentWhereUniqueInput
+  data: Prisma.XOR<Prisma.TripShipmentUpdateWithoutOperationInput, Prisma.TripShipmentUncheckedUpdateWithoutOperationInput>
+}
+
+export type TripShipmentUpdateManyWithWhereWithoutOperationInput = {
+  where: Prisma.TripShipmentScalarWhereInput
+  data: Prisma.XOR<Prisma.TripShipmentUpdateManyMutationInput, Prisma.TripShipmentUncheckedUpdateManyWithoutOperationInput>
+}
+
 export type TripShipmentCreateManyTripInput = {
   id?: string
   tenantId: string
   shipmentId: string
+  orderId?: string | null
   warehouseId: string
+  operationId?: string | null
+  state?: string
   weight: runtime.Decimal | runtime.DecimalJsLike | number | string
   volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Date | string
   removedAt?: Date | string | null
   createdAt?: Date | string
@@ -685,24 +1081,46 @@ export type TripShipmentUpdateWithoutTripInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  operation?: Prisma.TripOperationUpdateOneWithoutMembershipsNestedInput
 }
 
 export type TripShipmentUncheckedUpdateWithoutTripInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  operationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -715,9 +1133,124 @@ export type TripShipmentUncheckedUpdateManyWithoutTripInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  operationId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  state?: Prisma.StringFieldUpdateOperationsInput | string
   weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
   volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type TripShipmentCreateManyOperationInput = {
+  id?: string
+  tenantId: string
+  tripId: string
+  shipmentId: string
+  orderId?: string | null
+  warehouseId: string
+  state?: string
+  weight: runtime.Decimal | runtime.DecimalJsLike | number | string
+  volume: runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: bigint | number | null
+  shipmentVersion?: bigint | number | null
+  orderVersion?: bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  assignedAt?: Date | string
+  removedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+}
+
+export type TripShipmentUpdateWithoutOperationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.StringFieldUpdateOperationsInput | string
+  weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  trip?: Prisma.DeliveryTripUpdateOneRequiredWithoutShipmentsNestedInput
+}
+
+export type TripShipmentUncheckedUpdateWithoutOperationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  tripId?: Prisma.StringFieldUpdateOperationsInput | string
+  shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.StringFieldUpdateOperationsInput | string
+  weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type TripShipmentUncheckedUpdateManyWithoutOperationInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  tripId?: Prisma.StringFieldUpdateOperationsInput | string
+  shipmentId?: Prisma.StringFieldUpdateOperationsInput | string
+  orderId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  warehouseId?: Prisma.StringFieldUpdateOperationsInput | string
+  state?: Prisma.StringFieldUpdateOperationsInput | string
+  weight?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  volume?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
+  expectedShipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  shipmentVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  orderVersion?: Prisma.NullableBigIntFieldUpdateOperationsInput | bigint | number | null
+  claimRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  claimReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseRequest?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  releaseReceipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  shipmentSnapshot?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   assignedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   removedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -733,9 +1266,20 @@ export type TripShipmentSelect<ExtArgs extends runtime.Types.Extensions.Internal
   tenantId?: boolean
   tripId?: boolean
   shipmentId?: boolean
+  orderId?: boolean
   warehouseId?: boolean
+  operationId?: boolean
+  state?: boolean
   weight?: boolean
   volume?: boolean
+  expectedShipmentVersion?: boolean
+  shipmentVersion?: boolean
+  orderVersion?: boolean
+  claimRequest?: boolean
+  claimReceipt?: boolean
+  releaseRequest?: boolean
+  releaseReceipt?: boolean
+  shipmentSnapshot?: boolean
   assignedAt?: boolean
   removedAt?: boolean
   createdAt?: boolean
@@ -743,6 +1287,7 @@ export type TripShipmentSelect<ExtArgs extends runtime.Types.Extensions.Internal
   version?: boolean
   deletedAt?: boolean
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
+  operation?: boolean | Prisma.TripShipment$operationArgs<ExtArgs>
 }, ExtArgs["result"]["tripShipment"]>
 
 export type TripShipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -750,9 +1295,20 @@ export type TripShipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   tenantId?: boolean
   tripId?: boolean
   shipmentId?: boolean
+  orderId?: boolean
   warehouseId?: boolean
+  operationId?: boolean
+  state?: boolean
   weight?: boolean
   volume?: boolean
+  expectedShipmentVersion?: boolean
+  shipmentVersion?: boolean
+  orderVersion?: boolean
+  claimRequest?: boolean
+  claimReceipt?: boolean
+  releaseRequest?: boolean
+  releaseReceipt?: boolean
+  shipmentSnapshot?: boolean
   assignedAt?: boolean
   removedAt?: boolean
   createdAt?: boolean
@@ -760,6 +1316,7 @@ export type TripShipmentSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   version?: boolean
   deletedAt?: boolean
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
+  operation?: boolean | Prisma.TripShipment$operationArgs<ExtArgs>
 }, ExtArgs["result"]["tripShipment"]>
 
 export type TripShipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -767,9 +1324,20 @@ export type TripShipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   tenantId?: boolean
   tripId?: boolean
   shipmentId?: boolean
+  orderId?: boolean
   warehouseId?: boolean
+  operationId?: boolean
+  state?: boolean
   weight?: boolean
   volume?: boolean
+  expectedShipmentVersion?: boolean
+  shipmentVersion?: boolean
+  orderVersion?: boolean
+  claimRequest?: boolean
+  claimReceipt?: boolean
+  releaseRequest?: boolean
+  releaseReceipt?: boolean
+  shipmentSnapshot?: boolean
   assignedAt?: boolean
   removedAt?: boolean
   createdAt?: boolean
@@ -777,6 +1345,7 @@ export type TripShipmentSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   version?: boolean
   deletedAt?: boolean
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
+  operation?: boolean | Prisma.TripShipment$operationArgs<ExtArgs>
 }, ExtArgs["result"]["tripShipment"]>
 
 export type TripShipmentSelectScalar = {
@@ -784,9 +1353,20 @@ export type TripShipmentSelectScalar = {
   tenantId?: boolean
   tripId?: boolean
   shipmentId?: boolean
+  orderId?: boolean
   warehouseId?: boolean
+  operationId?: boolean
+  state?: boolean
   weight?: boolean
   volume?: boolean
+  expectedShipmentVersion?: boolean
+  shipmentVersion?: boolean
+  orderVersion?: boolean
+  claimRequest?: boolean
+  claimReceipt?: boolean
+  releaseRequest?: boolean
+  releaseReceipt?: boolean
+  shipmentSnapshot?: boolean
   assignedAt?: boolean
   removedAt?: boolean
   createdAt?: boolean
@@ -795,30 +1375,45 @@ export type TripShipmentSelectScalar = {
   deletedAt?: boolean
 }
 
-export type TripShipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "shipmentId" | "warehouseId" | "weight" | "volume" | "assignedAt" | "removedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tripShipment"]>
+export type TripShipmentOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "shipmentId" | "orderId" | "warehouseId" | "operationId" | "state" | "weight" | "volume" | "expectedShipmentVersion" | "shipmentVersion" | "orderVersion" | "claimRequest" | "claimReceipt" | "releaseRequest" | "releaseReceipt" | "shipmentSnapshot" | "assignedAt" | "removedAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tripShipment"]>
 export type TripShipmentInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
+  operation?: boolean | Prisma.TripShipment$operationArgs<ExtArgs>
 }
 export type TripShipmentIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
+  operation?: boolean | Prisma.TripShipment$operationArgs<ExtArgs>
 }
 export type TripShipmentIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
+  operation?: boolean | Prisma.TripShipment$operationArgs<ExtArgs>
 }
 
 export type $TripShipmentPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TripShipment"
   objects: {
     trip: Prisma.$DeliveryTripPayload<ExtArgs>
+    operation: Prisma.$TripOperationPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     tenantId: string
     tripId: string
     shipmentId: string
+    orderId: string | null
     warehouseId: string
+    operationId: string | null
+    state: string
     weight: runtime.Decimal
     volume: runtime.Decimal
+    expectedShipmentVersion: bigint | null
+    shipmentVersion: bigint | null
+    orderVersion: bigint | null
+    claimRequest: runtime.JsonValue | null
+    claimReceipt: runtime.JsonValue | null
+    releaseRequest: runtime.JsonValue | null
+    releaseReceipt: runtime.JsonValue | null
+    shipmentSnapshot: runtime.JsonValue | null
     assignedAt: Date
     removedAt: Date | null
     createdAt: Date
@@ -1220,6 +1815,7 @@ readonly fields: TripShipmentFieldRefs;
 export interface Prisma__TripShipmentClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   trip<T extends Prisma.DeliveryTripDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.DeliveryTripDefaultArgs<ExtArgs>>): Prisma.Prisma__DeliveryTripClient<runtime.Types.Result.GetResult<Prisma.$DeliveryTripPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  operation<T extends Prisma.TripShipment$operationArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TripShipment$operationArgs<ExtArgs>>): Prisma.Prisma__TripOperationClient<runtime.Types.Result.GetResult<Prisma.$TripOperationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1253,9 +1849,20 @@ export interface TripShipmentFieldRefs {
   readonly tenantId: Prisma.FieldRef<"TripShipment", 'String'>
   readonly tripId: Prisma.FieldRef<"TripShipment", 'String'>
   readonly shipmentId: Prisma.FieldRef<"TripShipment", 'String'>
+  readonly orderId: Prisma.FieldRef<"TripShipment", 'String'>
   readonly warehouseId: Prisma.FieldRef<"TripShipment", 'String'>
+  readonly operationId: Prisma.FieldRef<"TripShipment", 'String'>
+  readonly state: Prisma.FieldRef<"TripShipment", 'String'>
   readonly weight: Prisma.FieldRef<"TripShipment", 'Decimal'>
   readonly volume: Prisma.FieldRef<"TripShipment", 'Decimal'>
+  readonly expectedShipmentVersion: Prisma.FieldRef<"TripShipment", 'BigInt'>
+  readonly shipmentVersion: Prisma.FieldRef<"TripShipment", 'BigInt'>
+  readonly orderVersion: Prisma.FieldRef<"TripShipment", 'BigInt'>
+  readonly claimRequest: Prisma.FieldRef<"TripShipment", 'Json'>
+  readonly claimReceipt: Prisma.FieldRef<"TripShipment", 'Json'>
+  readonly releaseRequest: Prisma.FieldRef<"TripShipment", 'Json'>
+  readonly releaseReceipt: Prisma.FieldRef<"TripShipment", 'Json'>
+  readonly shipmentSnapshot: Prisma.FieldRef<"TripShipment", 'Json'>
   readonly assignedAt: Prisma.FieldRef<"TripShipment", 'DateTime'>
   readonly removedAt: Prisma.FieldRef<"TripShipment", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"TripShipment", 'DateTime'>
@@ -1660,6 +2267,25 @@ export type TripShipmentDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.
    * Limit how many TripShipments to delete.
    */
   limit?: number
+}
+
+/**
+ * TripShipment.operation
+ */
+export type TripShipment$operationArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the TripOperation
+   */
+  select?: Prisma.TripOperationSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the TripOperation
+   */
+  omit?: Prisma.TripOperationOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TripOperationInclude<ExtArgs> | null
+  where?: Prisma.TripOperationWhereInput
 }
 
 /**

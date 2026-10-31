@@ -23,14 +23,38 @@
 
 ## Description
 
+### Internal trip resource reads
+
+`GET /api/v1/internal/trip-resources/warehouses/:id` and
+`GET /api/v1/internal/trip-resources/vehicles/:id` accept only Transport's
+verified internal token and tenant. They delegate to the same owner reads as
+public resource APIs. Dispatch recovery can therefore revalidate current
+resources without persisting a user's access token. They are not Gateway
+public routes and do not relax public resource permissions.
+
 ### Driver master data
 
 `/api/v1/drivers` now supports list/detail/create/update and versioned
 enable/disable through the Gateway. `master-data:driver:read` authorizes reads;
 `master-data:driver:manage` authorizes writes and `/drivers/eligible-users`.
-Every query/write uses the verified access-token tenant. Code and user linkage
-are immutable in ordinary updates. Conflicting code, user or license and stale
-versions return conflicts; no hard deletion endpoint is provided.
+Every query/write uses the verified access-token tenant. User linkage is
+immutable in ordinary updates; driver code may be changed. Conflicting code,
+user or license and stale versions return conflicts; no hard deletion endpoint
+is provided.
+
+### Master-data codes
+
+Creating a customer, warehouse, product, vehicle or driver without a code (or
+with a blank code) assigns the next tenant-scoped code: `CUS-000001`,
+`WH-000001`, `PRD-000001`, `VEH-000001` or `DRV-000001`, respectively. Product
+uses the `sku` field; the other resources use `code`. A caller may still provide
+any nonblank code within the existing field limit (50 characters, or 100 for
+product SKU), and may change it on update. Blank update values leave the code
+unchanged. Existing tenant-scoped uniqueness rules still apply. Allocation
+atomically increments a persistent high-water mark per tenant and resource
+type. On first allocation it seeds that mark from existing codes, including
+soft-deleted records; later code edits therefore never make an allocated number
+available again.
 
 Identity owns names/membership/permissions. The authenticated internal lookup
 requires active tenant membership and both assigned-Driver permissions (or
@@ -85,10 +109,18 @@ failed or clear it. The returned version/user is authoritative for assignment.
 **Rollout prerequisite:** fence all legacy trip writers; every future Transport
 draft/create/reassignment/import must successfully lock the expected binding
 before persisting a reference, and use the returned binding. Release/cancel/failure
-never clears a lock. No production trip mutation endpoints exist yet. Deploy
+never clears a lock. Transport DRAFT create/assignment writes enforce this
+binding, and Phase 3 approval preserves it. Deploy
 Transport history reads before enabling this relink API; the history query catches
 legacy rows and never filters lifecycle/soft deletion. No DB transaction spans
 cross-service HTTP. See [database design §6.6](../../docs/architecture/database-design.md#66-drivers).
+
+`GET /api/v1/internal/drivers/:id/trip-eligibility` is also restricted to the
+signed tenant-bound Transport caller, not Gateway exposed. It requires an
+ACTIVE Driver profile and rechecks the linked account's current Identity
+membership/eligibility, returning the actual versioned Driver view for route
+preview/snapshot. It is read-only: no account, permission, relink or assignment
+is created. Ineligible/missing or unavailable Identity fails closed.
 
 The relink transaction writes the standard local `master_data.outbox_events`
 record `DriverUserRelinked` v1 atomically with Driver. Its payload matches the

@@ -67,7 +67,6 @@ describe('Driver DTO contract', () => {
     expect(dto.code).toBe('DRV');
   });
   it.each([
-    { code: ' ' },
     { userId: 'other' },
     { licenseNumber: '' },
     { licenseExpiry: '2027-02-30' },
@@ -79,6 +78,17 @@ describe('Driver DTO contract', () => {
         .length,
     ).toBeGreaterThan(0);
   });
+  it.each([undefined, '', '   '])(
+    'allows omitted or blank create code %j for backend allocation',
+    async (code) => {
+      const body: Record<string, unknown> = { ...valid };
+      if (code === undefined) delete body.code;
+      else body.code = code;
+      expect(await validate(plainToInstance(CreateDriverDto, body))).toEqual(
+        [],
+      );
+    },
+  );
   it.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '1', null])(
     'rejects unsafe version %j',
     async (version) => {
@@ -87,15 +97,24 @@ describe('Driver DTO contract', () => {
       ).toBeGreaterThan(0);
     },
   );
-  it('allows nullable phone, forbids mutable linkage and null license', async () => {
+  it('allows code edits and nullable phone, but forbids mutable linkage and null license', async () => {
     expect(
       await validate(
-        plainToInstance(UpdateDriverDto, { version: 1, phone: null }),
+        plainToInstance(UpdateDriverDto, {
+          version: 1,
+          phone: null,
+          code: ' DRV-2 ',
+        }),
       ),
     ).toEqual([]);
+    expect(
+      plainToInstance(UpdateDriverDto, {
+        version: 1,
+        code: ' DRV-2 ',
+      }).code,
+    ).toBe('DRV-2');
     for (const patch of [
       { userId: valid.userId },
-      { code: 'changed' },
       { licenseNumber: null },
       { licenseExpiry: null },
     ]) {

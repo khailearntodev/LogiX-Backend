@@ -23,10 +23,20 @@ export * from './enums.js';
  */
 export type Shipment = Prisma.ShipmentModel
 /**
+ * Model ShipmentTripReceipt
+ * 
+ */
+export type ShipmentTripReceipt = Prisma.ShipmentTripReceiptModel
+/**
  * Model ShipmentDispatchIntent
  * 
  */
 export type ShipmentDispatchIntent = Prisma.ShipmentDispatchIntentModel
+/**
+ * Model ShipmentDispatchBatch
+ * 
+ */
+export type ShipmentDispatchBatch = Prisma.ShipmentDispatchBatchModel
 /**
  * Model ShipmentOrderCursor
  * 

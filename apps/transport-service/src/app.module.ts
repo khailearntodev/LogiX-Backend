@@ -15,6 +15,7 @@ import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
+import { TripsModule } from './trips/trips.module.js';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { DatabaseModule } from './database/database.module.js';
 
     // Service-owned database
     DatabaseModule,
+    TripsModule,
   ],
   controllers: [AppController, DriverUsageController],
   providers: [

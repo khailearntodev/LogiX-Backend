@@ -58,6 +58,7 @@ export const ModelName = {
   Warehouse: 'Warehouse',
   Vehicle: 'Vehicle',
   Driver: 'Driver',
+  MasterDataCodeSequence: 'MasterDataCodeSequence',
   OutboxEvent: 'OutboxEvent'
 } as const
 
@@ -224,6 +225,16 @@ export const DriverScalarFieldEnum = {
 } as const
 
 export type DriverScalarFieldEnum = (typeof DriverScalarFieldEnum)[keyof typeof DriverScalarFieldEnum]
+
+
+export const MasterDataCodeSequenceScalarFieldEnum = {
+  tenantId: 'tenantId',
+  codeType: 'codeType',
+  lastValue: 'lastValue',
+  updatedAt: 'updatedAt'
+} as const
+
+export type MasterDataCodeSequenceScalarFieldEnum = (typeof MasterDataCodeSequenceScalarFieldEnum)[keyof typeof MasterDataCodeSequenceScalarFieldEnum]
 
 
 export const OutboxEventScalarFieldEnum = {

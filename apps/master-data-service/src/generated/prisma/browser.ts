@@ -54,6 +54,11 @@ export type Vehicle = Prisma.VehicleModel
  */
 export type Driver = Prisma.DriverModel
 /**
+ * Model MasterDataCodeSequence
+ * Tenant/type-scoped high-water marks keep generated codes monotonic after edits.
+ */
+export type MasterDataCodeSequence = Prisma.MasterDataCodeSequenceModel
+/**
  * Model OutboxEvent
  *
  */

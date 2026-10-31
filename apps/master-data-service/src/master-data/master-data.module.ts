@@ -23,12 +23,14 @@ import { ServiceId } from '@logix/common';
 import { DriverLinkService } from './drivers/driver-link.service.js';
 import { TransportDriverClient } from './drivers/transport-driver.client.js';
 import { InternalDriverLinksController } from './drivers/internal-driver-links.controller.js';
+import { InternalTripResourcesController } from './internal-trip-resources.controller.js';
 
 @Module({
   imports: [AuthModule],
   controllers: [
     DriversController,
     InternalDriverLinksController,
+    InternalTripResourcesController,
     WarehousesController,
     ProductsController,
     VehiclesController,

@@ -47,8 +47,13 @@ export { Prisma }
  */
 export type SalesOrder = Prisma.SalesOrderModel
 /**
- * Model OrderNumberSequence
+ * Model OrderDispatchBatch
  * Per-tenant daily counter for order numbers (SO-YYYYMMDD-000001); incremented with UPDATE ... RETURNING.
+ */
+export type OrderDispatchBatch = Prisma.OrderDispatchBatchModel
+/**
+ * Model OrderNumberSequence
+ *
  */
 export type OrderNumberSequence = Prisma.OrderNumberSequenceModel
 /**

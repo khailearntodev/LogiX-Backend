@@ -9,4 +9,5 @@ export const gatewayConfigSchema = z.object({
   IDENTITY_SERVICE_URL: z.string().url(),
   ORDER_SERVICE_URL: z.string().url(),
   FULFILLMENT_SERVICE_URL: z.string().url(),
+  TRANSPORT_SERVICE_URL: z.string().url(),
 });

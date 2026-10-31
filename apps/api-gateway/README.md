@@ -30,6 +30,12 @@ use the same explicit target. Identity's `/internal/driver-users` routes are
 deliberately not proxied publicly. Driver authentication and authorization remain
 in the owning service; adding a proxy route does not grant permissions.
 
+Draft-trip routes `/api/v1/trips` and child paths proxy to the required,
+validated `TRANSPORT_SERVICE_URL`. Only complete public resource segments are
+matched; service-only shipment membership and Driver link-lock/history APIs
+are not exposed. Transport enforces tenant and trip permissions. This route
+does not expose the later assigned-Driver `/driver/trips` surface.
+
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Project setup

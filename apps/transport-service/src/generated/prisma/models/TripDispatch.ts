@@ -28,11 +28,13 @@ export type AggregateTripDispatch = {
 
 export type TripDispatchAvgAggregateOutputType = {
   dispatchVersion: number | null
+  attemptCount: number | null
   version: number | null
 }
 
 export type TripDispatchSumAggregateOutputType = {
   dispatchVersion: bigint | null
+  attemptCount: number | null
   version: bigint | null
 }
 
@@ -44,6 +46,11 @@ export type TripDispatchMinAggregateOutputType = {
   idempotencyKey: string | null
   status: string | null
   requestedBy: string | null
+  stage: string | null
+  payloadHash: string | null
+  attemptCount: number | null
+  nextAttemptAt: Date | null
+  lastError: string | null
   requestedAt: Date | null
   completedAt: Date | null
   correlationId: string | null
@@ -61,6 +68,11 @@ export type TripDispatchMaxAggregateOutputType = {
   idempotencyKey: string | null
   status: string | null
   requestedBy: string | null
+  stage: string | null
+  payloadHash: string | null
+  attemptCount: number | null
+  nextAttemptAt: Date | null
+  lastError: string | null
   requestedAt: Date | null
   completedAt: Date | null
   correlationId: string | null
@@ -78,6 +90,15 @@ export type TripDispatchCountAggregateOutputType = {
   idempotencyKey: number
   status: number
   requestedBy: number
+  stage: number
+  payloadHash: number
+  command: number
+  payload: number
+  receipt: number
+  result: number
+  attemptCount: number
+  nextAttemptAt: number
+  lastError: number
   requestedAt: number
   completedAt: number
   correlationId: number
@@ -91,11 +112,13 @@ export type TripDispatchCountAggregateOutputType = {
 
 export type TripDispatchAvgAggregateInputType = {
   dispatchVersion?: true
+  attemptCount?: true
   version?: true
 }
 
 export type TripDispatchSumAggregateInputType = {
   dispatchVersion?: true
+  attemptCount?: true
   version?: true
 }
 
@@ -107,6 +130,11 @@ export type TripDispatchMinAggregateInputType = {
   idempotencyKey?: true
   status?: true
   requestedBy?: true
+  stage?: true
+  payloadHash?: true
+  attemptCount?: true
+  nextAttemptAt?: true
+  lastError?: true
   requestedAt?: true
   completedAt?: true
   correlationId?: true
@@ -124,6 +152,11 @@ export type TripDispatchMaxAggregateInputType = {
   idempotencyKey?: true
   status?: true
   requestedBy?: true
+  stage?: true
+  payloadHash?: true
+  attemptCount?: true
+  nextAttemptAt?: true
+  lastError?: true
   requestedAt?: true
   completedAt?: true
   correlationId?: true
@@ -141,6 +174,15 @@ export type TripDispatchCountAggregateInputType = {
   idempotencyKey?: true
   status?: true
   requestedBy?: true
+  stage?: true
+  payloadHash?: true
+  command?: true
+  payload?: true
+  receipt?: true
+  result?: true
+  attemptCount?: true
+  nextAttemptAt?: true
+  lastError?: true
   requestedAt?: true
   completedAt?: true
   correlationId?: true
@@ -245,6 +287,15 @@ export type TripDispatchGroupByOutputType = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage: string
+  payloadHash: string | null
+  command: runtime.JsonValue | null
+  payload: runtime.JsonValue | null
+  receipt: runtime.JsonValue | null
+  result: runtime.JsonValue | null
+  attemptCount: number
+  nextAttemptAt: Date
+  lastError: string | null
   requestedAt: Date
   completedAt: Date | null
   correlationId: string
@@ -285,6 +336,15 @@ export type TripDispatchWhereInput = {
   idempotencyKey?: Prisma.StringFilter<"TripDispatch"> | string
   status?: Prisma.StringFilter<"TripDispatch"> | string
   requestedBy?: Prisma.UuidFilter<"TripDispatch"> | string
+  stage?: Prisma.StringFilter<"TripDispatch"> | string
+  payloadHash?: Prisma.StringNullableFilter<"TripDispatch"> | string | null
+  command?: Prisma.JsonNullableFilter<"TripDispatch">
+  payload?: Prisma.JsonNullableFilter<"TripDispatch">
+  receipt?: Prisma.JsonNullableFilter<"TripDispatch">
+  result?: Prisma.JsonNullableFilter<"TripDispatch">
+  attemptCount?: Prisma.IntFilter<"TripDispatch"> | number
+  nextAttemptAt?: Prisma.DateTimeFilter<"TripDispatch"> | Date | string
+  lastError?: Prisma.StringNullableFilter<"TripDispatch"> | string | null
   requestedAt?: Prisma.DateTimeFilter<"TripDispatch"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"TripDispatch"> | Date | string | null
   correlationId?: Prisma.UuidFilter<"TripDispatch"> | string
@@ -303,6 +363,15 @@ export type TripDispatchOrderByWithRelationInput = {
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   requestedBy?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  command?: Prisma.SortOrderInput | Prisma.SortOrder
+  payload?: Prisma.SortOrderInput | Prisma.SortOrder
+  receipt?: Prisma.SortOrderInput | Prisma.SortOrder
+  result?: Prisma.SortOrderInput | Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrderInput | Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   correlationId?: Prisma.SortOrder
@@ -326,6 +395,15 @@ export type TripDispatchWhereUniqueInput = Prisma.AtLeast<{
   idempotencyKey?: Prisma.StringFilter<"TripDispatch"> | string
   status?: Prisma.StringFilter<"TripDispatch"> | string
   requestedBy?: Prisma.UuidFilter<"TripDispatch"> | string
+  stage?: Prisma.StringFilter<"TripDispatch"> | string
+  payloadHash?: Prisma.StringNullableFilter<"TripDispatch"> | string | null
+  command?: Prisma.JsonNullableFilter<"TripDispatch">
+  payload?: Prisma.JsonNullableFilter<"TripDispatch">
+  receipt?: Prisma.JsonNullableFilter<"TripDispatch">
+  result?: Prisma.JsonNullableFilter<"TripDispatch">
+  attemptCount?: Prisma.IntFilter<"TripDispatch"> | number
+  nextAttemptAt?: Prisma.DateTimeFilter<"TripDispatch"> | Date | string
+  lastError?: Prisma.StringNullableFilter<"TripDispatch"> | string | null
   requestedAt?: Prisma.DateTimeFilter<"TripDispatch"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"TripDispatch"> | Date | string | null
   correlationId?: Prisma.UuidFilter<"TripDispatch"> | string
@@ -344,6 +422,15 @@ export type TripDispatchOrderByWithAggregationInput = {
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   requestedBy?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrderInput | Prisma.SortOrder
+  command?: Prisma.SortOrderInput | Prisma.SortOrder
+  payload?: Prisma.SortOrderInput | Prisma.SortOrder
+  receipt?: Prisma.SortOrderInput | Prisma.SortOrder
+  result?: Prisma.SortOrderInput | Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrderInput | Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   correlationId?: Prisma.SortOrder
@@ -369,6 +456,15 @@ export type TripDispatchScalarWhereWithAggregatesInput = {
   idempotencyKey?: Prisma.StringWithAggregatesFilter<"TripDispatch"> | string
   status?: Prisma.StringWithAggregatesFilter<"TripDispatch"> | string
   requestedBy?: Prisma.UuidWithAggregatesFilter<"TripDispatch"> | string
+  stage?: Prisma.StringWithAggregatesFilter<"TripDispatch"> | string
+  payloadHash?: Prisma.StringNullableWithAggregatesFilter<"TripDispatch"> | string | null
+  command?: Prisma.JsonNullableWithAggregatesFilter<"TripDispatch">
+  payload?: Prisma.JsonNullableWithAggregatesFilter<"TripDispatch">
+  receipt?: Prisma.JsonNullableWithAggregatesFilter<"TripDispatch">
+  result?: Prisma.JsonNullableWithAggregatesFilter<"TripDispatch">
+  attemptCount?: Prisma.IntWithAggregatesFilter<"TripDispatch"> | number
+  nextAttemptAt?: Prisma.DateTimeWithAggregatesFilter<"TripDispatch"> | Date | string
+  lastError?: Prisma.StringNullableWithAggregatesFilter<"TripDispatch"> | string | null
   requestedAt?: Prisma.DateTimeWithAggregatesFilter<"TripDispatch"> | Date | string
   completedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"TripDispatch"> | Date | string | null
   correlationId?: Prisma.UuidWithAggregatesFilter<"TripDispatch"> | string
@@ -385,6 +481,15 @@ export type TripDispatchCreateInput = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage?: string
+  payloadHash?: string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   requestedAt: Date | string
   completedAt?: Date | string | null
   correlationId: string
@@ -403,6 +508,15 @@ export type TripDispatchUncheckedCreateInput = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage?: string
+  payloadHash?: string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   requestedAt: Date | string
   completedAt?: Date | string | null
   correlationId: string
@@ -419,6 +533,15 @@ export type TripDispatchUpdateInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -437,6 +560,15 @@ export type TripDispatchUncheckedUpdateInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -454,6 +586,15 @@ export type TripDispatchCreateManyInput = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage?: string
+  payloadHash?: string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   requestedAt: Date | string
   completedAt?: Date | string | null
   correlationId: string
@@ -470,6 +611,15 @@ export type TripDispatchUpdateManyMutationInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -487,6 +637,15 @@ export type TripDispatchUncheckedUpdateManyInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -525,6 +684,15 @@ export type TripDispatchCountOrderByAggregateInput = {
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   requestedBy?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  command?: Prisma.SortOrder
+  payload?: Prisma.SortOrder
+  receipt?: Prisma.SortOrder
+  result?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
@@ -536,6 +704,7 @@ export type TripDispatchCountOrderByAggregateInput = {
 
 export type TripDispatchAvgOrderByAggregateInput = {
   dispatchVersion?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -547,6 +716,11 @@ export type TripDispatchMaxOrderByAggregateInput = {
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   requestedBy?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
@@ -564,6 +738,11 @@ export type TripDispatchMinOrderByAggregateInput = {
   idempotencyKey?: Prisma.SortOrder
   status?: Prisma.SortOrder
   requestedBy?: Prisma.SortOrder
+  stage?: Prisma.SortOrder
+  payloadHash?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
+  lastError?: Prisma.SortOrder
   requestedAt?: Prisma.SortOrder
   completedAt?: Prisma.SortOrder
   correlationId?: Prisma.SortOrder
@@ -575,6 +754,7 @@ export type TripDispatchMinOrderByAggregateInput = {
 
 export type TripDispatchSumOrderByAggregateInput = {
   dispatchVersion?: Prisma.SortOrder
+  attemptCount?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -627,6 +807,15 @@ export type TripDispatchCreateWithoutTripInput = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage?: string
+  payloadHash?: string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   requestedAt: Date | string
   completedAt?: Date | string | null
   correlationId: string
@@ -643,6 +832,15 @@ export type TripDispatchUncheckedCreateWithoutTripInput = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage?: string
+  payloadHash?: string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   requestedAt: Date | string
   completedAt?: Date | string | null
   correlationId: string
@@ -689,6 +887,15 @@ export type TripDispatchScalarWhereInput = {
   idempotencyKey?: Prisma.StringFilter<"TripDispatch"> | string
   status?: Prisma.StringFilter<"TripDispatch"> | string
   requestedBy?: Prisma.UuidFilter<"TripDispatch"> | string
+  stage?: Prisma.StringFilter<"TripDispatch"> | string
+  payloadHash?: Prisma.StringNullableFilter<"TripDispatch"> | string | null
+  command?: Prisma.JsonNullableFilter<"TripDispatch">
+  payload?: Prisma.JsonNullableFilter<"TripDispatch">
+  receipt?: Prisma.JsonNullableFilter<"TripDispatch">
+  result?: Prisma.JsonNullableFilter<"TripDispatch">
+  attemptCount?: Prisma.IntFilter<"TripDispatch"> | number
+  nextAttemptAt?: Prisma.DateTimeFilter<"TripDispatch"> | Date | string
+  lastError?: Prisma.StringNullableFilter<"TripDispatch"> | string | null
   requestedAt?: Prisma.DateTimeFilter<"TripDispatch"> | Date | string
   completedAt?: Prisma.DateTimeNullableFilter<"TripDispatch"> | Date | string | null
   correlationId?: Prisma.UuidFilter<"TripDispatch"> | string
@@ -705,6 +912,15 @@ export type TripDispatchCreateManyTripInput = {
   idempotencyKey: string
   status: string
   requestedBy: string
+  stage?: string
+  payloadHash?: string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: number
+  nextAttemptAt?: Date | string
+  lastError?: string | null
   requestedAt: Date | string
   completedAt?: Date | string | null
   correlationId: string
@@ -721,6 +937,15 @@ export type TripDispatchUpdateWithoutTripInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -737,6 +962,15 @@ export type TripDispatchUncheckedUpdateWithoutTripInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -753,6 +987,15 @@ export type TripDispatchUncheckedUpdateManyWithoutTripInput = {
   idempotencyKey?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   requestedBy?: Prisma.StringFieldUpdateOperationsInput | string
+  stage?: Prisma.StringFieldUpdateOperationsInput | string
+  payloadHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  command?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  payload?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  receipt?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  result?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
+  attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   requestedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   completedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   correlationId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -772,6 +1015,15 @@ export type TripDispatchSelect<ExtArgs extends runtime.Types.Extensions.Internal
   idempotencyKey?: boolean
   status?: boolean
   requestedBy?: boolean
+  stage?: boolean
+  payloadHash?: boolean
+  command?: boolean
+  payload?: boolean
+  receipt?: boolean
+  result?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   requestedAt?: boolean
   completedAt?: boolean
   correlationId?: boolean
@@ -790,6 +1042,15 @@ export type TripDispatchSelectCreateManyAndReturn<ExtArgs extends runtime.Types.
   idempotencyKey?: boolean
   status?: boolean
   requestedBy?: boolean
+  stage?: boolean
+  payloadHash?: boolean
+  command?: boolean
+  payload?: boolean
+  receipt?: boolean
+  result?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   requestedAt?: boolean
   completedAt?: boolean
   correlationId?: boolean
@@ -808,6 +1069,15 @@ export type TripDispatchSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.
   idempotencyKey?: boolean
   status?: boolean
   requestedBy?: boolean
+  stage?: boolean
+  payloadHash?: boolean
+  command?: boolean
+  payload?: boolean
+  receipt?: boolean
+  result?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   requestedAt?: boolean
   completedAt?: boolean
   correlationId?: boolean
@@ -826,6 +1096,15 @@ export type TripDispatchSelectScalar = {
   idempotencyKey?: boolean
   status?: boolean
   requestedBy?: boolean
+  stage?: boolean
+  payloadHash?: boolean
+  command?: boolean
+  payload?: boolean
+  receipt?: boolean
+  result?: boolean
+  attemptCount?: boolean
+  nextAttemptAt?: boolean
+  lastError?: boolean
   requestedAt?: boolean
   completedAt?: boolean
   correlationId?: boolean
@@ -835,7 +1114,7 @@ export type TripDispatchSelectScalar = {
   deletedAt?: boolean
 }
 
-export type TripDispatchOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "dispatchVersion" | "idempotencyKey" | "status" | "requestedBy" | "requestedAt" | "completedAt" | "correlationId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tripDispatch"]>
+export type TripDispatchOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "tripId" | "dispatchVersion" | "idempotencyKey" | "status" | "requestedBy" | "stage" | "payloadHash" | "command" | "payload" | "receipt" | "result" | "attemptCount" | "nextAttemptAt" | "lastError" | "requestedAt" | "completedAt" | "correlationId" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tripDispatch"]>
 export type TripDispatchInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   trip?: boolean | Prisma.DeliveryTripDefaultArgs<ExtArgs>
 }
@@ -859,6 +1138,15 @@ export type $TripDispatchPayload<ExtArgs extends runtime.Types.Extensions.Intern
     idempotencyKey: string
     status: string
     requestedBy: string
+    stage: string
+    payloadHash: string | null
+    command: runtime.JsonValue | null
+    payload: runtime.JsonValue | null
+    receipt: runtime.JsonValue | null
+    result: runtime.JsonValue | null
+    attemptCount: number
+    nextAttemptAt: Date
+    lastError: string | null
     requestedAt: Date
     completedAt: Date | null
     correlationId: string
@@ -1297,6 +1585,15 @@ export interface TripDispatchFieldRefs {
   readonly idempotencyKey: Prisma.FieldRef<"TripDispatch", 'String'>
   readonly status: Prisma.FieldRef<"TripDispatch", 'String'>
   readonly requestedBy: Prisma.FieldRef<"TripDispatch", 'String'>
+  readonly stage: Prisma.FieldRef<"TripDispatch", 'String'>
+  readonly payloadHash: Prisma.FieldRef<"TripDispatch", 'String'>
+  readonly command: Prisma.FieldRef<"TripDispatch", 'Json'>
+  readonly payload: Prisma.FieldRef<"TripDispatch", 'Json'>
+  readonly receipt: Prisma.FieldRef<"TripDispatch", 'Json'>
+  readonly result: Prisma.FieldRef<"TripDispatch", 'Json'>
+  readonly attemptCount: Prisma.FieldRef<"TripDispatch", 'Int'>
+  readonly nextAttemptAt: Prisma.FieldRef<"TripDispatch", 'DateTime'>
+  readonly lastError: Prisma.FieldRef<"TripDispatch", 'String'>
   readonly requestedAt: Prisma.FieldRef<"TripDispatch", 'DateTime'>
   readonly completedAt: Prisma.FieldRef<"TripDispatch", 'DateTime'>
   readonly correlationId: Prisma.FieldRef<"TripDispatch", 'String'>

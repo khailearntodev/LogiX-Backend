@@ -264,6 +264,7 @@ def create_preview_node(
 
         return {
             "pending_approval": {
+                "execution_binding": preview.execution_binding,
                 "approval_id": str(record.id),
                 "action": tool_name,
                 "target_type": preview.target_type,
@@ -288,7 +289,7 @@ def create_confirm_node():
             pending.get("approval_id"),
             pending.get("action"),
         )
-        resume_val = interrupt(pending)
+        resume_val = interrupt({key: value for key, value in pending.items() if key != "execution_binding"})
         logger.info(
             "[CONFIRM_NODE:RESUMED] received user decision: %s for approval_id=%s",
             resume_val,
@@ -400,6 +401,7 @@ def create_revalidate_and_execute_node(
                 target_type=pending["target_type"],
                 target_id=pending["target_id"],
                 target_version=expected_version,
+                execution_binding=pending.get("execution_binding"),
             )
             exec_context = ToolContext(
                 actor=actor, correlation_id=correlation_id, approval=approved_action

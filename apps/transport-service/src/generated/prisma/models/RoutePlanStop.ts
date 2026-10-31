@@ -30,6 +30,7 @@ export type RoutePlanStopAvgAggregateOutputType = {
   sequence: number | null
   distanceFromPrevious: runtime.Decimal | null
   cumulativeDistance: runtime.Decimal | null
+  legDurationSeconds: number | null
   version: number | null
 }
 
@@ -37,6 +38,7 @@ export type RoutePlanStopSumAggregateOutputType = {
   sequence: number | null
   distanceFromPrevious: runtime.Decimal | null
   cumulativeDistance: runtime.Decimal | null
+  legDurationSeconds: number | null
   version: bigint | null
 }
 
@@ -49,6 +51,7 @@ export type RoutePlanStopMinAggregateOutputType = {
   distanceFromPrevious: runtime.Decimal | null
   cumulativeDistance: runtime.Decimal | null
   estimatedArrivalAt: Date | null
+  legDurationSeconds: number | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -64,6 +67,7 @@ export type RoutePlanStopMaxAggregateOutputType = {
   distanceFromPrevious: runtime.Decimal | null
   cumulativeDistance: runtime.Decimal | null
   estimatedArrivalAt: Date | null
+  legDurationSeconds: number | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -79,6 +83,7 @@ export type RoutePlanStopCountAggregateOutputType = {
   distanceFromPrevious: number
   cumulativeDistance: number
   estimatedArrivalAt: number
+  legDurationSeconds: number
   createdAt: number
   updatedAt: number
   version: number
@@ -91,6 +96,7 @@ export type RoutePlanStopAvgAggregateInputType = {
   sequence?: true
   distanceFromPrevious?: true
   cumulativeDistance?: true
+  legDurationSeconds?: true
   version?: true
 }
 
@@ -98,6 +104,7 @@ export type RoutePlanStopSumAggregateInputType = {
   sequence?: true
   distanceFromPrevious?: true
   cumulativeDistance?: true
+  legDurationSeconds?: true
   version?: true
 }
 
@@ -110,6 +117,7 @@ export type RoutePlanStopMinAggregateInputType = {
   distanceFromPrevious?: true
   cumulativeDistance?: true
   estimatedArrivalAt?: true
+  legDurationSeconds?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -125,6 +133,7 @@ export type RoutePlanStopMaxAggregateInputType = {
   distanceFromPrevious?: true
   cumulativeDistance?: true
   estimatedArrivalAt?: true
+  legDurationSeconds?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -140,6 +149,7 @@ export type RoutePlanStopCountAggregateInputType = {
   distanceFromPrevious?: true
   cumulativeDistance?: true
   estimatedArrivalAt?: true
+  legDurationSeconds?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -239,9 +249,10 @@ export type RoutePlanStopGroupByOutputType = {
   tenantId: string
   tripStopId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal
-  cumulativeDistance: runtime.Decimal
-  estimatedArrivalAt: Date
+  distanceFromPrevious: runtime.Decimal | null
+  cumulativeDistance: runtime.Decimal | null
+  estimatedArrivalAt: Date | null
+  legDurationSeconds: number | null
   createdAt: Date
   updatedAt: Date
   version: bigint
@@ -277,9 +288,10 @@ export type RoutePlanStopWhereInput = {
   tenantId?: Prisma.UuidFilter<"RoutePlanStop"> | string
   tripStopId?: Prisma.UuidFilter<"RoutePlanStop"> | string
   sequence?: Prisma.IntFilter<"RoutePlanStop"> | number
-  distanceFromPrevious?: Prisma.DecimalFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
+  distanceFromPrevious?: Prisma.DecimalNullableFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.DecimalNullableFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.DateTimeNullableFilter<"RoutePlanStop"> | Date | string | null
+  legDurationSeconds?: Prisma.IntNullableFilter<"RoutePlanStop"> | number | null
   createdAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
   version?: Prisma.BigIntFilter<"RoutePlanStop"> | bigint | number
@@ -294,9 +306,10 @@ export type RoutePlanStopOrderByWithRelationInput = {
   tenantId?: Prisma.SortOrder
   tripStopId?: Prisma.SortOrder
   sequence?: Prisma.SortOrder
-  distanceFromPrevious?: Prisma.SortOrder
-  cumulativeDistance?: Prisma.SortOrder
-  estimatedArrivalAt?: Prisma.SortOrder
+  distanceFromPrevious?: Prisma.SortOrderInput | Prisma.SortOrder
+  cumulativeDistance?: Prisma.SortOrderInput | Prisma.SortOrder
+  estimatedArrivalAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -316,9 +329,10 @@ export type RoutePlanStopWhereUniqueInput = Prisma.AtLeast<{
   tenantId?: Prisma.UuidFilter<"RoutePlanStop"> | string
   tripStopId?: Prisma.UuidFilter<"RoutePlanStop"> | string
   sequence?: Prisma.IntFilter<"RoutePlanStop"> | number
-  distanceFromPrevious?: Prisma.DecimalFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
+  distanceFromPrevious?: Prisma.DecimalNullableFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.DecimalNullableFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.DateTimeNullableFilter<"RoutePlanStop"> | Date | string | null
+  legDurationSeconds?: Prisma.IntNullableFilter<"RoutePlanStop"> | number | null
   createdAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
   version?: Prisma.BigIntFilter<"RoutePlanStop"> | bigint | number
@@ -333,9 +347,10 @@ export type RoutePlanStopOrderByWithAggregationInput = {
   tenantId?: Prisma.SortOrder
   tripStopId?: Prisma.SortOrder
   sequence?: Prisma.SortOrder
-  distanceFromPrevious?: Prisma.SortOrder
-  cumulativeDistance?: Prisma.SortOrder
-  estimatedArrivalAt?: Prisma.SortOrder
+  distanceFromPrevious?: Prisma.SortOrderInput | Prisma.SortOrder
+  cumulativeDistance?: Prisma.SortOrderInput | Prisma.SortOrder
+  estimatedArrivalAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -356,9 +371,10 @@ export type RoutePlanStopScalarWhereWithAggregatesInput = {
   tenantId?: Prisma.UuidWithAggregatesFilter<"RoutePlanStop"> | string
   tripStopId?: Prisma.UuidWithAggregatesFilter<"RoutePlanStop"> | string
   sequence?: Prisma.IntWithAggregatesFilter<"RoutePlanStop"> | number
-  distanceFromPrevious?: Prisma.DecimalWithAggregatesFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalWithAggregatesFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeWithAggregatesFilter<"RoutePlanStop"> | Date | string
+  distanceFromPrevious?: Prisma.DecimalNullableWithAggregatesFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.DecimalNullableWithAggregatesFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.DateTimeNullableWithAggregatesFilter<"RoutePlanStop"> | Date | string | null
+  legDurationSeconds?: Prisma.IntNullableWithAggregatesFilter<"RoutePlanStop"> | number | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"RoutePlanStop"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"RoutePlanStop"> | Date | string
   version?: Prisma.BigIntWithAggregatesFilter<"RoutePlanStop"> | bigint | number
@@ -369,9 +385,10 @@ export type RoutePlanStopCreateInput = {
   id?: string
   tenantId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -386,9 +403,10 @@ export type RoutePlanStopUncheckedCreateInput = {
   tenantId: string
   tripStopId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -399,9 +417,10 @@ export type RoutePlanStopUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -416,9 +435,10 @@ export type RoutePlanStopUncheckedUpdateInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   tripStopId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -431,9 +451,10 @@ export type RoutePlanStopCreateManyInput = {
   tenantId: string
   tripStopId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -444,9 +465,10 @@ export type RoutePlanStopUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -459,9 +481,10 @@ export type RoutePlanStopUncheckedUpdateManyInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   tripStopId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -499,6 +522,7 @@ export type RoutePlanStopCountOrderByAggregateInput = {
   distanceFromPrevious?: Prisma.SortOrder
   cumulativeDistance?: Prisma.SortOrder
   estimatedArrivalAt?: Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -509,6 +533,7 @@ export type RoutePlanStopAvgOrderByAggregateInput = {
   sequence?: Prisma.SortOrder
   distanceFromPrevious?: Prisma.SortOrder
   cumulativeDistance?: Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -521,6 +546,7 @@ export type RoutePlanStopMaxOrderByAggregateInput = {
   distanceFromPrevious?: Prisma.SortOrder
   cumulativeDistance?: Prisma.SortOrder
   estimatedArrivalAt?: Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -536,6 +562,7 @@ export type RoutePlanStopMinOrderByAggregateInput = {
   distanceFromPrevious?: Prisma.SortOrder
   cumulativeDistance?: Prisma.SortOrder
   estimatedArrivalAt?: Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -546,6 +573,7 @@ export type RoutePlanStopSumOrderByAggregateInput = {
   sequence?: Prisma.SortOrder
   distanceFromPrevious?: Prisma.SortOrder
   cumulativeDistance?: Prisma.SortOrder
+  legDurationSeconds?: Prisma.SortOrder
   version?: Prisma.SortOrder
 }
 
@@ -637,9 +665,10 @@ export type RoutePlanStopCreateWithoutTripStopInput = {
   id?: string
   tenantId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -652,9 +681,10 @@ export type RoutePlanStopUncheckedCreateWithoutTripStopInput = {
   routePlanId: string
   tenantId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -696,9 +726,10 @@ export type RoutePlanStopScalarWhereInput = {
   tenantId?: Prisma.UuidFilter<"RoutePlanStop"> | string
   tripStopId?: Prisma.UuidFilter<"RoutePlanStop"> | string
   sequence?: Prisma.IntFilter<"RoutePlanStop"> | number
-  distanceFromPrevious?: Prisma.DecimalFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
+  distanceFromPrevious?: Prisma.DecimalNullableFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.DecimalNullableFilter<"RoutePlanStop"> | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.DateTimeNullableFilter<"RoutePlanStop"> | Date | string | null
+  legDurationSeconds?: Prisma.IntNullableFilter<"RoutePlanStop"> | number | null
   createdAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"RoutePlanStop"> | Date | string
   version?: Prisma.BigIntFilter<"RoutePlanStop"> | bigint | number
@@ -709,9 +740,10 @@ export type RoutePlanStopCreateWithoutRoutePlanInput = {
   id?: string
   tenantId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -724,9 +756,10 @@ export type RoutePlanStopUncheckedCreateWithoutRoutePlanInput = {
   tenantId: string
   tripStopId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -764,9 +797,10 @@ export type RoutePlanStopCreateManyTripStopInput = {
   routePlanId: string
   tenantId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -777,9 +811,10 @@ export type RoutePlanStopUpdateWithoutTripStopInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -792,9 +827,10 @@ export type RoutePlanStopUncheckedUpdateWithoutTripStopInput = {
   routePlanId?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -806,9 +842,10 @@ export type RoutePlanStopUncheckedUpdateManyWithoutTripStopInput = {
   routePlanId?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -820,9 +857,10 @@ export type RoutePlanStopCreateManyRoutePlanInput = {
   tenantId: string
   tripStopId: string
   sequence: number
-  distanceFromPrevious: runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance: runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt: Date | string
+  distanceFromPrevious?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Date | string | null
+  legDurationSeconds?: number | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -833,9 +871,10 @@ export type RoutePlanStopUpdateWithoutRoutePlanInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -848,9 +887,10 @@ export type RoutePlanStopUncheckedUpdateWithoutRoutePlanInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   tripStopId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -862,9 +902,10 @@ export type RoutePlanStopUncheckedUpdateManyWithoutRoutePlanInput = {
   tenantId?: Prisma.StringFieldUpdateOperationsInput | string
   tripStopId?: Prisma.StringFieldUpdateOperationsInput | string
   sequence?: Prisma.IntFieldUpdateOperationsInput | number
-  distanceFromPrevious?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  cumulativeDistance?: Prisma.DecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string
-  estimatedArrivalAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  distanceFromPrevious?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  cumulativeDistance?: Prisma.NullableDecimalFieldUpdateOperationsInput | runtime.Decimal | runtime.DecimalJsLike | number | string | null
+  estimatedArrivalAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  legDurationSeconds?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -882,6 +923,7 @@ export type RoutePlanStopSelect<ExtArgs extends runtime.Types.Extensions.Interna
   distanceFromPrevious?: boolean
   cumulativeDistance?: boolean
   estimatedArrivalAt?: boolean
+  legDurationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -899,6 +941,7 @@ export type RoutePlanStopSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   distanceFromPrevious?: boolean
   cumulativeDistance?: boolean
   estimatedArrivalAt?: boolean
+  legDurationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -916,6 +959,7 @@ export type RoutePlanStopSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   distanceFromPrevious?: boolean
   cumulativeDistance?: boolean
   estimatedArrivalAt?: boolean
+  legDurationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -933,13 +977,14 @@ export type RoutePlanStopSelectScalar = {
   distanceFromPrevious?: boolean
   cumulativeDistance?: boolean
   estimatedArrivalAt?: boolean
+  legDurationSeconds?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
 }
 
-export type RoutePlanStopOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "routePlanId" | "tenantId" | "tripStopId" | "sequence" | "distanceFromPrevious" | "cumulativeDistance" | "estimatedArrivalAt" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["routePlanStop"]>
+export type RoutePlanStopOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "routePlanId" | "tenantId" | "tripStopId" | "sequence" | "distanceFromPrevious" | "cumulativeDistance" | "estimatedArrivalAt" | "legDurationSeconds" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["routePlanStop"]>
 export type RoutePlanStopInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   routePlan?: boolean | Prisma.RoutePlanDefaultArgs<ExtArgs>
   tripStop?: boolean | Prisma.TripStopDefaultArgs<ExtArgs>
@@ -965,9 +1010,10 @@ export type $RoutePlanStopPayload<ExtArgs extends runtime.Types.Extensions.Inter
     tenantId: string
     tripStopId: string
     sequence: number
-    distanceFromPrevious: runtime.Decimal
-    cumulativeDistance: runtime.Decimal
-    estimatedArrivalAt: Date
+    distanceFromPrevious: runtime.Decimal | null
+    cumulativeDistance: runtime.Decimal | null
+    estimatedArrivalAt: Date | null
+    legDurationSeconds: number | null
     createdAt: Date
     updatedAt: Date
     version: bigint
@@ -1405,6 +1451,7 @@ export interface RoutePlanStopFieldRefs {
   readonly distanceFromPrevious: Prisma.FieldRef<"RoutePlanStop", 'Decimal'>
   readonly cumulativeDistance: Prisma.FieldRef<"RoutePlanStop", 'Decimal'>
   readonly estimatedArrivalAt: Prisma.FieldRef<"RoutePlanStop", 'DateTime'>
+  readonly legDurationSeconds: Prisma.FieldRef<"RoutePlanStop", 'Int'>
   readonly createdAt: Prisma.FieldRef<"RoutePlanStop", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"RoutePlanStop", 'DateTime'>
   readonly version: Prisma.FieldRef<"RoutePlanStop", 'BigInt'>

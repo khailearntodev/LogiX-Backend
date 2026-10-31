@@ -857,6 +857,17 @@ movement/outbox and consumer inbox commit in the same Inventory transaction.
 
 ## 10. `transport-service` - `logix_transport`
 
+**Đích đã được người dùng chấp thuận 25/10/2026:**
+[refactor lifecycle L-01–L-04](../../../delivery-trip-dispatch-lifecycle-refactor.vi.md).
+Nền tảng LS001–LS003 đã triển khai và kiểm thử trên DB isolated qua migration
+`20261025140510_delivery_trip_lifecycle_foundation`; chưa deploy DB dùng chung.
+LS004/Phase 3 đã triển khai approval/override/reopen, route snapshots và request
+binding qua migration `20261025145259_phase3_routes_approval_resources`, G3 PASS
+không-browser. Dispatch/Driver vẫn thuộc Phase 4–5. Chỉ tạo migration
+mới qua Prisma migrate, không db push. Giữ snapshots/receipts/history; legacy
+REJECTED/SUPERSEDED chặn rollout đến khi bảo tồn quyết định qua Audit và xử lý
+source rows có phê duyệt. Không chạy binary cũ sau contract migration.
+
 ### 10.1 `delivery_trips`
 
 Các cột: `id`, `tenant_id`, `trip_number`, `warehouse_id`, `vehicle_id`,
@@ -869,7 +880,11 @@ Các cột: `id`, `tenant_id`, `trip_number`, `warehouse_id`, `vehicle_id`,
 (biển số, tải trọng) và `driver_snapshot` (tên, SĐT, số GPLX) chụp khi route plan
 được duyệt để chứng từ dispatch không đổi khi Master Data thay đổi.
 
-`status`: `DRAFT`, `PLANNED`, `APPROVED`, `IN_PROGRESS`, `COMPLETED`, `CANCELED`.
+`status` đích: `DRAFT`, `APPROVED`, `IN_PROGRESS`, `COMPLETED`, `CANCELED`.
+DRAFT có thể lập tuyến nhưng không giữ nguồn lực. Một quyết định duyệt ghi
+pointer/sequence, approval evidence/snapshots, exclusivity và Outbox cùng local
+transaction; reopen APPROVED → DRAFT clear pointer/sequence và release nguồn lực,
+chặn khi pending dispatch/grant. Không giữ transaction qua HTTP.
 
 ```sql
 CREATE UNIQUE INDEX ux_trips_number ON delivery_trips (tenant_id, trip_number);
@@ -877,27 +892,17 @@ CREATE INDEX ix_trips_status_schedule
 ON delivery_trips (tenant_id, status, planned_start_at);
 CREATE INDEX ix_trips_warehouse_status
 ON delivery_trips (tenant_id, warehouse_id, status, planned_start_at);
-CREATE INDEX ix_trips_driver_active
-ON delivery_trips (tenant_id, driver_id, planned_start_at)
-WHERE status IN ('PLANNED', 'APPROVED', 'IN_PROGRESS');
-CREATE INDEX ix_trips_vehicle_active
-ON delivery_trips (tenant_id, vehicle_id, planned_start_at)
-WHERE status IN ('PLANNED', 'APPROVED', 'IN_PROGRESS');
+CREATE UNIQUE INDEX ux_trips_driver_exclusive
+ON delivery_trips (tenant_id, driver_id)
+WHERE status IN ('APPROVED', 'IN_PROGRESS');
+CREATE UNIQUE INDEX ux_trips_vehicle_exclusive
+ON delivery_trips (tenant_id, vehicle_id)
+WHERE status IN ('APPROVED', 'IN_PROGRESS');
 ```
 
-Nếu trip có `planned_end_at`, nên dùng exclusion constraint với `tstzrange` để
-ngăn lịch trùng ở database. Đây là lựa chọn cần ADR vì ảnh hưởng quy tắc scheduling:
-
-```sql
-EXCLUDE USING gist (
-  tenant_id WITH =,
-  driver_id WITH =,
-  tstzrange(planned_start_at, planned_end_at, '[)') WITH &&
-) WHERE (status IN ('PLANNED', 'APPROVED', 'IN_PROGRESS'));
-```
-
-Tương tự cho vehicle. Application vẫn phải kiểm tra trạng thái ACTIVE qua contract
-Master Data ngay trước dispatch.
+Scope này giữ độc quyền cả khi khác ngày; không thêm planned_end_at, scheduling
+exclusion hoặc lease TTL. Resource không null khi giữ, không soft-delete để lách
+uniqueness. Application kiểm tra ACTIVE qua Master Data trước approval/dispatch.
 
 ### 10.2 `trip_shipments`
 
@@ -921,8 +926,10 @@ service khác từ trigger.
 
 Các cột: `id`, `tenant_id`, `trip_id`, `shipment_id`, `delivery_address_id`,
 `address_snapshot jsonb`, `location geography(Point,4326)`, `planned_sequence`,
-`approved_sequence`, `status` (`PENDING`, `ARRIVED`, `DELIVERED`, `FAILED`),
-`current_attempt`, `arrived_at`, `completed_at`, cột nền.
+`approved_sequence`, `status` đích (`PENDING`, `DELIVERED`, `FAILED`),
+`completed_at`, cột nền. Chỉ next PENDING trên trip IN_PROGRESS được terminal.
+`arrived_at` cũ chỉ giữ read-only nếu cần bảo tồn lịch sử; không ghi arrival mới.
+Không tạo vòng đời nhiều attempts từ current_attempt/attempt_number hiện hữu.
 
 `address_snapshot` copy nguyên văn từ `shipments.delivery_address_snapshot` (qua
 payload `ShipmentReady`). Không thêm stop vào trip khi snapshot chưa có tọa độ.
@@ -944,8 +951,7 @@ Các unique index đảm bảo mỗi shipment phục vụ đúng một lần và
 
 ### 10.4 `route_plans`
 
-Các cột: `id`, `tenant_id`, `trip_id`, `plan_version`, `route_request_id`,
-`status` (`PROPOSED`, `APPROVED`, `SUPERSEDED`, `REJECTED`), `source`
+Các cột đích: `id`, `tenant_id`, `trip_id`, `plan_version`, `route_request_id`, `source`
 (`OPTIMIZER`, `MANUAL_OVERRIDE`), `input_hash`, `input_snapshot jsonb` (đầu vào
 solver: depot, stops, tọa độ, tải trọng — chính là dữ liệu được băm thành
 `input_hash`), `solver_name`, `solver_version`,
@@ -958,14 +964,16 @@ CREATE UNIQUE INDEX ux_route_plan_version
 ON route_plans (tenant_id, trip_id, plan_version);
 CREATE UNIQUE INDEX ux_route_request
 ON route_plans (tenant_id, route_request_id);
-CREATE UNIQUE INDEX ux_route_plan_approved
-ON route_plans (tenant_id, trip_id)
-WHERE status = 'APPROVED';
 CREATE INDEX ix_route_plan_trip_created
 ON route_plans (tenant_id, trip_id, created_at DESC);
 CREATE INDEX ix_route_plan_input_hash
 ON route_plans (tenant_id, input_hash, created_at DESC);
 ```
+
+Không còn RoutePlan.status hoặc unique index phụ thuộc status. Trip's
+approved_route_plan_id chọn phiên bản thực thi cùng tenant/trip; approved_by/at
+và snapshot theo version chỉ là evidence bất biến. Reapproval tạo version mới,
+không ghi đè; hash mismatch là validation failure, không state STALE mới.
 
 Manual override bắt buộc `override_reason` và `original_plan_id`:
 
@@ -992,6 +1000,13 @@ Hai constraint chứng minh mỗi stop xuất hiện đúng một lần trong m�
 
 Các cột: `id`, `tenant_id`, `trip_stop_id`, `shipment_id`, `attempt_number`,
 `status`, `reason`, `actor_driver_id`, `occurred_at`, `correlation_id`.
+
+Theo L-04, đây chỉ là terminal chứng từ/receipt bất biến, không pending workflow.
+Outcome chỉ DELIVERED/FAILED; mở rộng model hiện hữu với request/payload binding,
+response, acting_user_id, assigned Driver và acting_reason theo contract. Dùng
+unique tenant/request và tối đa một terminal result/stop cho scope mới; bảo tồn
+legacy attempts nếu có, không xóa để ép uniqueness. Lookup replay trước state/
+version/expiry, không tăng attempt_number khi HTTP retry. Không có arrive receipt.
 
 ```sql
 CHECK (status <> 'FAILED' OR reason IS NOT NULL)
@@ -1037,7 +1052,7 @@ domain-specific codes must not be mistaken for system-wide policy.
 | Shipment claim/release | Transport membership intent; Fulfillment row-locked claim mirror; immutable request/receipt replay | Concurrent claim/direct-dispatch/cancel and restart recovery |
 | Eligible-shipment pool | Authority filters before pagination; stable `createdAt DESC,id DESC`, default 20/max 100 | Count/page correctness, pending membership and tenant isolation |
 | Batch Order grant | Sorted Order locks; all grants or none; exact batch replay | Whole-set cancellation race and crash-after-grant recovery |
-| Transport command preview | Persisted single-use record, 300-second expiry, immutable actor/context/version/payload binding | Atomic consumption/replay, stale versions and tenant switch |
+| Transport command preview | Signed token, 300-second expiry, actor/context/version/payload binding; revalidation plus durable command receipt | Tamper/expiry/stale/tenant rejection, committed replay after expiry; no separate preview table |
 | Result defer | Durable Fulfillment deferred event; no applied Inbox marker before effect | Result-before-dispatch, restart and contradictory terminal events |
 | Optimizer run | Canonical UTF-8 SHA-256 v1; durable tenant/trip/request/version binding and external run ID | Cross-language parity, persistence/idempotency and stale-result rejection |
 
@@ -1100,19 +1115,21 @@ Inventory ISSUE remains solely driven by `ShipmentDispatched`, not Trip events.
 
 #### Preview and result defer
 
-Preview is a server-created persisted record with `expiresAt = issuedAt + 300s`
-(`TRANSPORT_PREVIEW_TTL_SECONDS`); `now >= expiresAt` is expired. Bind verified
+Preview is a server-signed token with `expiresAt = issuedAt + 300s`;
+`now >= expiresAt` is expired. Follow the root simplification S-01 and lifecycle
+L-03/L-04 targets; no persisted preview row or arrive action. Bind verified
 tenant/principal, assignee, action/target, all relevant trip/stop/plan versions,
 approved-plan/input hash and the normalized full command payload including
 acting/failure reasons. The exported schemas describe trusted stored/internal
 bindings, not permission to accept tenant/actor/admin fields from public bodies.
 Only a backend-verified Super Admin gets the assignee exception; OWNER/wildcard
 alone does not. Admin stop actions require nonblank actingReason (max 1,000).
-At command acceptance, lock the aggregate/preview, recheck authorization,
-state/versions/hash/expiry, consume once and persist the immutable request intent
-or local effect/receipt in the same local transaction. Exact committed retries
-return the original receipt even after expiry; new/changed/expired requests
-cannot refresh or reuse that preview. No database transaction spans HTTP.
+At command acceptance, lock the aggregate, recheck authorization,
+state/versions/hash/expiry and persist the immutable request intent or local
+effect/receipt in the same local transaction. A token alone is not single-use
+or independently revocable. Lookup exact committed receipts before current
+state/version/expiry checks; changed or uncommitted expired requests require
+a fresh preview. No database transaction spans HTTP.
 
 Fulfillment validates the complete version-2 result, producer, tenant, aggregate,
 trip/stop/shipment/attempt and persisted dispatch/claim binding. If a valid result

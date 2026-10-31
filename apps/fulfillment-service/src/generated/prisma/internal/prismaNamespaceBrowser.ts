@@ -52,7 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Shipment: 'Shipment',
+  ShipmentTripReceipt: 'ShipmentTripReceipt',
   ShipmentDispatchIntent: 'ShipmentDispatchIntent',
+  ShipmentDispatchBatch: 'ShipmentDispatchBatch',
   ShipmentOrderCursor: 'ShipmentOrderCursor',
   ShipmentItem: 'ShipmentItem',
   ShipmentStatusHistory: 'ShipmentStatusHistory',
@@ -94,6 +96,7 @@ export const ShipmentScalarFieldEnum = {
   totalVolume: 'totalVolume',
   reservationGroupId: 'reservationGroupId',
   assignedTripId: 'assignedTripId',
+  tripClaimId: 'tripClaimId',
   dispatchIssuedAt: 'dispatchIssuedAt',
   readyAt: 'readyAt',
   deliveredAt: 'deliveredAt',
@@ -108,6 +111,23 @@ export const ShipmentScalarFieldEnum = {
 export type ShipmentScalarFieldEnum = (typeof ShipmentScalarFieldEnum)[keyof typeof ShipmentScalarFieldEnum]
 
 
+export const ShipmentTripReceiptScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  requestId: 'requestId',
+  shipmentId: 'shipmentId',
+  tripId: 'tripId',
+  claimId: 'claimId',
+  actorId: 'actorId',
+  operation: 'operation',
+  requestPayload: 'requestPayload',
+  responsePayload: 'responsePayload',
+  createdAt: 'createdAt'
+} as const
+
+export type ShipmentTripReceiptScalarFieldEnum = (typeof ShipmentTripReceiptScalarFieldEnum)[keyof typeof ShipmentTripReceiptScalarFieldEnum]
+
+
 export const ShipmentDispatchIntentScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -117,6 +137,8 @@ export const ShipmentDispatchIntentScalarFieldEnum = {
   actorId: 'actorId',
   correlationId: 'correlationId',
   status: 'status',
+  batchId: 'batchId',
+  grantReceipt: 'grantReceipt',
   rejectionReason: 'rejectionReason',
   attemptCount: 'attemptCount',
   nextAttemptAt: 'nextAttemptAt',
@@ -125,6 +147,26 @@ export const ShipmentDispatchIntentScalarFieldEnum = {
 } as const
 
 export type ShipmentDispatchIntentScalarFieldEnum = (typeof ShipmentDispatchIntentScalarFieldEnum)[keyof typeof ShipmentDispatchIntentScalarFieldEnum]
+
+
+export const ShipmentDispatchBatchScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tripId: 'tripId',
+  payload: 'payload',
+  payloadHash: 'payloadHash',
+  status: 'status',
+  stage: 'stage',
+  decision: 'decision',
+  response: 'response',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShipmentDispatchBatchScalarFieldEnum = (typeof ShipmentDispatchBatchScalarFieldEnum)[keyof typeof ShipmentDispatchBatchScalarFieldEnum]
 
 
 export const ShipmentOrderCursorScalarFieldEnum = {
@@ -211,6 +253,12 @@ export const InboxEventScalarFieldEnum = {
   eventType: 'eventType',
   aggregateId: 'aggregateId',
   aggregateVersion: 'aggregateVersion',
+  eventPayload: 'eventPayload',
+  payloadHash: 'payloadHash',
+  semanticKey: 'semanticKey',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
   processedAt: 'processedAt',
   outcome: 'outcome',
   errorCode: 'errorCode',
