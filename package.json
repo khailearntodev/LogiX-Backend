@@ -5,9 +5,9 @@
     "packageManager": "pnpm@11.6.0",
     "scripts": {
         "dev": "turbo dev",
-        "dev:route": ".\\.venv\\Scripts\\python.exe -m uvicorn logix_route_optimizer.main:app --reload --port 8003",
-        "dev:agent": ".\\.venv\\Scripts\\python.exe -m uvicorn logix_agent.main:app --reload --port 8001",
-        "dev:forecast": ".\\.venv\\Scripts\\python.exe -m uvicorn logix_forecast.main:app --reload --port 8002",
+        "dev:route": "uv run uvicorn logix_route_optimizer.main:app --reload --port 8003",
+        "dev:agent": "uv run uvicorn logix_agent.main:app --reload --port 8001",
+        "dev:forecast": "uv run uvicorn logix_forecast.main:app --reload --port 8002",
         "build": "turbo build",
         "test": "turbo test",
         "lint": "turbo lint",

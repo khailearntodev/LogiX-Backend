@@ -23,6 +23,8 @@ class AgentSettings(BaseSettings):
     inventory_service_url: str = "http://localhost:3004"
     fulfillment_service_url: str = "http://localhost:3005"
     transport_service_url: str = "http://localhost:3006"
+    route_optimizer_service_url: str = "http://localhost:8003"
+    forecast_service_url: str = "http://localhost:8002"
     tool_http_timeout_seconds: float = 10.0
     tool_http_max_attempts: int = 2
 

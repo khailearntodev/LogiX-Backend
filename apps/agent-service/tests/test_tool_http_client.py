@@ -5,9 +5,10 @@ from __future__ import annotations
 import httpx
 import pytest
 
+from logix_agent.config import AgentSettings
 from logix_agent.modules.auth import Actor
 from logix_agent.modules.registry import ToolContext, ToolError
-from logix_agent.modules.tools.http_client import ServiceClient
+from logix_agent.modules.tools.http_client import ServiceClient, create_service_client
 
 
 def _ctx(token: str | None = "tok") -> ToolContext:
@@ -60,6 +61,28 @@ async def test_unknown_service() -> None:
     with pytest.raises(ToolError) as exc:
         await client.request("orders", "GET", "/x", _ctx())
     assert exc.value.code == "TOOL_NOT_CONFIGURED"
+
+
+@pytest.mark.parametrize(
+    ("service", "setting"),
+    [
+        ("identity", "identity_service_url"),
+        ("order", "order_service_url"),
+        ("master_data", "master_data_service_url"),
+        ("inventory", "inventory_service_url"),
+        ("fulfillment", "fulfillment_service_url"),
+        ("transport", "transport_service_url"),
+        ("route_optimizer", "route_optimizer_service_url"),
+        ("forecast", "forecast_service_url"),
+    ],
+)
+async def test_factory_preserves_service_configuration(service: str, setting: str) -> None:
+    settings = AgentSettings(**{setting: f"http://{service.replace('_', '-')}.test/"})
+    client = create_service_client(settings)
+    try:
+        assert client._base_urls[service] == f"http://{service.replace('_', '-')}.test"
+    finally:
+        await client.aclose()
 
 
 @pytest.mark.parametrize(

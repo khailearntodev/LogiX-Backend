@@ -34,3 +34,8 @@ summary and public confirmation interrupt, and reused unchanged with the stable 
 `requestId`. A stale/expired preview must fail and request a new explicit
 preview; confirmation must never silently substitute a fresh token.
 The tool cannot dispatch or execute Driver delivery operations.
+
+The shared client also accepts `ROUTE_OPTIMIZER_SERVICE_URL` and
+`FORECAST_SERVICE_URL` from process environment. These service mappings do not
+change route-tool ownership: proposals and comparisons still go through
+Transport and use persisted measurements, not fabricated baseline durations.

@@ -1,4 +1,9 @@
-"""Read-only tools for the create_agent flow: plain @tool functions calling business services."""
+"""[LEGACY / SPIKE PROTOTYPE] Read-only tools for the standalone create_agent flow (/api/v1/agent/official/runs).
+
+NOTE: The official production modular tools for LogiX Planner Agent live in:
+`logix_agent.modules.tools.catalog` (order, inventory, master_data, fulfillment, route).
+Do NOT add production tools here.
+"""
 
 import logging
 import time
