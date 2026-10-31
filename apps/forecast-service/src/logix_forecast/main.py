@@ -38,7 +38,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         session_factory = get_session_factory()
         async with session_factory() as session:
             await session.execute(text("SELECT 1"))
-    except SQLAlchemyError as exc:
+    except Exception as exc:
         print(
             f"[{settings.service_name}] Database connection warning on startup: {exc}"
         )
@@ -96,7 +96,7 @@ async def readiness() -> dict[str, str]:
         async with session_factory() as session:
             await session.execute(text("SELECT 1"))
         return {"status": "ready"}
-    except SQLAlchemyError as exc:
+    except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Database is not ready: {exc}",
