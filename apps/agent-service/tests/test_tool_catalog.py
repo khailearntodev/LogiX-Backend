@@ -41,6 +41,9 @@ def _registry(handler):  # type: ignore[no-untyped-def]
             "master_data": "http://master.test",
             "order": "http://order.test",
             "fulfillment": "http://fulfillment.test",
+            "route_optimizer": "http://route-optimizer.test",
+            "transport": "http://transport.test",
+            "forecast": "http://forecast.test",
         },
         backoff_seconds=0,
         transport=httpx.MockTransport(handler),
@@ -67,10 +70,10 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 19
+    assert len(specs) == 22
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 16
+    assert len(read_tools) == 19
     assert len(sensitive_tools) == 3
     assert {s.name for s in sensitive_tools} == {
         "confirm_order",
@@ -110,6 +113,11 @@ def test_tools_are_filtered_by_permission() -> None:
     assert "get_route_plan_comparison" in names("transport:route:read")
     assert "approve_trip_route" not in names("transport:route:optimize")
     assert "approve_trip_route" in names("transport:route:approve")
+    assert "get_sku_demand_forecast" not in names("inventory:stock:read")
+    assert "get_sku_demand_forecast" in names("forecast:read")
+    assert "check_stockout_risk" in names("forecast:read")
+    assert "trigger_demand_forecast" not in names("forecast:read")
+    assert "trigger_demand_forecast" in names("forecast:run")
 
 
 async def test_list_balances_maps_query_params() -> None:
