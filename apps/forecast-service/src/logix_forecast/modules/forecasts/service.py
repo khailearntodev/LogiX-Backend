@@ -5,10 +5,6 @@ from uuid import UUID
 
 from logix_forecast.engine.pipeline import run_series_forecast_pipeline
 from logix_forecast.engine.schemas import DemandObservationIn
-from logix_forecast.modules.forecasts.defaults import (
-    SAMPLE_SKUS,
-    build_default_observations,
-)
 from logix_forecast.modules.forecasts.schemas import (
     DEFAULT_WAREHOUSE_ID,
     ForecastMetricsComparisonOut,
@@ -22,7 +18,7 @@ from logix_forecast.modules.forecasts.schemas import (
 class ForecastEngineService:
     """
     Service layer orchestrating demand forecasting, baseline comparison,
-    and advisory stockout-risk evaluation for the MVP.
+    and advisory stockout-risk evaluation.
     """
 
     def compute_forecast(
@@ -32,12 +28,16 @@ class ForecastEngineService:
         db_observations: list[DemandObservationIn] | None = None,
         run_id: UUID | None = None,
     ) -> ForecastRunOut:
-        if request.observations is not None:
-            observations = request.observations
-        elif db_observations:
-            observations = db_observations
-        else:
-            observations = build_default_observations()
+        observations = (
+            request.observations
+            if request.observations is not None
+            else db_observations
+        )
+        if not observations:
+            raise LookupError(
+                f"No demand observations found for warehouse_id={request.warehouse_id} "
+                f"and product_id={request.product_id}."
+            )
 
         pipeline_res = run_series_forecast_pipeline(
             observations,
@@ -55,7 +55,7 @@ class ForecastEngineService:
 
         if stockout_risk:
             recommended_action = (
-                f"Stockout risk detected: 7-day forecast requires {total_pred:.1f} units "
+                f"Stockout risk detected: {request.horizon_days}-day forecast requires {total_pred:.1f} units "
                 f"(upper bound {total_upper:.1f}), exceeding available stock ({request.available_stock:.1f}). "
                 f"Advisory: replenish at least {shortfall:.1f} units."
             )
@@ -137,22 +137,29 @@ class ForecastEngineService:
         *,
         warehouse_id: UUID = DEFAULT_WAREHOUSE_ID,
         horizon_days: int = 7,
+        series_by_product: dict[UUID, list[DemandObservationIn]],
+        product_metadata: dict[UUID, dict[str, object]] | None = None,
     ) -> StockoutRisksResponseOut:
+        if not series_by_product:
+            raise LookupError(
+                f"No demand observations found for warehouse_id={warehouse_id}."
+            )
+
         items: list[StockoutRiskItemOut] = []
         at_risk_count = 0
+        metadata_map = product_metadata or {}
 
-        for sku in SAMPLE_SKUS:
-            obs = build_default_observations(
-                base_demand=float(sku["base_demand"]),  # type: ignore[arg-type]
-                daily_trend=float(sku["daily_trend"]),  # type: ignore[arg-type]
-            )
+        for product_id, obs in series_by_product.items():
+            meta = metadata_map.get(product_id, {})
             req = ForecastRunRequest(
                 warehouse_id=warehouse_id,
-                product_id=sku["product_id"],  # type: ignore[arg-type]
-                sku_code=str(sku["sku_code"]),
-                product_name=str(sku["product_name"]),
+                product_id=product_id,
+                sku_code=str(meta.get("sku_code", f"SKU-{str(product_id)[-4:]}")),
+                product_name=str(
+                    meta.get("product_name", f"Product {str(product_id)[-4:]}")
+                ),
                 horizon_days=horizon_days,
-                available_stock=float(sku["available_stock"]),  # type: ignore[arg-type]
+                available_stock=float(meta.get("available_stock", 280.0)),  # type: ignore[arg-type]
                 observations=obs,
             )
             res = self.compute_forecast(req)

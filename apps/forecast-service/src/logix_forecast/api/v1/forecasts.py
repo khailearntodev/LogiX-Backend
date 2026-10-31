@@ -5,12 +5,14 @@ import time
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Header, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, status
+from sqlalchemy.exc import SQLAlchemyError
 
 from logix_forecast.config import settings
 from logix_forecast.modules.forecasts.persistence import (
-    try_load_demand_observations,
-    try_save_forecast_run,
+    load_demand_observations,
+    load_warehouse_demand_observations,
+    save_forecast_run,
 )
 from logix_forecast.modules.forecasts.schemas import (
     DEFAULT_PRODUCT_ID,
@@ -28,6 +30,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/forecast", tags=["Demand Forecasting"])
 forecast_service = ForecastEngineService()
 
+KNOWN_PRODUCT_METADATA: dict[UUID, dict[str, object]] = {
+    UUID("00000000-0000-0000-0000-000000000201"): {
+        "sku_code": "SKU-FMCG-001",
+        "product_name": "Thùng Nước Giải Khát 24 Lon",
+        "available_stock": 280.0,
+    },
+    UUID("00000000-0000-0000-0000-000000000202"): {
+        "sku_code": "SKU-PACK-002",
+        "product_name": "Thùng Carton Đóng Hàng 5 Lớp",
+        "available_stock": 600.0,
+    },
+}
+
 
 def _resolve_tenant_id(
     x_tenant_id: str | None, fallback: UUID = DEFAULT_TENANT_ID
@@ -38,6 +53,35 @@ def _resolve_tenant_id(
         return UUID(x_tenant_id)
     except ValueError:
         return fallback
+
+
+async def _fetch_series_from_db(
+    *,
+    tenant_id: UUID,
+    warehouse_id: UUID,
+    product_id: UUID,
+):
+    if not settings.database_url:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database URL is not configured for forecast-service.",
+        )
+    try:
+        from logix_forecast.main import get_session_factory
+
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            return await load_demand_observations(
+                session,
+                tenant_id=tenant_id,
+                warehouse_id=warehouse_id,
+                product_id=product_id,
+            )
+    except (SQLAlchemyError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Database query failed: {exc}",
+        ) from exc
 
 
 @router.post(
@@ -55,33 +99,32 @@ async def create_forecast_run(
     start_ts = time.perf_counter()
 
     db_observations = None
-    if req.observations is None and settings.database_url:
-        try:
-            from logix_forecast.main import get_session_factory
+    if req.observations is None:
+        db_observations = await _fetch_series_from_db(
+            tenant_id=tenant_uuid,
+            warehouse_id=req.warehouse_id,
+            product_id=req.product_id,
+        )
 
-            session_factory = get_session_factory()
-            async with session_factory() as session:
-                loaded = await try_load_demand_observations(
-                    session,
-                    tenant_id=tenant_uuid,
-                    warehouse_id=req.warehouse_id,
-                    product_id=req.product_id,
-                )
-                if loaded:
-                    db_observations = loaded
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Skipping DB observation lookup: %s", exc)
+    try:
+        result = forecast_service.compute_forecast(
+            req, db_observations=db_observations
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
 
-    result = forecast_service.compute_forecast(req, db_observations=db_observations)
     elapsed_ms = int((time.perf_counter() - start_ts) * 1000)
 
-    if settings.database_url:
+    if settings.database_url and req.observations is None:
         try:
             from logix_forecast.main import get_session_factory
 
             session_factory = get_session_factory()
             async with session_factory() as session:
-                await try_save_forecast_run(
+                await save_forecast_run(
                     session,
                     req,
                     result,
@@ -101,10 +144,30 @@ async def create_forecast_run(
 )
 async def get_forecast_run(
     run_id: UUID,
+    warehouse_id: UUID = DEFAULT_WAREHOUSE_ID,
+    product_id: UUID = DEFAULT_PRODUCT_ID,
     x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
 ) -> ForecastRunOut:
-    _ = _resolve_tenant_id(x_tenant_id)
-    return forecast_service.compute_forecast(ForecastRunRequest(), run_id=run_id)
+    tenant_uuid = _resolve_tenant_id(x_tenant_id)
+    db_observations = await _fetch_series_from_db(
+        tenant_id=tenant_uuid,
+        warehouse_id=warehouse_id,
+        product_id=product_id,
+    )
+    req = ForecastRunRequest(
+        tenant_id=tenant_uuid,
+        warehouse_id=warehouse_id,
+        product_id=product_id,
+    )
+    try:
+        return forecast_service.compute_forecast(
+            req, db_observations=db_observations, run_id=run_id
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
 
 
 @router.get(
@@ -120,6 +183,11 @@ async def get_forecast_results(
     x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
 ) -> ForecastRunOut:
     tenant_uuid = _resolve_tenant_id(x_tenant_id)
+    db_observations = await _fetch_series_from_db(
+        tenant_id=tenant_uuid,
+        warehouse_id=warehouse_id,
+        product_id=product_id,
+    )
     req = ForecastRunRequest(
         tenant_id=tenant_uuid,
         warehouse_id=warehouse_id,
@@ -127,7 +195,15 @@ async def get_forecast_results(
         horizon_days=horizon_days,
         available_stock=available_stock,
     )
-    return forecast_service.compute_forecast(req)
+    try:
+        return forecast_service.compute_forecast(
+            req, db_observations=db_observations
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
 
 
 @router.get(
@@ -142,13 +218,26 @@ async def get_forecast_metrics(
     x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
 ) -> ForecastMetricsComparisonOut:
     tenant_uuid = _resolve_tenant_id(x_tenant_id)
+    db_observations = await _fetch_series_from_db(
+        tenant_id=tenant_uuid,
+        warehouse_id=warehouse_id,
+        product_id=product_id,
+    )
     req = ForecastRunRequest(
         tenant_id=tenant_uuid,
         warehouse_id=warehouse_id,
         product_id=product_id,
         horizon_days=horizon_days,
     )
-    run_out = forecast_service.compute_forecast(req)
+    try:
+        run_out = forecast_service.compute_forecast(
+            req, db_observations=db_observations
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
     return forecast_service.build_metrics_comparison(run_out)
 
 
@@ -162,8 +251,37 @@ async def get_stockout_risks(
     horizon_days: Annotated[int, Query(ge=1, le=30)] = 7,
     x_tenant_id: Annotated[str | None, Header(alias="X-Tenant-Id")] = None,
 ) -> StockoutRisksResponseOut:
-    _ = _resolve_tenant_id(x_tenant_id)
-    return forecast_service.evaluate_stockout_risks(
-        warehouse_id=warehouse_id,
-        horizon_days=horizon_days,
-    )
+    tenant_uuid = _resolve_tenant_id(x_tenant_id)
+    if not settings.database_url:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database URL is not configured for forecast-service.",
+        )
+    try:
+        from logix_forecast.main import get_session_factory
+
+        session_factory = get_session_factory()
+        async with session_factory() as session:
+            series_by_product = await load_warehouse_demand_observations(
+                session,
+                tenant_id=tenant_uuid,
+                warehouse_id=warehouse_id,
+            )
+    except (SQLAlchemyError, OSError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Database query failed: {exc}",
+        ) from exc
+
+    try:
+        return forecast_service.evaluate_stockout_risks(
+            warehouse_id=warehouse_id,
+            horizon_days=horizon_days,
+            series_by_product=series_by_product,
+            product_metadata=KNOWN_PRODUCT_METADATA,
+        )
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc
