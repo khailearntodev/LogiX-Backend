@@ -15,6 +15,7 @@ from logix_forecast.engine.metrics import (
     compute_rmse,
     evaluate_method_metrics,
 )
+from logix_forecast.engine.pipeline import run_series_forecast_pipeline
 from logix_forecast.engine.preprocessor import fill_missing_dates
 from logix_forecast.engine.prophet_model import ProphetForecaster
 from logix_forecast.engine.schemas import DemandObservationIn
@@ -171,3 +172,72 @@ def test_prophet_forecaster_captures_trend_and_weekly_seasonality() -> None:
     prophet_rmse = compute_rmse(test_actuals, prophet_preds)
     ma7_rmse = compute_rmse(test_actuals, ma7_preds)
     assert prophet_rmse < ma7_rmse
+
+
+def test_pipeline_healthy_series_runs_prophet_and_computes_backtest_metrics() -> None:
+    weekly_factors = [0.75, 0.85, 0.90, 1.00, 1.15, 1.40, 0.95]
+    start = date(2026, 9, 1)
+    observations = [
+        DemandObservationIn(
+            demand_date=start + timedelta(days=i),
+            fulfilled_quantity=round(
+                (40.0 + 0.3 * i)
+                * weekly_factors[(start + timedelta(days=i)).weekday()],
+                2,
+            ),
+        )
+        for i in range(56)
+    ]
+
+    result = run_series_forecast_pipeline(observations, horizon=7)
+
+    assert result.status == "SUCCEEDED"
+    assert result.used_fallback is False
+    assert result.fallback_reason is None
+    assert result.confidence_level == 0.80
+    assert result.model_name == "Meta Prophet"
+    assert result.observation_count == 56
+    assert len(result.dataset_hash) == 64
+    assert len(result.forecast_points) == 7
+
+    for pt in result.forecast_points:
+        assert pt.lower_bound <= pt.predicted_quantity <= pt.upper_bound
+        assert pt.baseline_moving_average_7 > 0.0
+        assert pt.baseline_naive > 0.0
+
+    metrics_by_name = {m.method_name: m for m in result.metrics}
+    assert "Meta Prophet" in metrics_by_name
+    assert "Moving Average 7" in metrics_by_name
+    assert "Naive" in metrics_by_name
+    assert "Seasonal Naive 7" in metrics_by_name
+    assert (
+        metrics_by_name["Meta Prophet"].rmse < metrics_by_name["Moving Average 7"].rmse
+    )
+
+
+def test_pipeline_short_or_empty_series_triggers_fallback_safely() -> None:
+    # 1. Short 7-day series (< 14 days threshold)
+    short_obs = [
+        DemandObservationIn(
+            demand_date=date(2026, 10, 1) + timedelta(days=i),
+            fulfilled_quantity=10.0 + i,
+        )
+        for i in range(7)
+    ]
+    short_res = run_series_forecast_pipeline(short_obs, horizon=7)
+    assert short_res.status == "SUCCEEDED"
+    assert short_res.used_fallback is True
+    assert short_res.confidence_level == 0.50
+    assert short_res.model_name == "Moving Average 7 (Fallback)"
+    assert len(short_res.forecast_points) == 7
+    assert all(pt.predicted_quantity == 13.0 for pt in short_res.forecast_points)
+    assert len(short_res.metrics) >= 2
+
+    # 2. Empty observation list
+    empty_res = run_series_forecast_pipeline([], horizon=7)
+    assert empty_res.status == "INSUFFICIENT_DATA"
+    assert empty_res.used_fallback is True
+    assert empty_res.observation_count == 0
+    assert len(empty_res.forecast_points) == 7
+    assert all(pt.predicted_quantity == 0.0 for pt in empty_res.forecast_points)
+    assert empty_res.metrics == []

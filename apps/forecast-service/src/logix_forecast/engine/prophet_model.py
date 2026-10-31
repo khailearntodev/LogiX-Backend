@@ -8,14 +8,14 @@ from datetime import date
 import pandas as pd
 from prophet import Prophet
 
-# Tắt log chi tiết của CmdStan để tránh làm ngập terminal
+# Suppress verbose CmdStan and Prophet info logs
 logging.getLogger("cmdstanpy").setLevel(logging.WARNING)
 logging.getLogger("prophet").setLevel(logging.WARNING)
 
 
 @dataclass(frozen=True)
 class ProphetForecastPoint:
-    """Điểm dự báo cho một ngày trong tương lai."""
+    """Single future day forecast point produced by Meta Prophet."""
 
     forecast_date: date
     predicted: float
@@ -27,7 +27,7 @@ class ProphetForecastPoint:
 
 @dataclass(frozen=True)
 class ProphetFitResult:
-    """Kết quả dự báo hoàn chỉnh từ mô hình Meta Prophet."""
+    """Complete forecast output from the official Meta Prophet engine."""
 
     future_points: list[ProphetForecastPoint]
     fitted_values: list[float]
@@ -36,14 +36,14 @@ class ProphetFitResult:
 
 class ProphetForecaster:
     """
-    Bộ dự báo nhu cầu sử dụng hoàn toàn thư viện chính thức Meta Prophet (`prophet.Prophet`).
+    Demand forecaster powered by the official Meta Prophet library (`prophet.Prophet`).
 
-    Quy trình thực hiện:
-        1. Nhận chuỗi lịch sử (dates, values) và đưa vào DataFrame với 2 cột chuẩn [ds, y].
-        2. Khởi tạo mô hình Prophet với chu kỳ tuần (weekly seasonality) và khoảng tin cậy.
-        3. Huấn luyện (fit) và dự báo (predict) cho N ngày tiếp theo (horizon).
-        4. Trích xuất giá trị dự báo, khoảng tin cậy (lower_bound, upper_bound)
-           và kẹp biên không âm (max(0.0, ...)) theo đặc thù nghiệp vụ kho vận.
+    Workflow:
+        1. Converts the historical series (dates, values) into a [ds, y] DataFrame.
+        2. Configures Prophet with weekly seasonality and confidence interval width.
+        3. Fits the model and predicts over the requested future horizon.
+        4. Extracts point forecasts and confidence bounds, clamping negative values
+           to 0.0 to enforce non-negative logistics demand constraints.
     """
 
     def __init__(
@@ -68,9 +68,11 @@ class ProphetForecaster:
         horizon: int = 7,
     ) -> ProphetFitResult:
         if not dates or not values or len(dates) != len(values):
-            raise ValueError("dates và values không được rỗng và phải có cùng độ dài")
+            raise ValueError(
+                "dates and values must be non-empty and have matching lengths"
+            )
 
-        # 1. Chuẩn bị DataFrame đúng chuẩn của Prophet (cột ds: ngày, cột y: sản lượng)
+        # 1. Prepare canonical Prophet training DataFrame with columns [ds, y]
         df = pd.DataFrame(
             {
                 "ds": pd.to_datetime(list(dates)),
@@ -78,7 +80,7 @@ class ProphetForecaster:
             }
         )
 
-        # 2. Khởi tạo mô hình Meta Prophet chính thức
+        # 2. Initialize official Meta Prophet model
         model = Prophet(
             interval_width=self.interval_width,
             weekly_seasonality=False,
@@ -93,20 +95,20 @@ class ProphetForecaster:
                 fourier_order=self.fourier_order,
             )
 
-        # 3. Huấn luyện mô hình
+        # 3. Fit model on historical observations
         model.fit(df)
 
-        # 4. Sinh bảng ngày tương lai (mặc định 7 ngày) và dự báo
+        # 4. Generate future calendar dates and run prediction
         future_df = model.make_future_dataframe(periods=horizon, freq="D")
         forecast_df = model.predict(future_df)
 
-        # 5. Lấy giá trị đã khớp (fitted values) trên tập lịch sử
+        # 5. Extract in-sample fitted values over the historical window
         n_hist = len(dates)
         fitted_values = [
             max(0.0, round(float(v), 3)) for v in forecast_df["yhat"].iloc[:n_hist]
         ]
 
-        # 6. Trích xuất kết quả dự báo cho horizon ngày tương lai
+        # 6. Extract future horizon forecast points and clamp non-negative bounds
         future_points: list[ProphetForecastPoint] = []
         for idx in range(n_hist, n_hist + horizon):
             row = forecast_df.iloc[idx]
