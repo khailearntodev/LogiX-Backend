@@ -15,15 +15,23 @@ from logix_forecast.engine.metrics import (
     evaluate_method_metrics,
 )
 from logix_forecast.engine.preprocessor import PreprocessedSeries, fill_missing_dates
+from logix_forecast.engine.prophet_model import (
+    ProphetFitResult,
+    ProphetForecaster,
+    ProphetForecastPoint,
+)
 from logix_forecast.engine.schemas import DemandObservationIn, MethodMetricsOut
 
 __all__ = [
+    "ZERO_ACTUAL_POLICY_FILTER",
     "DemandObservationIn",
     "FallbackDecision",
     "MapeCalculation",
     "MethodMetricsOut",
     "PreprocessedSeries",
-    "ZERO_ACTUAL_POLICY_FILTER",
+    "ProphetFitResult",
+    "ProphetForecastPoint",
+    "ProphetForecaster",
     "check_fallback_condition",
     "compute_mae",
     "compute_mape_with_policy",

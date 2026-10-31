@@ -16,6 +16,7 @@ from logix_forecast.engine.metrics import (
     evaluate_method_metrics,
 )
 from logix_forecast.engine.preprocessor import fill_missing_dates
+from logix_forecast.engine.prophet_model import ProphetForecaster
 from logix_forecast.engine.schemas import DemandObservationIn
 
 
@@ -102,7 +103,10 @@ def test_fallback_triggers_on_short_history_or_high_sparsity() -> None:
     short_decision = check_fallback_condition(short_series, min_observations=14)
     assert short_decision.should_fallback is True
     assert short_decision.confidence_level == 0.50
-    assert short_decision.reason is not None and "INSUFFICIENT_HISTORY" in short_decision.reason
+    assert (
+        short_decision.reason is not None
+        and "INSUFFICIENT_HISTORY" in short_decision.reason
+    )
 
     # Case 2: 20 days span, but only 2 non-zero days (90% zeros > 85% threshold)
     sparse_obs = [
@@ -114,7 +118,10 @@ def test_fallback_triggers_on_short_history_or_high_sparsity() -> None:
     assert sparse_series.total_days == 20
     assert sparse_decision.should_fallback is True
     assert sparse_decision.confidence_level == 0.50
-    assert sparse_decision.reason is not None and "EXTREME_ZERO_SPARSITY" in sparse_decision.reason
+    assert (
+        sparse_decision.reason is not None
+        and "EXTREME_ZERO_SPARSITY" in sparse_decision.reason
+    )
 
     # Case 3: Healthy 20-day series
     healthy_obs = [
@@ -129,3 +136,38 @@ def test_fallback_triggers_on_short_history_or_high_sparsity() -> None:
     assert healthy_decision.should_fallback is False
     assert healthy_decision.reason is None
     assert healthy_decision.confidence_level == 0.80
+
+
+def test_prophet_forecaster_captures_trend_and_weekly_seasonality() -> None:
+    # 56 days (8 weeks): 49 days train + 7 days holdout test with trend + weekly pattern
+    weekly_factors = [0.75, 0.85, 0.90, 1.00, 1.15, 1.40, 0.95]
+    start = date(2026, 9, 1)
+    dates = [start + timedelta(days=i) for i in range(56)]
+    values = [
+        round(
+            (40.0 + 0.3 * i) * weekly_factors[(start + timedelta(days=i)).weekday()], 2
+        )
+        for i in range(56)
+    ]
+
+    train_dates, test_dates = dates[:49], dates[49:]
+    train_vals, test_actuals = values[:49], values[49:]
+
+    forecaster = ProphetForecaster(interval_width=0.80, weekly_seasonality=True)
+    res = forecaster.fit_predict(train_dates, train_vals, horizon=7)
+
+    assert len(res.future_points) == 7
+    assert len(res.fitted_values) == 49
+    assert [p.forecast_date for p in res.future_points] == test_dates
+
+    for pt in res.future_points:
+        assert pt.predicted >= 0.0
+        assert pt.lower_bound >= 0.0
+        assert pt.lower_bound <= pt.predicted <= pt.upper_bound
+
+    prophet_preds = [p.predicted for p in res.future_points]
+    ma7_preds = moving_average_7_forecast(train_vals, horizon=7)
+
+    prophet_rmse = compute_rmse(test_actuals, prophet_preds)
+    ma7_rmse = compute_rmse(test_actuals, ma7_preds)
+    assert prophet_rmse < ma7_rmse
