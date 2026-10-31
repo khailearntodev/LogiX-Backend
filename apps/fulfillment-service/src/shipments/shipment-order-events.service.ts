@@ -12,7 +12,7 @@ import { z } from 'zod';
 import { PrismaService } from '../database/prisma.service.js';
 import { Prisma } from '../generated/prisma/client.js';
 import { OrderClient } from './order.client.js';
-import { INTENT_STATUS, SHIPMENT_CONSUMER } from './shipment.domain.js';
+import { INTENT_STATUS, SHIPMENT_CONSUMER, ShipmentErrors } from './shipment.domain.js';
 import { lockShipment, recordShipment } from './shipment.persistence.js';
 
 const legacyLine = shipmentLineSchema.pick({
@@ -223,6 +223,10 @@ export class ShipmentOrderEventsService {
           const current = await tx.shipment.findUniqueOrThrow({
             where: { id: existing.id },
           });
+          const pendingBatch = await tx.shipmentDispatchIntent.findFirst({
+            where: { shipmentId: current.id, tenantId: event.tenantId, batchId: { not: null }, status: INTENT_STATUS.PENDING },
+          });
+          if (pendingBatch) throw ShipmentErrors.pending();
           if (
             [S.DISPATCHED, S.DELIVERED, S.FAILED].some(
               (status) => status === current.status,

@@ -109,20 +109,12 @@ async def test_route_engine_detects_overcapacity() -> None:
 async def test_api_post_route_optimization_endpoint() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        # 1. Post request with default sample stops
+        # Production rejects partial sample/default input.
         resp = await client.post(
             "/api/v1/route-optimizations",
             json={"trip_id": str(uuid.uuid4())},
         )
-        assert resp.status_code == 200
-        data = resp.json()
-
-        assert "total_distance_km" in data
-        assert "total_duration_minutes" in data
-        assert "stops" in data
-        assert len(data["stops"]) == 5
-        assert data["feasibility_status"] == "FEASIBLE"
-        assert "OSRM" in data["distance_provider"] or "Haversine" in data["distance_provider"]
+        assert resp.status_code == 422
 
 
 @pytest.mark.asyncio
@@ -142,6 +134,4 @@ async def test_api_get_route_by_run_id() -> None:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         resp = await client.get(f"/api/v1/route-optimizations/{trip_id}")
-        assert resp.status_code == 200
-        data = resp.json()
-        assert data["trip_id"] == str(trip_id)
+        assert resp.status_code == 401

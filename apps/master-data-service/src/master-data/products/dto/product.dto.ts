@@ -1,10 +1,11 @@
 import {
-  IsNotEmpty,
   IsOptional,
+  IsNotEmpty,
   IsString,
   Matches,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 /** Decimal(18,3) as a string — a JS number would lose precision. */
 const WEIGHT = /^\d{1,15}(\.\d{1,3})?$/;
@@ -12,10 +13,13 @@ const WEIGHT = /^\d{1,15}(\.\d{1,3})?$/;
 const VOLUME = /^\d{1,12}(\.\d{1,6})?$/;
 
 export class CreateProductDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
-  @IsNotEmpty({ message: 'SKU không được để trống' })
   @MaxLength(100)
-  sku!: string;
+  sku?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Tên sản phẩm không được để trống' })
@@ -41,6 +45,14 @@ export class CreateProductDto {
 }
 
 export class UpdateProductDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MaxLength(100)
+  sku?: string;
+
   @IsOptional()
   @IsString()
   @IsNotEmpty({ message: 'Tên sản phẩm không được để trống' })

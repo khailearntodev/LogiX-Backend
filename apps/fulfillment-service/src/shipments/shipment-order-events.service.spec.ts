@@ -74,7 +74,7 @@ function setup() {
       update: vi.fn(),
     },
     shipmentStatusHistory: { create: vi.fn() },
-    shipmentDispatchIntent: { updateMany: vi.fn() },
+    shipmentDispatchIntent: { updateMany: vi.fn(), findFirst: vi.fn().mockResolvedValue(null) },
     outboxEvent: { create: vi.fn() },
   };
   const prisma = {
@@ -244,6 +244,60 @@ describe('Shipment pool source events', () => {
         create: expect.objectContaining({ canceled: true, orderVersion: 3n }),
       }),
     );
+  });
+  it('defers cancellation without acknowledging or mutating a pending batch grant', async () => {
+    const s = setup();
+    const current = { id: randomUUID(), status: 'READY_TO_SHIP', version: 4n };
+    s.tx.shipment.findUnique.mockResolvedValue(current);
+    s.tx.shipment.findUniqueOrThrow.mockResolvedValue(current);
+    s.tx.shipmentDispatchIntent.findFirst.mockResolvedValue({ id: randomUUID(), batchId: randomUUID(), status: 'PENDING' });
+    await expect(s.service.handle({
+      ...s.event, eventType: 'OrderCanceled', aggregateVersion: 3,
+      payload: { orderId: s.payload.orderId, reason: 'Late cancellation', canceledAt: new Date().toISOString() },
+    })).rejects.toThrow();
+    expect(s.tx.shipment.update).not.toHaveBeenCalled();
+    expect(s.tx.inboxEvent.create).not.toHaveBeenCalled();
+  });
+  it('keeps the active trip claim mirror on the canceled Shipment tombstone', async () => {
+    const s = setup();
+    const current = {
+      id: randomUUID(),
+      status: 'READY_TO_SHIP',
+      assignedTripId: randomUUID(),
+      tripClaimId: randomUUID(),
+      version: 4n,
+    };
+    let canceled: typeof current | undefined;
+    s.tx.shipment.findUnique.mockResolvedValue({
+      reservationGroupId: s.payload.reservationGroupId,
+    });
+    s.tx.shipment.findUniqueOrThrow.mockResolvedValue(current);
+    s.tx.shipment.update.mockImplementation(async ({ data }) => {
+      canceled = { ...current, ...data, version: 5n };
+      return canceled;
+    });
+
+    await s.service.handle({
+      ...s.event,
+      eventType: 'OrderCanceled',
+      aggregateVersion: 3,
+      payload: {
+        orderId: s.payload.orderId,
+        reason: 'QA cancel',
+        canceledAt: new Date().toISOString(),
+      },
+    });
+
+    expect(s.tx.$queryRaw).toHaveBeenCalledTimes(2);
+    expect(s.tx.shipment.update).toHaveBeenCalledWith({
+      where: { id: current.id },
+      data: { status: 'CANCELED', version: { increment: 1 } },
+    });
+    expect(canceled).toMatchObject({
+      status: 'CANCELED',
+      assignedTripId: current.assignedTripId,
+      tripClaimId: current.tripClaimId,
+    });
   });
   it('ignores a late legacy confirmation after cancellation even if Order is unavailable', async () => {
     const s = setup();

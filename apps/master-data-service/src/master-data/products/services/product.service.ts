@@ -5,17 +5,15 @@ import {
   DEFAULT_PAGE_SIZE,
   RecordStatus,
 } from '../../common/master-data.constants.js';
+import {
+  allocateNextMasterDataCode,
+  syncMasterDataCodeSequence,
+} from '../../common/master-data-code.js';
 import { toProductView } from '../../common/master-data.mappers.js';
 import { toConflict } from '../../common/prisma-error.js';
-import type {
-  Paginated,
-  ProductView,
-} from '../../common/master-data.types.js';
+import type { Paginated, ProductView } from '../../common/master-data.types.js';
 import type { PaginationQueryDto } from '../../common/dto/pagination-query.dto.js';
-import type {
-  CreateProductDto,
-  UpdateProductDto,
-} from '../dto/product.dto.js';
+import type { CreateProductDto, UpdateProductDto } from '../dto/product.dto.js';
 
 const DUPLICATE_SKU = 'SKU đã tồn tại trong tổ chức này';
 
@@ -25,16 +23,36 @@ export class ProductService {
 
   async create(tenantId: string, dto: CreateProductDto): Promise<ProductView> {
     try {
-      const row = await this.prisma.product.create({
-        data: {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const manualSku = dto.sku?.trim();
+        const existingSkus = (
+          await tx.product.findMany({
+            where: { tenantId },
+            select: { sku: true },
+          })
+        ).map((product) => product.sku);
+        await syncMasterDataCodeSequence(
+          tx,
           tenantId,
-          sku: dto.sku,
-          name: dto.name,
-          baseUnit: dto.baseUnit,
-          weight: new Prisma.Decimal(dto.weight),
-          volume: new Prisma.Decimal(dto.volume),
-          status: RecordStatus.ACTIVE,
-        },
+          'product',
+          existingSkus,
+          manualSku,
+        );
+        const sku =
+          manualSku ??
+          (await allocateNextMasterDataCode(tx, tenantId, 'product'));
+
+        return tx.product.create({
+          data: {
+            tenantId,
+            sku,
+            name: dto.name,
+            baseUnit: dto.baseUnit,
+            weight: new Prisma.Decimal(dto.weight),
+            volume: new Prisma.Decimal(dto.volume),
+            status: RecordStatus.ACTIVE,
+          },
+        });
       });
 
       return toProductView(row);
@@ -88,22 +106,34 @@ export class ProductService {
   ): Promise<ProductView> {
     await this.requireProduct(tenantId, id);
 
-    const row = await this.prisma.product.update({
-      where: { id },
-      data: {
-        ...(dto.name === undefined ? {} : { name: dto.name }),
-        ...(dto.baseUnit === undefined ? {} : { baseUnit: dto.baseUnit }),
-        ...(dto.weight === undefined
-          ? {}
-          : { weight: new Prisma.Decimal(dto.weight) }),
-        ...(dto.volume === undefined
-          ? {}
-          : { volume: new Prisma.Decimal(dto.volume) }),
-        version: { increment: 1 },
-      },
-    });
+    try {
+      const sku = dto.sku?.trim();
+      const row = await this.prisma.$transaction(async (tx) => {
+        if (sku) {
+          await syncMasterDataCodeSequence(tx, tenantId, 'product', [], sku);
+        }
 
-    return toProductView(row);
+        return tx.product.update({
+          where: { id },
+          data: {
+            ...(sku ? { sku } : {}),
+            ...(dto.name === undefined ? {} : { name: dto.name }),
+            ...(dto.baseUnit === undefined ? {} : { baseUnit: dto.baseUnit }),
+            ...(dto.weight === undefined
+              ? {}
+              : { weight: new Prisma.Decimal(dto.weight) }),
+            ...(dto.volume === undefined
+              ? {}
+              : { volume: new Prisma.Decimal(dto.volume) }),
+            version: { increment: 1 },
+          },
+        });
+      });
+
+      return toProductView(row);
+    } catch (error) {
+      toConflict(error, DUPLICATE_SKU);
+    }
   }
 
   /** BR-TEN-004: referenced master data is disabled, never hard deleted. */

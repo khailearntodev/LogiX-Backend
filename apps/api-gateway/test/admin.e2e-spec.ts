@@ -47,6 +47,8 @@ describe('Admin Gateway HTTP proxy (isolated upstream fixture, not Identity/Post
     vi.stubEnv('IDENTITY_SERVICE_URL', target);
     vi.stubEnv('ORDER_SERVICE_URL', target);
     vi.stubEnv('FULFILLMENT_SERVICE_URL', target);
+    vi.stubEnv('MASTER_DATA_SERVICE_URL', target);
+    vi.stubEnv('TRANSPORT_SERVICE_URL', target);
     const { AppModule } = await import('../src/app.module.js');
     const module = await Test.createTestingModule({
       imports: [AppModule],

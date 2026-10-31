@@ -5,6 +5,10 @@ import {
   DEFAULT_PAGE_SIZE,
   RecordStatus,
 } from '../../common/master-data.constants.js';
+import {
+  allocateNextMasterDataCode,
+  syncMasterDataCodeSequence,
+} from '../../common/master-data-code.js';
 import { toWarehouseView } from '../../common/master-data.mappers.js';
 import { toConflict } from '../../common/prisma-error.js';
 import type {
@@ -26,20 +30,40 @@ export class WarehouseService {
     dto: CreateWarehouseDto,
   ): Promise<WarehouseView> {
     try {
-      const row = await this.prisma.warehouse.create({
-        data: {
+      const row = await this.prisma.$transaction(async (tx) => {
+        const manualCode = dto.code?.trim();
+        const existingCodes = (
+          await tx.warehouse.findMany({
+            where: { tenantId },
+            select: { code: true },
+          })
+        ).map((warehouse) => warehouse.code);
+        await syncMasterDataCodeSequence(
+          tx,
           tenantId,
-          code: dto.code,
-          name: dto.name,
-          addressLine: dto.addressLine,
-          ward: dto.ward ?? null,
-          district: dto.district ?? null,
-          province: dto.province,
-          postalCode: dto.postalCode ?? null,
-          latitude: dto.latitude ? new Prisma.Decimal(dto.latitude) : null,
-          longitude: dto.longitude ? new Prisma.Decimal(dto.longitude) : null,
-          status: RecordStatus.ACTIVE,
-        },
+          'warehouse',
+          existingCodes,
+          manualCode,
+        );
+        const code =
+          manualCode ??
+          (await allocateNextMasterDataCode(tx, tenantId, 'warehouse'));
+
+        return tx.warehouse.create({
+          data: {
+            tenantId,
+            code,
+            name: dto.name,
+            addressLine: dto.addressLine,
+            ward: dto.ward ?? null,
+            district: dto.district ?? null,
+            province: dto.province,
+            postalCode: dto.postalCode ?? null,
+            latitude: dto.latitude ? new Prisma.Decimal(dto.latitude) : null,
+            longitude: dto.longitude ? new Prisma.Decimal(dto.longitude) : null,
+            status: RecordStatus.ACTIVE,
+          },
+        });
       });
 
       return toWarehouseView(row);
@@ -93,28 +117,42 @@ export class WarehouseService {
   ): Promise<WarehouseView> {
     await this.requireWarehouse(tenantId, id);
 
-    const row = await this.prisma.warehouse.update({
-      where: { id },
-      data: {
-        ...(dto.name === undefined ? {} : { name: dto.name }),
-        ...(dto.addressLine === undefined
-          ? {}
-          : { addressLine: dto.addressLine }),
-        ...(dto.ward === undefined ? {} : { ward: dto.ward }),
-        ...(dto.district === undefined ? {} : { district: dto.district }),
-        ...(dto.province === undefined ? {} : { province: dto.province }),
-        ...(dto.postalCode === undefined ? {} : { postalCode: dto.postalCode }),
-        ...(dto.latitude === undefined
-          ? {}
-          : { latitude: new Prisma.Decimal(dto.latitude) }),
-        ...(dto.longitude === undefined
-          ? {}
-          : { longitude: new Prisma.Decimal(dto.longitude) }),
-        version: { increment: 1 },
-      },
-    });
+    try {
+      const code = dto.code?.trim();
+      const row = await this.prisma.$transaction(async (tx) => {
+        if (code) {
+          await syncMasterDataCodeSequence(tx, tenantId, 'warehouse', [], code);
+        }
 
-    return toWarehouseView(row);
+        return tx.warehouse.update({
+          where: { id },
+          data: {
+            ...(code ? { code } : {}),
+            ...(dto.name === undefined ? {} : { name: dto.name }),
+            ...(dto.addressLine === undefined
+              ? {}
+              : { addressLine: dto.addressLine }),
+            ...(dto.ward === undefined ? {} : { ward: dto.ward }),
+            ...(dto.district === undefined ? {} : { district: dto.district }),
+            ...(dto.province === undefined ? {} : { province: dto.province }),
+            ...(dto.postalCode === undefined
+              ? {}
+              : { postalCode: dto.postalCode }),
+            ...(dto.latitude === undefined
+              ? {}
+              : { latitude: new Prisma.Decimal(dto.latitude) }),
+            ...(dto.longitude === undefined
+              ? {}
+              : { longitude: new Prisma.Decimal(dto.longitude) }),
+            version: { increment: 1 },
+          },
+        });
+      });
+
+      return toWarehouseView(row);
+    } catch (error) {
+      toConflict(error, DUPLICATE_CODE);
+    }
   }
 
   /** BR-TEN-004: referenced master data is disabled, never hard deleted. */

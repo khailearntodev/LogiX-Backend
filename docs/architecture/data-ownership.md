@@ -34,6 +34,20 @@ Identity is the authority for tenant identity and tenant lifecycle. Every busine
 
 Master Data is authoritative. Business services store only identifiers and bounded snapshots where justified by read-model or audit needs.
 
+Identity remains authoritative for user identity, tenant membership and access
+rights; Master Data owns the business profile that references that identity.
+Owning a profile does not grant ownership of the referenced account or of
+downstream transaction history. Changes to a profile must preserve historical
+references and immutable snapshots in consuming services.
+
+Cross-service checks use authenticated, tenant-scoped contracts with the
+service that owns the referenced data, not shared database reads. Any
+domain-specific restriction on changing a reference must define its authority,
+concurrency protection and failure behavior in the owning domain design.
+The Driver account-link correction and its division of responsibilities are
+specified in [database design §6.6](database-design.md#66-drivers); its permanent
+identity lock is not a general disable/lease rule for all master data.
+
 Address rules:
 
 - `CustomerAddress.addressType` is `SHIPPING` (ship-to) or `BILLING` (bill-to), immutable after creation; each type has at most one active default per customer.
@@ -73,6 +87,10 @@ Agent Service is authoritative for agent execution lifecycle. Business outcome r
 ### AuditLog
 
 Audit Service is authoritative for immutable audit records.
+Business services may persist pending audit evidence in their own transactional
+outbox alongside the business mutation. This does not transfer AuditLog
+ownership or prove centralized ingestion; relay and consumer delivery require
+separate implementation and verification.
 
 ## 3. Transaction boundaries
 

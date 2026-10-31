@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-_SERVICE_DIR = Path(__file__).resolve().parent.parent.parent
-_ENV_FILE = _SERVICE_DIR / ".env"
 
 
 class AgentSettings(BaseSettings):
@@ -57,8 +53,7 @@ class AgentSettings(BaseSettings):
     prompt_policy_version: str = "v1"
 
     model_config = SettingsConfigDict(
-        env_file=(_ENV_FILE, ".env"),
-        env_file_encoding="utf-8",
+        env_file=None,
         extra="ignore",
     )
 

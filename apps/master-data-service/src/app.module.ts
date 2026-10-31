@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { LogixConfigModule, databaseConfigSchema } from '@logix/config';
+import { LogixConfigModule } from '@logix/config';
+import { masterDataConfigSchema } from './config/master-data-config.schema.js';
 import { LogixLoggerModule } from '@logix/logger';
 import { GlobalExceptionFilter } from '@logix/errors';
 import { DatabaseModule } from './database/database.module.js';
@@ -11,7 +12,7 @@ import { MasterDataModule } from './master-data/master-data.module.js';
   imports: [
     // Configuration with Zod validation — fails fast if env vars missing
     LogixConfigModule.forRoot({
-      schema: databaseConfigSchema,
+      schema: masterDataConfigSchema,
     }),
 
     // Structured Pino logging with correlation ID propagation

@@ -52,6 +52,42 @@ before migrating a deployment with legacy rows. Never reset a business DB.
 Consumers read historical Order events; this can create pool entries for
 previously confirmed orders but does not change stock.
 
+### Internal trip shipment ownership
+
+Only the allowlisted Transport service can call the internal routes below. They
+use `x-internal-service-token`, signed for the Fulfillment audience with the
+shared internal-service secret; the request tenant must match its verified
+tenant claim. These paths are service-to-service only and must never be
+publicly proxied by Gateway.
+
+| Method/path | Contract |
+| --- | --- |
+| GET `/api/v1/internal/shipments/pool` | `contractVersion=1`, `warehouseId`, optional `page`/`pageSize` (defaults 1/20), optional `status=READY_TO_SHIP`, and repeated `excludedShipmentIds`; returns `{ items, total, page, pageSize }` |
+| POST `/api/v1/internal/shipments/claim` | Exact `shipmentClaimRequestSchema` v1; returns `{ receipt, snapshot }` |
+| POST `/api/v1/internal/shipments/release` | Exact `shipmentReleaseRequestSchema` v1; returns `{ receipt, snapshot: null }` |
+| GET `/api/v1/internal/shipments/receipts/:requestId` | Tenant-scoped immutable receipt response for request recovery |
+| GET `/api/v1/internal/shipments/claims/:claimId/status` | Tenant-scoped active/released claim status, current `shipmentStatus`/version and persisted receipt; Transport revalidates READY_TO_SHIP before route approval |
+
+Claim and release lock the same Shipment row as direct dispatch and Order
+cancellation projection. A claim is accepted only for an active, unassigned
+`READY_TO_SHIP` Shipment at the expected version with no active dispatch intent.
+Claim receipts are idempotent on `(tenantId, requestId)` and bind the complete
+original request, including actor. A replay returns its original immutable
+address/item/demand snapshot before checking current Shipment state/version;
+reusing the request key with any changed input conflicts. Release must bind the
+original claim/trip/shipment/actor, is idempotently receipted, and clears only
+that claim. Canceled Shipment tombstones may be released without changing their
+canceled status. Fulfillment rejects release after local dispatch intent/issuance;
+Transport must not call release after its Order batch grant commits because that
+grant is owned outside Fulfillment and is never read cross-database. Trip
+ownership changes do not mutate Order or inventory state.
+
+The claim snapshot preserves the canonical Order `AddressSnapshot` fields and
+does not synthesize missing values. Schema-nullable coordinates may remain
+`null` in a valid Fulfillment snapshot; Transport must require both usable
+coordinates before treating that claim as a trip membership, and release the
+claim if its own membership validation rejects the snapshot.
+
 Public endpoints through Gateway (`/api/v1` prefix):
 
 | Method/path | Permission | Body |
@@ -153,7 +189,7 @@ Fulfillment, PostgreSQL and Kafka**, independently of AI or Transport:
 
 ```text
 pnpm --filter fulfillment-service --filter order-service --filter inventory-service --filter api-gateway build
-pnpm --filter fulfillment-service test:e2e test/pick-pack.query.e2e-spec.ts test/pick-pack.lifecycle.e2e-spec.ts test/pick-pack.cancellation.e2e-spec.ts --no-file-parallelism
+pnpm --filter fulfillment-service test:e2e test/pick-pack.query.e2e-spec.ts test/pick-pack.lifecycle.e2e-spec.ts test/pick-pack.cancellation.e2e-spec.ts test/trip-claims.e2e-spec.ts --no-file-parallelism
 ```
 
 Before the second command, explicitly set:
@@ -193,6 +229,38 @@ LeaveGroup) before deleting its exact consumer groups/topics and container.
 Cleanup failures fail the suite. Container/topics names are printed as ownership
 evidence; no secrets or connection strings should be logged.
 
+#### Trip claim HTTP/PostgreSQL regression
+
+`test/trip-claims.e2e-spec.ts` is included in the permanent isolated-stack
+runner above (and is discovered by `test:e2e`). It covers four real HTTP and
+PostgreSQL scenarios:
+
+- `claims with immutable snapshot, filters pool, rejects direct dispatch and releases a canceled tombstone`: canonical immutable address/item snapshot, signed internal auth and tenant isolation, pool warehouse/exclusion/pagination/count behavior, claimed preview/dispatch rejection, exact claim/release replay and payload conflict, status/receipt recovery, canceled-tombstone release, and no Order/stock/outbox side effects from claim/release.
+- `serializes a real claim against direct dispatch on the Shipment row lock`: exactly one command wins; verifies dispatch-intent/Order/Shipment state and Inventory effects.
+- `keeps an OrderCanceled tombstone under the claim row lock and release never revives readiness`: races the real Order cancellation HTTP flow against claim and verifies cancellation remains terminal after release.
+- `preserves successful unclaimed direct dispatch and rejects an incomplete claim snapshot`: confirms the existing dispatch path and rejects a claim with missing immutable address data.
+
+On Windows PowerShell, the reproducible focused command used for these four
+tests is:
+
+```powershell
+$env:PICK_PACK_STACK_E2E = '1'
+$env:PICK_PACK_TEST_HOST = '127.0.0.1'
+$env:PICK_PACK_POSTGRES_IMAGE = 'postgres:17-bookworm' # any approved image already present locally
+$env:MASTER_DATA_SERVICE_URL = 'http://127.0.0.1:9'
+$env:TRANSPORT_SERVICE_URL = 'http://127.0.0.1:9'
+pnpm --filter fulfillment-service exec vitest run --config ./vitest.config.e2e.ts test/trip-claims.e2e-spec.ts
+```
+
+The focused command assumes the four services have been built using the build
+command above, Docker is available, the selected PostgreSQL image already
+exists locally, and required business-service/Kafka settings are present in
+the local service `.env` files. The two `127.0.0.1:9` values satisfy the
+Gateway's required downstream URL configuration; this isolated suite does not
+route requests through Gateway to Master Data or Transport. A missing image,
+unavailable broker, or omitted `PICK_PACK_STACK_E2E=1` is a test failure or
+skip, not evidence that the real integration passed.
+
 Assertions cover concurrent same-version requests, history/outbox rollback,
 immutable snapshots/items, exact decimal quantities, unchanged stock while
 pick/ready, ordered lifecycle projection, duplicate/stale/cancel-before-confirm
@@ -218,6 +286,36 @@ retries it with bounded persisted backoff, including after restart. Do not
 create a replacement request while an intent is PENDING. No transaction spans
 the grant HTTP request. A successful dispatch does not mean Inventory has
 already consumed ISSUE; Inventory and Order converge through Kafka.
+
+### Phase 4 trip-wide dispatch owner
+
+Transport-only internal APIs are `POST /internal/shipments/dispatch-readiness`,
+`POST /internal/shipments/dispatch-batch` and
+`GET /internal/shipments/dispatch-batches/:requestId`. Verified tenant and
+internal caller are mandatory. Readiness checks current claims/versions and
+authoritative Order reservation, version and cancellation status.
+
+Preparation locks every Shipment and persists the exact complete payload plus
+stable existing child dispatch intents before requesting Order's all-or-none
+grant. Invalid local readiness produces a durable whole-set REJECTED receipt,
+without child intents or an Order call. The owner saves the complete Order
+receipt and each child grant receipt before a separate owner transaction commits
+all Shipment DISPATCHED transitions, history, ShipmentDispatched outbox events
+and the complete batch receipt together. No per-Shipment sequential grant loop
+is used. Assigned Shipments still reject the public single-dispatch path.
+
+`ShipmentDispatchBatch` is a necessary many-Shipment recovery header; the
+existing unique-per-Shipment intent cannot hold full-set replay/rejection
+identity. Its children reuse ShipmentDispatchIntent rather than introducing a
+second action workflow. Stages PREPARED and GRANTED recover through the existing
+intent worker with bounded persisted backoff. Singles exclude batch children.
+An OrderCanceled event encountering a PENDING batch child is deferred without
+Inbox acknowledgement, never used to undo an unknown or granted dispatch.
+
+Deploy `20261025162508_phase4_durable_dispatch` with the compatible Order batch
+owner. Never replace pending request/child IDs, release a possibly granted
+reservation, or infer rejection from HTTP failure. Only ShipmentDispatched
+requests Inventory ISSUE; the TripDispatched event is not another stock action.
 
 Frontend pool/detail, themed confirmations and pending-state UX are implemented
 in phase 5C under `LogiX-Frontend/src/features/shipments`. Order list/detail now

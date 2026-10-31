@@ -30,6 +30,8 @@ export class ShipmentDispatchService {
       include: { dispatchIntent: true },
     });
     if (!shipment) throw ShipmentErrors.missing();
+    if (shipment.assignedTripId !== null || shipment.tripClaimId !== null)
+      throw ShipmentErrors.tripClaimConflict();
     if (shipment.dispatchIntent?.status === I.PENDING)
       throw ShipmentErrors.pending();
     assertShipmentTransition(shipment.status, S.DISPATCHED);
@@ -57,6 +59,8 @@ export class ShipmentDispatchService {
       include: { dispatchIntent: true },
     });
     if (!before) throw ShipmentErrors.missing();
+    if (before.assignedTripId !== null || before.tripClaimId !== null)
+      throw ShipmentErrors.tripClaimConflict();
     if (before.dispatchIntent?.id !== dto.requestId) {
       if (before.dispatchIntent && before.dispatchIntent.status !== I.REJECTED)
         throw ShipmentErrors.pending();
@@ -80,6 +84,8 @@ export class ShipmentDispatchService {
           include: { dispatchIntent: true },
         });
         if (!shipment) throw ShipmentErrors.missing();
+        if (shipment.assignedTripId !== null || shipment.tripClaimId !== null)
+          throw ShipmentErrors.tripClaimConflict();
         const intent = shipment.dispatchIntent;
         if (intent?.id === dto.requestId) {
           if (
@@ -127,7 +133,7 @@ export class ShipmentDispatchService {
       include: { dispatchIntent: true },
     });
     const intent = shipment?.dispatchIntent;
-    if (!shipment || !intent || intent.status !== I.PENDING) return;
+    if (!shipment || !intent || intent.status !== I.PENDING || intent.batchId) return;
     const ctx = {
       tenantId,
       actorId: intent.actorId,

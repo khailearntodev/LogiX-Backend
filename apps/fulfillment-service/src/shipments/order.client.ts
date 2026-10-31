@@ -7,6 +7,8 @@ import {
 import { ServiceId } from '@logix/common';
 import {
   shipmentLineSchema,
+  batchDispatchGrantDecisionSchema,
+  type BatchDispatchGrantRequest,
   type AuthorizeOrderDispatchRequest,
 } from '@logix/messaging';
 import { z } from 'zod';
@@ -69,11 +71,16 @@ export class OrderClient {
       body,
     );
   }
+  authorizeBatch(body: BatchDispatchGrantRequest) {
+    return this.request('/internal/orders/authorize-dispatch-batch', {
+      tenantId: body.tenantId, actorId: body.actorId, correlationId: body.requestId,
+    }, batchDispatchGrantDecisionSchema, body);
+  }
   private async request<T>(
     path: string,
     ctx: ShipmentContext,
     schema: z.ZodType<T>,
-    body?: AuthorizeOrderDispatchRequest,
+    body?: AuthorizeOrderDispatchRequest | BatchDispatchGrantRequest,
   ): Promise<T> {
     const token = signInternalServiceToken({
       secret: this.secret,

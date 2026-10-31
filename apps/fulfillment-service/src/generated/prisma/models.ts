@@ -9,7 +9,9 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Shipment.js'
+export type * from './models/ShipmentTripReceipt.js'
 export type * from './models/ShipmentDispatchIntent.js'
+export type * from './models/ShipmentDispatchBatch.js'
 export type * from './models/ShipmentOrderCursor.js'
 export type * from './models/ShipmentItem.js'
 export type * from './models/ShipmentStatusHistory.js'

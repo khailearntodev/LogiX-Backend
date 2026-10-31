@@ -1,4 +1,9 @@
-import { Module, NestModule, MiddlewareConsumer, RequestMethod } from '@nestjs/common';
+import {
+  Module,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from '@nestjs/common';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { LogixConfigModule } from '@logix/config';
@@ -13,6 +18,7 @@ import { MasterDataProxyMiddleware } from './proxy/master-data-proxy.middleware.
 import { OrderProxyMiddleware } from './proxy/order-proxy.middleware.js';
 import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware.js';
+import { TransportProxyMiddleware } from './proxy/transport-proxy.middleware.js';
 
 @Module({
   imports: [
@@ -47,10 +53,20 @@ import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(FulfillmentProxyMiddleware).forRoutes(
-      { path: 'api/v1/shipments', method: RequestMethod.ALL },
-      { path: 'api/v1/shipments/*', method: RequestMethod.ALL },
-    );
+    consumer
+      .apply(TransportProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/trips', method: RequestMethod.ALL },
+        { path: 'api/v1/trips/*', method: RequestMethod.ALL },
+        { path: 'api/v1/driver/trips', method: RequestMethod.ALL },
+        { path: 'api/v1/driver/trips/*', method: RequestMethod.ALL },
+      );
+    consumer
+      .apply(FulfillmentProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/shipments', method: RequestMethod.ALL },
+        { path: 'api/v1/shipments/*', method: RequestMethod.ALL },
+      );
     // Chuyển hướng các request Identity sang identity-service
     consumer
       .apply(AuthProxyMiddleware)
@@ -81,6 +97,8 @@ export class AppModule implements NestModule {
         { path: 'api/v1/warehouses/*', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles', method: RequestMethod.ALL },
         { path: 'api/v1/vehicles/*', method: RequestMethod.ALL },
+        { path: 'api/v1/drivers', method: RequestMethod.ALL },
+        { path: 'api/v1/drivers/*', method: RequestMethod.ALL },
       );
 
     consumer

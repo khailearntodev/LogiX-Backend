@@ -23,6 +23,30 @@
 
 ## Description
 
+### Internal Driver identity lookup
+
+`GET /api/v1/internal/driver-users`, `GET /api/v1/internal/driver-users/:id/eligibility`
+and `POST /api/v1/internal/driver-users/resolve` are service-to-service APIs.
+Only signed `master-data-service` internal tokens with Identity audience and a
+valid tenant are accepted. They are not exposed by the Gateway. Eligibility is
+applied before pagination/count; resolve supports names for existing historical
+profiles and does not grant Driver eligibility.
+
+Set `INTERNAL_SERVICE_JWT_SECRET` (at least 32 characters) through the normal
+secret/environment mechanism, matching Master Data. Missing/invalid
+configuration prevents startup; never put a secret in this document.
+
+To provision only the permission catalogue without creating QA/demo accounts:
+
+```powershell
+node --env-file=.env prisma/provision-permissions.js
+```
+
+Run from this service using an explicitly authorized database environment.
+Existing role grants remain unchanged; an authorized tenant administrator must
+grant new capabilities explicitly. New MEMBER roles do not automatically receive
+sensitive Driver permissions. Do not use the full account seed to add permissions.
+
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Project setup

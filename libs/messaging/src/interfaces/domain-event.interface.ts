@@ -9,7 +9,8 @@
  * @see docs/architecture/event-architecture.md §11
  */
 
-import type { ShipmentLifecyclePayload } from './shipment.contract.js';
+import type { ShipmentLifecyclePayload } from "./shipment.contract.js";
+import type { DeliveryResultPayload } from "./transport.contract.js";
 
 // ─── Shared Snapshots ───────────────────────────────────────────────────────
 // Immutable copies of Master Data / Identity records carried inside events so
@@ -19,7 +20,7 @@ import type { ShipmentLifecyclePayload } from './shipment.contract.js';
 export interface AddressSnapshot {
   addressId: string;
   addressVersion: number;
-  addressType: 'SHIPPING' | 'BILLING';
+  addressType: "SHIPPING" | "BILLING";
   label: string | null;
   recipientName: string;
   phone: string | null;
@@ -117,15 +118,17 @@ export interface OrderConfirmedPayload {
   customerSnapshot: CustomerSnapshot;
   deliveryAddressSnapshot: AddressSnapshot;
   warehouseSnapshot: WarehouseSnapshot;
-  orderLines: Array<OrderLinePayload & {
-    orderLineId: string;
-    /** Additive fields; legacy events resolve locked line snapshots through Order's internal API. */
-    skuSnapshot?: string;
-    productNameSnapshot?: string;
-    unitSnapshot?: string;
-    unitWeight?: string;
-    unitVolume?: string;
-  }>;
+  orderLines: Array<
+    OrderLinePayload & {
+      orderLineId: string;
+      /** Additive fields; legacy events resolve locked line snapshots through Order's internal API. */
+      skuSnapshot?: string;
+      productNameSnapshot?: string;
+      unitSnapshot?: string;
+      unitWeight?: string;
+      unitVolume?: string;
+    }
+  >;
   totalQuantity: string;
   totalWeight: string;
   totalVolume: string;
@@ -203,6 +206,10 @@ export interface ShipmentReadyPayload {
 
 // ─── Transport Events ───────────────────────────────────────────────────────
 
+/**
+ * @deprecated Legacy published event; do not emit it for DRAFT planning or
+ * route approval. Existing consumers may still require it during rollout.
+ */
 export interface TripPlannedPayload {
   tripId: string;
   warehouseId: string;
@@ -233,19 +240,21 @@ export interface TripDispatchedPayload {
   dispatchedAt: string;
 }
 
-export interface DeliveryCompletedPayload {
-  stopId: string;
-  attempt: number;
-  deliveredAt: string;
-  receivedBy?: string;
-}
+export type DeliveryCompletedPayload = Omit<
+  DeliveryResultPayload,
+  "outcome" | "reason"
+> & {
+  outcome: "DELIVERED";
+  reason: null;
+};
 
-export interface DeliveryFailedPayload {
-  stopId: string;
-  attempt: number;
-  failedAt: string;
+export type DeliveryFailedPayload = Omit<
+  DeliveryResultPayload,
+  "outcome" | "reason"
+> & {
+  outcome: "FAILED";
   reason: string;
-}
+};
 
 // ─── Forecast Events ────────────────────────────────────────────────────────
 

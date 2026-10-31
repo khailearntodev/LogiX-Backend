@@ -6,6 +6,7 @@ import { INTERNAL_CALLERS_KEY, InternalServiceGuard } from '@logix/auth';
 import { AuthorizeDispatchDto } from './dto/authorize-dispatch.dto.js';
 import { OrdersDispatchInternalController } from './orders-dispatch.internal.controller.js';
 import { OrderDispatchService } from './services/order-dispatch.service.js';
+import { OrderDispatchBatchService } from './services/order-dispatch-batch.service.js';
 
 const validRequest = () =>
   Object.assign(new AuthorizeDispatchDto(), {
@@ -33,6 +34,7 @@ describe('OrdersDispatchInternalController', () => {
     const dispatch = { authorize: vi.fn().mockResolvedValue({}) };
     const controller = new OrdersDispatchInternalController(
       dispatch as unknown as OrderDispatchService,
+      {} as OrderDispatchBatchService,
     );
     const tenantId = randomUUID();
     const orderId = randomUUID();
@@ -60,6 +62,7 @@ describe('OrdersDispatchInternalController', () => {
     const dispatch = { authorize: vi.fn() };
     const controller = new OrdersDispatchInternalController(
       dispatch as unknown as OrderDispatchService,
+      {} as OrderDispatchBatchService,
     );
     expect(() =>
       controller.authorize(
@@ -80,6 +83,7 @@ describe('OrdersDispatchInternalController', () => {
     const dispatch = { authorize: vi.fn() };
     const controller = new OrdersDispatchInternalController(
       dispatch as unknown as OrderDispatchService,
+      {} as OrderDispatchBatchService,
     );
     expect(() =>
       controller.authorize(

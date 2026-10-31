@@ -29,6 +29,7 @@ class ApprovedAction:
     target_type: str
     target_id: str
     target_version: int
+    execution_binding: dict[str, object] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,6 +48,7 @@ class PreviewResult:
     target_version: int
     # Shown to the user and stored with the approval; must already be sanitized.
     summary: dict[str, object]
+    execution_binding: dict[str, object] | None = None
 
 
 ToolHandler = Callable[[ToolContext, BaseModel], Awaitable[BaseModel]]

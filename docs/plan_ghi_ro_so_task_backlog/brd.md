@@ -154,10 +154,10 @@ Hình 2. Luồng Order-to-Delivery chuẩn
 6.3 Điều phối chuyến và giao hàng
 13.	Dispatcher chọn các shipment READY cùng warehouse để tạo DeliveryTrip DRAFT.
 14.	Dispatcher gán vehicle và driver đang hoạt động; hệ thống kiểm tra lịch trùng và sức chứa.
-15.	Route Optimizer nhận depot, điểm giao, tải trọng và distance matrix để sinh RoutePlan PROPOSED.
+15.	Route Optimizer nhận depot, điểm giao, tải trọng và distance matrix để sinh phiên bản tuyến đề xuất trong trip DRAFT; RoutePlan không có workflow status độc lập.
 16.	Dispatcher xem quãng đường, tải và thứ tự điểm; có thể phê duyệt hoặc override kèm lý do.
-17.	Sau khi route APPROVED, Dispatcher dispatch chuyến. Hệ thống xuất kho theo reservation và chuyển trip sang IN_PROGRESS.
-18.	Driver lần lượt cập nhật ARRIVED, DELIVERED hoặc FAILED cho các điểm thuộc chuyến của mình.
+17.	Sau một lần duyệt chuyến sang APPROVED với approved route pointer và nguồn lực độc quyền, Dispatcher xác nhận dispatch. ShipmentDispatched là nguồn ISSUE tồn kho duy nhất; trip chuyển IN_PROGRESS khi dispatch receipt đã được xác lập.
+18.	Driver lần lượt xác nhận DELIVERED hoặc FAILED trực tiếp từ điểm PENDING đúng lượt trên chuyến IN_PROGRESS; không có bước xác nhận đến nơi (quyết định tinh giản lifecycle 25/10/2026).
 19.	DELIVERED làm shipment hoàn tất và order COMPLETED. FAILED bắt buộc có reason và cho phép Dispatcher lên lịch giao lại.
 20.	Khi tất cả điểm có kết quả cuối, DeliveryTrip chuyển COMPLETED và cập nhật dashboard.
 6.4 Dự báo nhu cầu
@@ -247,10 +247,17 @@ DELIVERED	Giao thành công	Kết thúc
 CANCELED	Hủy trước dispatch	Kết thúc
 
 8.3 DeliveryTrip
+
+Quyết định người dùng 25/10/2026 cho module Delivery Trip & Vehicle Dispatch:
+[L-01–L-04](../../../delivery-trip-dispatch-lifecycle-refactor.vi.md) thay lifecycle
+cũ; đây là nghiệp vụ đích, chưa phải bằng chứng code đã triển khai. RoutePlan
+chỉ lưu phiên bản/bằng chứng duyệt, không workflow status độc lập. DeliveryAttempt
+chỉ lưu chứng từ terminal bất biến; không mở giao lại trong task này.
+Chỉ APPROVED/IN_PROGRESS giữ độc quyền xe/Driver; DRAFT không giữ dù đã có tuyến.
+
 Trạng thái	Ý nghĩa	Chuyển tiếp
-DRAFT	Dispatcher đang chọn shipment	PLANNED, CANCELED
-PLANNED	Đã có vehicle/driver và route proposed	APPROVED, DRAFT, CANCELED
-APPROVED	Dispatcher phê duyệt route	IN_PROGRESS, PLANNED, CANCELED
+DRAFT	Dispatcher gom hàng/chọn xe, Driver và lập tuyến; chưa giữ nguồn lực	APPROVED, CANCELED
+APPROVED	Một lần duyệt chuyến chốt route và giữ độc quyền nguồn lực	IN_PROGRESS, DRAFT khi mở lại trước pending dispatch/grant, CANCELED trước grant
 IN_PROGRESS	Đã xuất kho và khởi hành	COMPLETED
 COMPLETED	Mọi stop có kết quả cuối	Kết thúc
 CANCELED	Hủy trước dispatch	Kết thúc
@@ -288,7 +295,7 @@ FR-TRIP-003	Yêu cầu route optimization và lưu proposed plan cùng metrics.	
 FR-TRIP-004	Approve hoặc override route với reason.	Dispatcher	Must
 FR-TRIP-005	Dispatch idempotent, xuất kho đúng một lần và phát sự kiện.	Dispatcher	Must
 FR-DRV-001	Driver xem trip hiện tại và danh sách stop theo thứ tự.	Driver	Must
-FR-DRV-002	Driver cập nhật arrived/delivered/failed và reason.	Driver	Must
+FR-DRV-002	Driver cập nhật delivered/failed trực tiếp từ PENDING đúng lượt; failed có reason; không arrive action.	Driver	Must
 FR-TRIP-006	Hoàn tất trip và cập nhật order/shipment tương ứng.	System	Must
 
 9.4 AI, dashboard, thông báo và audit
@@ -360,7 +367,7 @@ Mục tiêu	Tối thiểu hóa tổng quãng đường hoặc chi phí quy đổ
 Ràng buộc tùy chọn	Time window và service time chỉ triển khai khi MVP ổn định.
 Đối chứng	Thứ tự nhập ban đầu và/hoặc nearest-neighbor.
 Phê duyệt	Dispatcher approve/override; lưu lý do và cả proposed route.
-Fallback	Không có distance matrix/solver lỗi thì giữ trip ở PLANNED và cho phép điều phối thủ công.
+Fallback	Không có distance matrix/solver lỗi thì giữ trip ở DRAFT và cho phép lập tuyến thủ công; không giữ nguồn lực trước approval.
 
 12. Dashboard, thông báo và báo cáo
 Nhóm	Thông tin tối thiểu
@@ -415,4 +422,3 @@ R-06	Kubernetes chiếm thời gian	Trung bình	Docker Compose cho dev; K8s ch�
 R-07	Tích hợp muộn	Cao	Contract-first; vertical slice Order→Event→Agent/Tool sớm; freeze feature 30/11.
 R-08	Benchmark không tái lập	Trung bình	Khóa dataset, seed, cấu hình môi trường, script và version model/solver.
 R-09	Rò dữ liệu tenant	Cao	Tenant context bắt buộc, negative test tự động và không cấp Agent quyền toàn cục.
-

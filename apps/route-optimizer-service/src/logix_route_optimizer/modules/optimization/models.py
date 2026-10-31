@@ -22,8 +22,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.ext.mutable import MutableDict, MutableList
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from logix_route_optimizer.db.base import Base, SCHEMA, TenantMutableMixin
-
+from logix_route_optimizer.db.base import SCHEMA, Base, TenantMutableMixin
 
 EMPTY_JSON = text("'{}'::jsonb")
 
@@ -90,10 +89,10 @@ class OptimizationRun(TenantMutableMixin, Base):
     parameters: Mapped[dict[str, object]] = mapped_column(
         MutableDict.as_mutable(JSONB), nullable=False, default=dict, server_default=EMPTY_JSON
     )
-    random_seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    random_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     stop_count: Mapped[int] = mapped_column(Integer, nullable=False)
     vehicle_capacity_weight: Mapped[Decimal] = mapped_column(Numeric(18, 3), nullable=False)
-    vehicle_capacity_volume: Mapped[Decimal] = mapped_column(Numeric(18, 3), nullable=False)
+    vehicle_capacity_volume: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     correlation_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(
@@ -165,7 +164,7 @@ class OptimizationStop(TenantMutableMixin, Base):
     latitude: Mapped[Decimal] = mapped_column(Numeric(9, 6), nullable=False)
     longitude: Mapped[Decimal] = mapped_column(Numeric(9, 6), nullable=False)
     demand_weight: Mapped[Decimal] = mapped_column(Numeric(18, 3), nullable=False)
-    demand_volume: Mapped[Decimal] = mapped_column(Numeric(18, 3), nullable=False)
+    demand_volume: Mapped[Decimal] = mapped_column(Numeric(18, 6), nullable=False)
     service_duration_seconds: Mapped[int] = mapped_column(
         Integer, nullable=False, default=0, server_default=text("0")
     )

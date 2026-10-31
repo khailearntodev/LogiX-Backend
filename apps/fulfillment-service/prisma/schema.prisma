@@ -29,6 +29,7 @@ model Shipment {
   totalVolume             Decimal                 @map("total_volume") @db.Decimal(18, 6)
   reservationGroupId      String                  @map("reservation_group_id") @db.Uuid
   assignedTripId          String?                 @map("assigned_trip_id") @db.Uuid
+  tripClaimId             String?                 @map("trip_claim_id") @db.Uuid
   dispatchIssuedAt        DateTime?               @map("dispatch_issued_at") @db.Timestamptz(6)
   readyAt                 DateTime?               @map("ready_at") @db.Timestamptz(6)
   deliveredAt             DateTime?               @map("delivered_at") @db.Timestamptz(6)
@@ -41,6 +42,7 @@ model Shipment {
   items                   ShipmentItem[]
   statusHistory           ShipmentStatusHistory[]
   dispatchIntent          ShipmentDispatchIntent?
+  tripReceipts            ShipmentTripReceipt[]
 
   @@unique([tenantId, orderId], map: "ux_shipments_order")
   @@unique([tenantId, shipmentNumber], map: "ux_shipments_number")
@@ -49,32 +51,76 @@ model Shipment {
   @@schema("fulfillment")
 }
 
+model ShipmentTripReceipt {
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  requestId       String   @map("request_id") @db.Uuid
+  shipmentId      String   @map("shipment_id") @db.Uuid
+  tripId          String   @map("trip_id") @db.Uuid
+  claimId         String   @map("claim_id") @db.Uuid
+  actorId         String   @map("actor_id") @db.Uuid
+  operation       String   @db.VarChar(10)
+  requestPayload  Json     @map("request_payload")
+  responsePayload Json     @map("response_payload")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  shipment        Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@unique([tenantId, requestId], map: "ux_shipment_trip_receipts_request")
+  @@index([tenantId, shipmentId, claimId], map: "ix_shipment_trip_receipts_claim")
+  @@map("shipment_trip_receipts")
+  @@schema("fulfillment")
+}
+
 model ShipmentDispatchIntent {
-  id                 String   @id @default(uuid()) @db.Uuid
-  tenantId           String   @map("tenant_id") @db.Uuid
-  shipmentId         String   @unique @map("shipment_id") @db.Uuid
-  orderVersion       BigInt   @map("order_version")
-  shipmentVersion    BigInt   @map("shipment_version")
-  actorId            String   @map("actor_id") @db.Uuid
-  correlationId      String   @map("correlation_id") @db.Uuid
-  status             String   @db.VarChar(20)
-  rejectionReason    String?  @map("rejection_reason") @db.VarChar(100)
-  attemptCount       Int      @default(0) @map("attempt_count")
-  nextAttemptAt      DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  shipment           Shipment @relation(fields: [shipmentId], references: [id])
+  id              String   @id @default(uuid()) @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  shipmentId      String   @unique @map("shipment_id") @db.Uuid
+  orderVersion    BigInt   @map("order_version")
+  shipmentVersion BigInt   @map("shipment_version")
+  actorId         String   @map("actor_id") @db.Uuid
+  correlationId   String   @map("correlation_id") @db.Uuid
+  status          String   @db.VarChar(20)
+  batchId         String?  @map("batch_id") @db.Uuid
+  grantReceipt    Json?    @map("grant_receipt")
+  rejectionReason String?  @map("rejection_reason") @db.VarChar(100)
+  attemptCount    Int      @default(0) @map("attempt_count")
+  nextAttemptAt   DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  shipment        Shipment @relation(fields: [shipmentId], references: [id])
 
   @@index([status, updatedAt], map: "ix_dispatch_intent_recovery")
   @@map("shipment_dispatch_intents")
   @@schema("fulfillment")
 }
 
+model ShipmentDispatchBatch {
+  id            String   @id @db.Uuid
+  tenantId      String   @map("tenant_id") @db.Uuid
+  tripId        String   @map("trip_id") @db.Uuid
+  payload       Json
+  payloadHash   String   @map("payload_hash") @db.VarChar(64)
+  status        String   @db.VarChar(20)
+  stage         String   @db.VarChar(20)
+  decision      Json?
+  response      Json?
+  attemptCount  Int      @default(0) @map("attempt_count")
+  nextAttemptAt DateTime @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError     String?  @map("last_error") @db.VarChar(100)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([tenantId, id], map: "ux_shipment_dispatch_batch_request")
+  @@index([status, nextAttemptAt], map: "ix_shipment_batch_recovery")
+  @@map("shipment_dispatch_batches")
+  @@schema("fulfillment")
+}
+
 model ShipmentOrderCursor {
-  tenantId       String @map("tenant_id") @db.Uuid
-  orderId        String @map("order_id") @db.Uuid
-  orderVersion   BigInt @map("order_version")
-  canceled       Boolean @default(false)
+  tenantId     String  @map("tenant_id") @db.Uuid
+  orderId      String  @map("order_id") @db.Uuid
+  orderVersion BigInt  @map("order_version")
+  canceled     Boolean @default(false)
 
   @@id([tenantId, orderId])
   @@map("shipment_order_cursors")
@@ -162,6 +208,12 @@ model InboxEvent {
   eventType        String    @map("event_type") @db.VarChar(100)
   aggregateId      String?   @map("aggregate_id") @db.Uuid
   aggregateVersion BigInt?   @map("aggregate_version")
+  eventPayload     Json?     @map("event_payload") @db.JsonB
+  payloadHash      String?   @map("payload_hash") @db.VarChar(64)
+  semanticKey      String?   @map("semantic_key") @db.VarChar(100)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.VarChar(100)
   processedAt      DateTime  @default(now()) @map("processed_at") @db.Timestamptz(6)
   outcome          String    @db.VarChar(30)
   errorCode        String?   @map("error_code") @db.VarChar(100)
@@ -173,6 +225,8 @@ model InboxEvent {
   @@unique([consumerName, eventId], map: "ux_inbox_consumer_event")
   @@index([tenantId, eventId], map: "ix_inbox_tenant_event")
   @@index([tenantId, aggregateId, aggregateVersion], map: "ix_inbox_aggregate")
+  @@index([consumerName, outcome, nextAttemptAt], map: "ix_inbox_deferred_retry")
+  @@index([tenantId, consumerName, semanticKey], map: "ix_inbox_semantic_result")
   @@map("inbox_events")
   @@schema("fulfillment")
 }

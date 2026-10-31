@@ -6,6 +6,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
+import { MEMBER_RESTRICTED_PERMISSIONS } from '@logix/auth';
 import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateRoleDto } from '../dto/create-role.dto.js';
@@ -13,6 +14,9 @@ import { UpdateRoleDto } from '../dto/update-role.dto.js';
 
 export const SYSTEM_ROLE_CODES = ['OWNER', 'ADMIN', 'MEMBER'];
 export const BLACKLIST_ROLE_CODES = [...SYSTEM_ROLE_CODES, 'SUPER_ADMIN'];
+const RESTRICTED_MEMBER_PERMISSION_CODES = new Set<string>(
+  MEMBER_RESTRICTED_PERMISSIONS,
+);
 
 @Injectable()
 export class RolesService {
@@ -103,7 +107,11 @@ export class RolesService {
 
       // 3. MEMBER: Chỉ các quyền xem (action === 'read')
       const memberPerms = allPermissions
-        .filter((p) => p.action === 'read')
+        .filter(
+          (p) =>
+            p.action === 'read' &&
+            !RESTRICTED_MEMBER_PERMISSION_CODES.has(p.code),
+        )
         .map((p) => ({
           tenantId,
           roleId: createdRoles['MEMBER'].id,

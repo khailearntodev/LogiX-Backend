@@ -74,9 +74,29 @@ timeout. Different replay content or a request key used for another order
 returns 409. A database CHECK forbids partial decisions and simultaneous
 cancellation/dispatch. Deploy the additive migration before the new code.
 
-Fulfillment's dispatch-intent worker, shipment lifecycle events, Inventory ISSUE
-and the confirmation dialog are subsequent phase-5 work; this internal endpoint
-alone does not enable user dispatch.
+Fulfillment owns durable dispatch intents and Shipment lifecycle events.
+Inventory owns eventual ISSUE, not this grant endpoint.
+
+### Phase 4 whole-set authorization
+
+`POST /internal/orders/authorize-dispatch-batch` is restricted to Fulfillment's
+verified internal caller and tenant. The strict shared contract binds request,
+trip, actor, approved plan, input hash, trip/dispatch versions and every Shipment,
+Order, reservation and stable child dispatchRequestId. The request-level lock
+serializes even conflicting retries naming disjoint Orders; sorted Order locks
+are the same authority used by direct grants and cancellation.
+
+Order validates every member before writing any grant. The owner transaction
+persists either the complete GRANTED decision and all existing per-Order grant
+fields, or REJECTED with zero grants. Exact replay returns the original durable
+decision before consulting newer Order versions; changed payload or actor is
+409. Direct single-Shipment authorization remains supported and cannot bypass
+the cancellation/grant lock.
+
+`OrderDispatchBatch` is the immutable full-set decision header: one Order row
+cannot represent a many-Order rejection/replay identity. This is not a second
+dispatch workflow. Deploy `20261025162402_phase4_durable_dispatch` before owner
+code. A grant is irrevocable: cancellation/recovery must never release its stock.
 
 ## Events and reconciliation
 

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../database/prisma.service.js';
 import { ShipmentDispatchService } from './shipment-dispatch.service.js';
 import { ShipmentRecoveryService } from './shipment-recovery.service.js';
+import { ShipmentDispatchBatchService } from './shipment-dispatch-batch.service.js';
 
 describe('Shipment recovery scheduling', () => {
   it('continues after failure and schedules persisted bounded backoff without discarding unknown decisions', async () => {
@@ -11,6 +12,7 @@ describe('Shipment recovery scheduling', () => {
       { id: 'request-b', tenantId: 'tenant', shipmentId: 'b', attemptCount: 3 },
     ];
     const prisma = {
+      shipmentDispatchBatch: { findMany: vi.fn().mockResolvedValue([]) },
       shipmentDispatchIntent: {
         findMany: vi.fn(async () => intents),
         updateMany: vi.fn(),
@@ -31,6 +33,7 @@ describe('Shipment recovery scheduling', () => {
       prisma as unknown as PrismaService,
       dispatch as unknown as ShipmentDispatchService,
       config,
+      {} as ShipmentDispatchBatchService,
     );
     await service.recover();
     expect(dispatch.complete).toHaveBeenCalledTimes(2);
@@ -40,7 +43,7 @@ describe('Shipment recovery scheduling', () => {
     });
     expect(prisma.shipmentDispatchIntent.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { status: 'PENDING', nextAttemptAt: { lte: expect.any(Date) } },
+        where: { status: 'PENDING', batchId: null, nextAttemptAt: { lte: expect.any(Date) } },
       }),
     );
   });

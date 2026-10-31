@@ -52,6 +52,7 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   SalesOrder: 'SalesOrder',
+  OrderDispatchBatch: 'OrderDispatchBatch',
   OrderNumberSequence: 'OrderNumberSequence',
   OrderLine: 'OrderLine',
   OrderStatusHistory: 'OrderStatusHistory',
@@ -120,6 +121,17 @@ export const SalesOrderScalarFieldEnum = {
 } as const
 
 export type SalesOrderScalarFieldEnum = (typeof SalesOrderScalarFieldEnum)[keyof typeof SalesOrderScalarFieldEnum]
+
+
+export const OrderDispatchBatchScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  payload: 'payload',
+  decision: 'decision',
+  createdAt: 'createdAt'
+} as const
+
+export type OrderDispatchBatchScalarFieldEnum = (typeof OrderDispatchBatchScalarFieldEnum)[keyof typeof OrderDispatchBatchScalarFieldEnum]
 
 
 export const OrderNumberSequenceScalarFieldEnum = {

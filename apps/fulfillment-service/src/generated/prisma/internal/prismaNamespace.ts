@@ -398,7 +398,9 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 
 export const ModelName = {
   Shipment: 'Shipment',
+  ShipmentTripReceipt: 'ShipmentTripReceipt',
   ShipmentDispatchIntent: 'ShipmentDispatchIntent',
+  ShipmentDispatchBatch: 'ShipmentDispatchBatch',
   ShipmentOrderCursor: 'ShipmentOrderCursor',
   ShipmentItem: 'ShipmentItem',
   ShipmentStatusHistory: 'ShipmentStatusHistory',
@@ -419,7 +421,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "shipment" | "shipmentDispatchIntent" | "shipmentOrderCursor" | "shipmentItem" | "shipmentStatusHistory" | "outboxEvent" | "inboxEvent"
+    modelProps: "shipment" | "shipmentTripReceipt" | "shipmentDispatchIntent" | "shipmentDispatchBatch" | "shipmentOrderCursor" | "shipmentItem" | "shipmentStatusHistory" | "outboxEvent" | "inboxEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -497,6 +499,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ShipmentTripReceipt: {
+      payload: Prisma.$ShipmentTripReceiptPayload<ExtArgs>
+      fields: Prisma.ShipmentTripReceiptFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShipmentTripReceiptFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShipmentTripReceiptFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>
+        }
+        findFirst: {
+          args: Prisma.ShipmentTripReceiptFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShipmentTripReceiptFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>
+        }
+        findMany: {
+          args: Prisma.ShipmentTripReceiptFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>[]
+        }
+        create: {
+          args: Prisma.ShipmentTripReceiptCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>
+        }
+        createMany: {
+          args: Prisma.ShipmentTripReceiptCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShipmentTripReceiptCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>[]
+        }
+        delete: {
+          args: Prisma.ShipmentTripReceiptDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>
+        }
+        update: {
+          args: Prisma.ShipmentTripReceiptUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShipmentTripReceiptDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShipmentTripReceiptUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShipmentTripReceiptUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShipmentTripReceiptUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentTripReceiptPayload>
+        }
+        aggregate: {
+          args: Prisma.ShipmentTripReceiptAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShipmentTripReceipt>
+        }
+        groupBy: {
+          args: Prisma.ShipmentTripReceiptGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShipmentTripReceiptGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShipmentTripReceiptCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShipmentTripReceiptCountAggregateOutputType> | number
+        }
+      }
+    }
     ShipmentDispatchIntent: {
       payload: Prisma.$ShipmentDispatchIntentPayload<ExtArgs>
       fields: Prisma.ShipmentDispatchIntentFieldRefs
@@ -568,6 +644,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.ShipmentDispatchIntentCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.ShipmentDispatchIntentCountAggregateOutputType> | number
+        }
+      }
+    }
+    ShipmentDispatchBatch: {
+      payload: Prisma.$ShipmentDispatchBatchPayload<ExtArgs>
+      fields: Prisma.ShipmentDispatchBatchFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ShipmentDispatchBatchFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ShipmentDispatchBatchFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>
+        }
+        findFirst: {
+          args: Prisma.ShipmentDispatchBatchFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ShipmentDispatchBatchFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>
+        }
+        findMany: {
+          args: Prisma.ShipmentDispatchBatchFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>[]
+        }
+        create: {
+          args: Prisma.ShipmentDispatchBatchCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>
+        }
+        createMany: {
+          args: Prisma.ShipmentDispatchBatchCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ShipmentDispatchBatchCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>[]
+        }
+        delete: {
+          args: Prisma.ShipmentDispatchBatchDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>
+        }
+        update: {
+          args: Prisma.ShipmentDispatchBatchUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>
+        }
+        deleteMany: {
+          args: Prisma.ShipmentDispatchBatchDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ShipmentDispatchBatchUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ShipmentDispatchBatchUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>[]
+        }
+        upsert: {
+          args: Prisma.ShipmentDispatchBatchUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ShipmentDispatchBatchPayload>
+        }
+        aggregate: {
+          args: Prisma.ShipmentDispatchBatchAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateShipmentDispatchBatch>
+        }
+        groupBy: {
+          args: Prisma.ShipmentDispatchBatchGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShipmentDispatchBatchGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ShipmentDispatchBatchCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ShipmentDispatchBatchCountAggregateOutputType> | number
         }
       }
     }
@@ -998,6 +1148,7 @@ export const ShipmentScalarFieldEnum = {
   totalVolume: 'totalVolume',
   reservationGroupId: 'reservationGroupId',
   assignedTripId: 'assignedTripId',
+  tripClaimId: 'tripClaimId',
   dispatchIssuedAt: 'dispatchIssuedAt',
   readyAt: 'readyAt',
   deliveredAt: 'deliveredAt',
@@ -1012,6 +1163,23 @@ export const ShipmentScalarFieldEnum = {
 export type ShipmentScalarFieldEnum = (typeof ShipmentScalarFieldEnum)[keyof typeof ShipmentScalarFieldEnum]
 
 
+export const ShipmentTripReceiptScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  requestId: 'requestId',
+  shipmentId: 'shipmentId',
+  tripId: 'tripId',
+  claimId: 'claimId',
+  actorId: 'actorId',
+  operation: 'operation',
+  requestPayload: 'requestPayload',
+  responsePayload: 'responsePayload',
+  createdAt: 'createdAt'
+} as const
+
+export type ShipmentTripReceiptScalarFieldEnum = (typeof ShipmentTripReceiptScalarFieldEnum)[keyof typeof ShipmentTripReceiptScalarFieldEnum]
+
+
 export const ShipmentDispatchIntentScalarFieldEnum = {
   id: 'id',
   tenantId: 'tenantId',
@@ -1021,6 +1189,8 @@ export const ShipmentDispatchIntentScalarFieldEnum = {
   actorId: 'actorId',
   correlationId: 'correlationId',
   status: 'status',
+  batchId: 'batchId',
+  grantReceipt: 'grantReceipt',
   rejectionReason: 'rejectionReason',
   attemptCount: 'attemptCount',
   nextAttemptAt: 'nextAttemptAt',
@@ -1029,6 +1199,26 @@ export const ShipmentDispatchIntentScalarFieldEnum = {
 } as const
 
 export type ShipmentDispatchIntentScalarFieldEnum = (typeof ShipmentDispatchIntentScalarFieldEnum)[keyof typeof ShipmentDispatchIntentScalarFieldEnum]
+
+
+export const ShipmentDispatchBatchScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tripId: 'tripId',
+  payload: 'payload',
+  payloadHash: 'payloadHash',
+  status: 'status',
+  stage: 'stage',
+  decision: 'decision',
+  response: 'response',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ShipmentDispatchBatchScalarFieldEnum = (typeof ShipmentDispatchBatchScalarFieldEnum)[keyof typeof ShipmentDispatchBatchScalarFieldEnum]
 
 
 export const ShipmentOrderCursorScalarFieldEnum = {
@@ -1115,6 +1305,12 @@ export const InboxEventScalarFieldEnum = {
   eventType: 'eventType',
   aggregateId: 'aggregateId',
   aggregateVersion: 'aggregateVersion',
+  eventPayload: 'eventPayload',
+  payloadHash: 'payloadHash',
+  semanticKey: 'semanticKey',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
   processedAt: 'processedAt',
   outcome: 'outcome',
   errorCode: 'errorCode',
@@ -1437,7 +1633,9 @@ export interface PrismaClientOptionsWithAdapter extends PrismaClientBaseOptions 
 export type PrismaClientOptions = PrismaClientOptionsWithAccelerateUrl | PrismaClientOptionsWithAdapter
 export type GlobalOmitConfig = {
   shipment?: Prisma.ShipmentOmit
+  shipmentTripReceipt?: Prisma.ShipmentTripReceiptOmit
   shipmentDispatchIntent?: Prisma.ShipmentDispatchIntentOmit
+  shipmentDispatchBatch?: Prisma.ShipmentDispatchBatchOmit
   shipmentOrderCursor?: Prisma.ShipmentOrderCursorOmit
   shipmentItem?: Prisma.ShipmentItemOmit
   shipmentStatusHistory?: Prisma.ShipmentStatusHistoryOmit

@@ -14,7 +14,7 @@ import type * as Prisma from "../internal/prismaNamespace.js"
 
 /**
  * Model OrderNumberSequence
- * Per-tenant daily counter for order numbers (SO-YYYYMMDD-000001); incremented with UPDATE ... RETURNING.
+ *
  */
 export type OrderNumberSequenceModel = runtime.Types.Result.DefaultSelection<Prisma.$OrderNumberSequencePayload>
 

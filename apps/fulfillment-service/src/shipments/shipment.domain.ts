@@ -49,6 +49,24 @@ export const ShipmentErrors = {
       409,
       'Đang xử lý xuất giao, vui lòng tải lại',
     ),
+  tripClaimConflict: () =>
+    new ShipmentError(
+      'SHIPMENT_TRIP_CLAIM_CONFLICT',
+      409,
+      'Lô giao đang được chuyến khác giữ hoặc không thể thay đổi claim',
+    ),
+  tripRequestConflict: () =>
+    new ShipmentError(
+      'SHIPMENT_TRIP_REQUEST_CONFLICT',
+      409,
+      'Mã yêu cầu đã được dùng với nội dung khác',
+    ),
+  snapshotInvalid: () =>
+    new ShipmentError(
+      'SHIPMENT_SNAPSHOT_INVALID',
+      409,
+      'Ảnh chụp địa chỉ hoặc nhu cầu lô giao không hợp lệ',
+    ),
   unavailable: () =>
     new ShipmentError(
       'ORDER_UNAVAILABLE',

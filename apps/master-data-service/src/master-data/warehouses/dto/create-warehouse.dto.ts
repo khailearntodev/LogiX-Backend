@@ -6,12 +6,16 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class CreateWarehouseDto {
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
   @IsString()
-  @IsNotEmpty({ message: 'Mã kho không được để trống' })
   @MaxLength(50)
-  code!: string;
+  code?: string;
 
   @IsString()
   @IsNotEmpty({ message: 'Tên kho không được để trống' })

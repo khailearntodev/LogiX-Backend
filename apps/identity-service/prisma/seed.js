@@ -1,6 +1,8 @@
 import bcrypt from 'bcrypt';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../dist/generated/prisma/client.js';
+import { resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 export const SYSTEM_PERMISSIONS = [
   { code: 'fulfillment:shipment:read', module: 'FULFILLMENT', resource: 'shipment', action: 'read',
@@ -79,6 +81,14 @@ export const SYSTEM_PERMISSIONS = [
     description: 'Cho phép lập kế hoạch và tạo mới chuyến xe vận tải',
   },
   {
+    code: 'transport:trip:update',
+    module: 'TRANSPORT',
+    resource: 'trip',
+    action: 'update',
+    name: 'Cập nhật chuyến xe',
+    description: 'Cho phép cập nhật manifest, phân công và trạng thái kế hoạch chuyến xe',
+  },
+  {
     code: 'transport:trip:dispatch',
     module: 'TRANSPORT',
     resource: 'trip',
@@ -87,12 +97,68 @@ export const SYSTEM_PERMISSIONS = [
     description: 'Cho phép điều phối phương tiện, gán tài xế và xuất phát/hoàn thành chuyến xe',
   },
   {
+    code: 'transport:route:read',
+    module: 'TRANSPORT',
+    resource: 'route',
+    action: 'read',
+    name: 'Xem tuyến vận chuyển',
+    description: 'Cho phép xem đề xuất, kế hoạch và lịch sử tuyến vận chuyển',
+  },
+  {
+    code: 'transport:route:optimize',
+    module: 'TRANSPORT',
+    resource: 'route',
+    action: 'execute',
+    name: 'Tối ưu tuyến vận chuyển',
+    description: 'Cho phép yêu cầu tạo đề xuất tuyến từ bộ tối ưu',
+  },
+  {
+    code: 'transport:route:approve',
+    module: 'TRANSPORT',
+    resource: 'route',
+    action: 'approve',
+    name: 'Duyệt tuyến vận chuyển',
+    description: 'Cho phép duyệt hoặc thay thế tuyến sau khi xác nhận',
+  },
+  {
+    code: 'transport:driver:read',
+    module: 'TRANSPORT',
+    resource: 'driver',
+    action: 'read',
+    name: 'Xem chuyến được giao',
+    description: 'Cho phép đọc chuyến và điểm giao theo phạm vi tài xế được phép',
+  },
+  {
+    code: 'transport:driver:update',
+    module: 'TRANSPORT',
+    resource: 'driver',
+    action: 'update',
+    name: 'Ghi nhận kết quả chuyến',
+    description: 'Cho phép tài xế ghi nhận đến điểm và kết quả giao theo quyền sở hữu',
+  },
+  {
     code: 'transport:vehicle:manage',
     module: 'TRANSPORT',
     resource: 'vehicle',
     action: 'manage',
     name: 'Quản lý phương tiện & tài xế',
     description: 'Cho phép thêm mới, bảo dưỡng và quản lý hồ sơ phương tiện, tài xế',
+  },
+  {
+    code: 'master-data:driver:read',
+    module: 'MASTER_DATA',
+    resource: 'driver',
+    action: 'read',
+    name: 'Xem hồ sơ tài xế',
+    description: 'Cho phép tra cứu hồ sơ tài xế và dữ liệu tên qua Identity',
+  },
+  {
+    code: 'master-data:driver:manage',
+    module: 'MASTER_DATA',
+    resource: 'driver',
+    action: 'manage',
+    name: 'Quản lý hồ sơ tài xế',
+    description: 'Cho phép tạo, cập nhật, kích hoạt và vô hiệu hóa hồ sơ tài xế',
   },
 
   // --- Phân hệ Quản lý Đơn hàng (ORDER) ---
@@ -272,7 +338,9 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
-  console.error('❌ Lỗi khi seed dữ liệu:', err);
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  main().catch((err) => {
+    console.error('❌ Lỗi khi seed dữ liệu:', err);
+    process.exit(1);
+  });
+}

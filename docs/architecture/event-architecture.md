@@ -48,12 +48,12 @@ Fields may be represented differently by the implementation, but the semantic co
 | `StockReserved` | Inventory | Record successful all-or-nothing reservation | `reservation_group_id + version` |
 | `StockReleased` | Inventory | Wake pending stock retries after release | `reservation_group_id + version` |
 | `ShipmentReady` | Fulfillment | Make shipment available to Dispatcher | `shipment_id` |
-| `TripPlanned` | Transport | Permit route optimization request | `trip_id + version` |
+| `TripPlanned` | Transport | Legacy contract; lifecycle L-01 does not emit a PLANNED transition or require this event to optimize a DRAFT | `trip_id + version` |
 | `RouteOptimized` | Route Optimizer | Persist proposed route/metrics | `route_request_id` |
 | `RouteApproved` | Transport | Permit dispatch | `route_plan_id` |
-| `TripDispatched` | Transport | Trigger stock issue / driver notification | `trip_id + dispatch_version` |
-| `DeliveryCompleted` | Driver/Transport | Complete shipment/order | `stop_id + attempt` |
-| `DeliveryFailed` | Driver/Transport | Notify Dispatcher / enable reschedule | `stop_id + attempt` |
+| `TripDispatched` | Transport | Trip-level audit / driver notification; never a second Inventory ISSUE trigger | `trip_id + dispatch_version` |
+| `DeliveryCompleted` | Transport | Fulfillment projects the Shipment to `DELIVERED`; Order follows Shipment lifecycle | `tenant_id + trip_stop_id + request_id` |
+| `DeliveryFailed` | Transport | Fulfillment projects the Shipment to `FAILED`; Order follows Shipment lifecycle | `tenant_id + trip_stop_id + request_id` |
 | `ForecastCompleted` | Forecast | Dashboard/notification update | `forecast_run_id` |
 | `AgentExecutionCompleted` | Agent | Audit/metrics | `agent_execution_id` |
 
@@ -74,7 +74,7 @@ Fulfillment Service
   -> ShipmentReady
 
 Transport Service
-  -> TripPlanned / RouteApproved / TripDispatched
+  -> RouteApproved / TripDispatched
 
 Forecast Service
   -> ForecastCompleted
@@ -82,6 +82,27 @@ Forecast Service
 Agent Service
   -> AgentExecutionCompleted
 ```
+
+For the Delivery Trip & Vehicle Dispatch task, the owner-approved
+[lifecycle refactor L-01–L-04](../../../delivery-trip-dispatch-lifecycle-refactor.vi.md)
+supersedes the older planning/arrival workflow: optimize while DRAFT, approve
+once, then dispatch; stop results go directly from PENDING to DELIVERED/FAILED.
+Do not repurpose TripPlanned or silently delete published legacy contracts.
+Inventory ISSUE remains driven solely by ShipmentDispatched; TripDispatched
+is a trip-level notification/audit fact, not a second stock trigger. Delivery
+results are applied by Fulfillment, then projected to Order via Shipment
+lifecycle events. No new arrival event or redelivery flow is introduced.
+These are target contracts; schema/interface presence is not runtime proof.
+
+`DeliveryCompleted` and `DeliveryFailed` use event version 2 and carry
+`tripId`, `tripStopId`, `shipmentId`, `driverId`, `attempt`, `occurredAt`, and
+the terminal command `requestId`; `DeliveryFailed` additionally carries its
+failure `reason`. Fulfillment validates the Transport producer and trip/stop/
+shipment binding. Its Inbox durably defers a result until the assigned Shipment
+is locally `DISPATCHED`; after applying a result, only the Shipment lifecycle
+outbox drives Order projection. Semantic duplicates do not repeat Shipment
+history or lifecycle events, and conflicting terminal results are retained as
+diagnostics without overwriting terminal Shipment state.
 
 A consumer must not rewrite the meaning of a producer-owned event.
 
@@ -233,3 +254,103 @@ event ID checks the persisted shipment/request receipt, not only Inbox.
 Stock movements emit `StockIssued`, never `InventoryAdjusted` for ISSUE.
 Permanent malformed events retain the existing observable retry/blocking
 behavior; automatic DLQ and full phase-5 benchmark remain separate work.
+
+## 14. Transport event and integration contracts
+
+The envelope, outbox/Inbox and ownership rules above remain system-wide.
+This section specializes them for Transport; its versions and protocols do not
+silently replace contracts used by other domains. Implementation progress and
+test results belong to the
+[execution record](../plans/active/2026-10-25-delivery-trip-dispatch.md).
+
+Runtime Transport event schemas are owned by
+[`@logix/messaging`](../../libs/messaging/src/interfaces/transport.contract.ts).
+Schema availability does not prove producer, consumer, relay or recovery
+integration. Existing version-1 interfaces remain backward compatible.
+
+The `DeliveryCompleted`/`DeliveryFailed` result envelope schema is event
+version 2 and requires a non-null `actorId`. Its payload binds the tenant and
+trip aggregate and carries `driverId` and `assigneeUserId` separately from the
+acting principal. An authorized user acting for the assignee is valid; the
+envelope actor must not be inferred from, or replaced with, the assignee.
+Event/payload tenant mismatch, payload trip/aggregate mismatch, event/outcome
+mismatch and malformed identity/version values must be rejected.
+
+Related command and receipt contracts cover:
+
+- versioned, idempotency-keyed claim and release request/receipt shapes;
+- READY_TO_SHIP pool page shape, default 20/max 100, stable createdAt/id descending;
+- whole-set batch grant request and all-or-none decision shapes;
+- actor/assignee/target/version/payload-bound preview and confirmation shape;
+- delivery-result defer receipt for `DISPATCH_PROJECTION_NOT_READY`; and
+- optimizer request/run identity bound to tenant, trip, request, and input hash.
+
+The persistence requirements for claim/release locking/replay, pool filtering/pagination,
+whole-set grant persistence/recovery, 300-second single-use preview, durable
+result defer/reconciliation and canonical UTF-8 SHA-256 optimizer run binding
+are recorded in [database design §10.8](database-design.md#108-transport-cross-service-persistence-contracts).
+The existing version-1 minimal `TripDispatched` and delivery event interfaces are
+not silently widened; consumers must opt into the version-2 result contract
+through an explicitly coordinated rollout.
+
+## 15. Domain audit event: Driver account-link correction
+
+This event applies the existing system audit vocabulary to one domain action;
+it does not introduce a second audit authority or a mandatory event shape for
+unrelated business actions.
+
+Master Data owns `outbox_events` rows for `DriverUserRelinked`
+event version 1. Driver CAS and outbox insert are one local transaction; an audit
+insert failure rolls back the user/version change. Preview and all rejected
+commands create no success event. The event carries tenant, Driver aggregate and
+new version, UUID correlation/source-event identity and occurrence time.
+Its payload uses the existing AuditLog vocabulary:
+`actorId` from the authenticated JWT (not new/old assignee or request body),
+`actorType=USER`, `action=driver.relink-user`, `entityType=Driver`, `entityId`,
+`outcome=SUCCESS`, before/after user IDs and versions, `metadata.reason`,
+correlation/causation, source service/event ID and timestamp. It does not copy
+email/display names into the event or log the reason/payload.
+
+This is durable **local pending audit evidence**, not a new audit authority.
+Audit Service remains authoritative for centralized immutable audit queries.
+Local persistence alone does not establish relay or Audit ingestion.
+Delivery status and observed integration evidence belong to the execution
+record, not to this event's ownership contract.
+Existing standard outbox fields (`published_at`, attempts, next-attempt,
+last-error and aggregate ordering index) retain compatibility with the shared
+relay store for that later integration. Operators must retain pending evidence
+until an authorized relay/consumer rollout has been proven.
+
+The separate read-only preview is not the persisted, single-use 300-second Transport
+command preview foundation in §14. Relink uses explicit old-user/version binding
+and full revalidation on confirmation; no token or reservation is issued.
+
+## 16. Delivery route approval (Phase 3)
+
+Transport publishes `RouteApproved` event version **2**, aggregate DeliveryTrip,
+only from the same transaction that creates the immutable approved plan,
+per-version vehicle/Driver snapshots, approval receipt and current stop order.
+The runtime payload schema is `routeApprovedPayloadV2Schema` in
+`@logix/messaging/interfaces/trip-route.contract.ts`. It binds tenant, acting
+user, trip, exact route/version/hash, source/original plan, command request,
+approve/override action/reason, resources, approval time and before/after trip
+versions. It does not claim the trip is dispatched or fabricate optimizer data.
+The existing v1 interface is not silently changed.
+
+The Transport outbox relay now uses the existing ordered `FOR UPDATE SKIP LOCKED`
+store, bounded batches and retry scheduling. Broker ACK before database commit
+can redeliver an identical `eventId`; consumers must use Inbox deduplication.
+The envelope parser adds the explicitly coordinated `RouteApproved` v2 to its
+existing v1 support; it still rejects unknown higher versions, so existing
+v1-only Order/Inventory consumers do not silently accept a new protocol.
+The owning handler must still validate its specific payload/version.
+Reopen emits `TripReopened` v1 with actor/reason and before/after evidence.
+This is pending local domain audit evidence, not proof of centralized Audit
+ingestion. No new workflow/lease table is introduced.
+
+`ShipmentCanceled` is consumed idempotently. For an APPROVED trip it clears the
+current plan pointer/sequences and returns to DRAFT while retaining immutable
+approval history, then recovers the existing durable release operation.
+IN_PROGRESS/non-rejected dispatch evidence blocks consumption and resource
+release until the existing authority is explicitly recovered; the event remains
+retryable instead of being acknowledged as handled.

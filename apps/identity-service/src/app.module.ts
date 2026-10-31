@@ -11,12 +11,16 @@ import { OrganizationsModule } from './organizations/organizations.module.js';
 import { IamModule } from './iam/iam.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { DriverUsersModule } from './driver-users/driver-users.module.js';
+import { z } from 'zod';
 
 @Module({
   imports: [
     // Configuration with Zod validation — fails fast if env vars missing
     LogixConfigModule.forRoot({
-      schema: databaseConfigSchema,
+      schema: databaseConfigSchema.extend({
+        INTERNAL_SERVICE_JWT_SECRET: z.string().min(32),
+      }),
       envFilePath: ['apps/identity-service/.env', '.env'],
     }),
 
@@ -32,6 +36,7 @@ import { AdminModule } from './admin/admin.module.js';
     OrganizationsModule,
     IamModule,
     AdminModule,
+    DriverUsersModule,
   ],
   controllers: [AppController],
   providers: [

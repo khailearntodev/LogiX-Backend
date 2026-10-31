@@ -1340,7 +1340,13 @@ export type $TripStopPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     plannedSequence: number
     approvedSequence: number | null
     status: string
+    /**
+     * Compatibility counter retained for reads; HTTP retries must not increment it.
+     */
     currentAttempt: number
+    /**
+     * Historical arrival evidence retained as read-only data.
+     */
     arrivedAt: Date | null
     completedAt: Date | null
     createdAt: Date

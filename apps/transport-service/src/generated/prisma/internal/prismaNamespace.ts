@@ -405,7 +405,8 @@ export const ModelName = {
   DeliveryAttempt: 'DeliveryAttempt',
   TripDispatch: 'TripDispatch',
   OutboxEvent: 'OutboxEvent',
-  InboxEvent: 'InboxEvent'
+  InboxEvent: 'InboxEvent',
+  TripOperation: 'TripOperation'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -421,7 +422,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "deliveryTrip" | "tripShipment" | "tripStop" | "routePlan" | "routePlanStop" | "deliveryAttempt" | "tripDispatch" | "outboxEvent" | "inboxEvent"
+    modelProps: "deliveryTrip" | "tripShipment" | "tripStop" | "routePlan" | "routePlanStop" | "deliveryAttempt" | "tripDispatch" | "outboxEvent" | "inboxEvent" | "tripOperation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1091,6 +1092,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TripOperation: {
+      payload: Prisma.$TripOperationPayload<ExtArgs>
+      fields: Prisma.TripOperationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TripOperationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TripOperationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>
+        }
+        findFirst: {
+          args: Prisma.TripOperationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TripOperationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>
+        }
+        findMany: {
+          args: Prisma.TripOperationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>[]
+        }
+        create: {
+          args: Prisma.TripOperationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>
+        }
+        createMany: {
+          args: Prisma.TripOperationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TripOperationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>[]
+        }
+        delete: {
+          args: Prisma.TripOperationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>
+        }
+        update: {
+          args: Prisma.TripOperationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>
+        }
+        deleteMany: {
+          args: Prisma.TripOperationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TripOperationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TripOperationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>[]
+        }
+        upsert: {
+          args: Prisma.TripOperationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TripOperationPayload>
+        }
+        aggregate: {
+          args: Prisma.TripOperationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTripOperation>
+        }
+        groupBy: {
+          args: Prisma.TripOperationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TripOperationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TripOperationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TripOperationCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1137,6 +1212,8 @@ export const DeliveryTripScalarFieldEnum = {
   warehouseId: 'warehouseId',
   vehicleId: 'vehicleId',
   driverId: 'driverId',
+  driverUserId: 'driverUserId',
+  driverVersion: 'driverVersion',
   depotSnapshot: 'depotSnapshot',
   vehicleSnapshot: 'vehicleSnapshot',
   driverSnapshot: 'driverSnapshot',
@@ -1165,9 +1242,20 @@ export const TripShipmentScalarFieldEnum = {
   tenantId: 'tenantId',
   tripId: 'tripId',
   shipmentId: 'shipmentId',
+  orderId: 'orderId',
   warehouseId: 'warehouseId',
+  operationId: 'operationId',
+  state: 'state',
   weight: 'weight',
   volume: 'volume',
+  expectedShipmentVersion: 'expectedShipmentVersion',
+  shipmentVersion: 'shipmentVersion',
+  orderVersion: 'orderVersion',
+  claimRequest: 'claimRequest',
+  claimReceipt: 'claimReceipt',
+  releaseRequest: 'releaseRequest',
+  releaseReceipt: 'releaseReceipt',
+  shipmentSnapshot: 'shipmentSnapshot',
   assignedAt: 'assignedAt',
   removedAt: 'removedAt',
   createdAt: 'createdAt',
@@ -1209,7 +1297,6 @@ export const RoutePlanScalarFieldEnum = {
   tripId: 'tripId',
   planVersion: 'planVersion',
   routeRequestId: 'routeRequestId',
-  status: 'status',
   source: 'source',
   inputHash: 'inputHash',
   inputSnapshot: 'inputSnapshot',
@@ -1219,6 +1306,16 @@ export const RoutePlanScalarFieldEnum = {
   totalDistance: 'totalDistance',
   estimatedCost: 'estimatedCost',
   metrics: 'metrics',
+  optimizationRunId: 'optimizationRunId',
+  requestActorId: 'requestActorId',
+  requestHash: 'requestHash',
+  optimizerRequest: 'optimizerRequest',
+  optimizerResponse: 'optimizerResponse',
+  vehicleSnapshot: 'vehicleSnapshot',
+  driverSnapshot: 'driverSnapshot',
+  approvalRequestId: 'approvalRequestId',
+  approvalHash: 'approvalHash',
+  approvalReceipt: 'approvalReceipt',
   originalPlanId: 'originalPlanId',
   overrideReason: 'overrideReason',
   approvedBy: 'approvedBy',
@@ -1241,6 +1338,7 @@ export const RoutePlanStopScalarFieldEnum = {
   distanceFromPrevious: 'distanceFromPrevious',
   cumulativeDistance: 'cumulativeDistance',
   estimatedArrivalAt: 'estimatedArrivalAt',
+  legDurationSeconds: 'legDurationSeconds',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   version: 'version',
@@ -1256,9 +1354,16 @@ export const DeliveryAttemptScalarFieldEnum = {
   tripStopId: 'tripStopId',
   shipmentId: 'shipmentId',
   attemptNumber: 'attemptNumber',
+  requestId: 'requestId',
   status: 'status',
   reason: 'reason',
   actorDriverId: 'actorDriverId',
+  actorUserId: 'actorUserId',
+  assigneeUserId: 'assigneeUserId',
+  actorMode: 'actorMode',
+  actingReason: 'actingReason',
+  payloadHash: 'payloadHash',
+  receipt: 'receipt',
   occurredAt: 'occurredAt',
   correlationId: 'correlationId',
   createdAt: 'createdAt',
@@ -1278,6 +1383,15 @@ export const TripDispatchScalarFieldEnum = {
   idempotencyKey: 'idempotencyKey',
   status: 'status',
   requestedBy: 'requestedBy',
+  stage: 'stage',
+  payloadHash: 'payloadHash',
+  command: 'command',
+  payload: 'payload',
+  receipt: 'receipt',
+  result: 'result',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
   requestedAt: 'requestedAt',
   completedAt: 'completedAt',
   correlationId: 'correlationId',
@@ -1333,6 +1447,30 @@ export const InboxEventScalarFieldEnum = {
 } as const
 
 export type InboxEventScalarFieldEnum = (typeof InboxEventScalarFieldEnum)[keyof typeof InboxEventScalarFieldEnum]
+
+
+export const TripOperationScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  tripId: 'tripId',
+  requestId: 'requestId',
+  actorId: 'actorId',
+  kind: 'kind',
+  status: 'status',
+  payloadHash: 'payloadHash',
+  payload: 'payload',
+  result: 'result',
+  activeLock: 'activeLock',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lockedUntil: 'lockedUntil',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  version: 'version'
+} as const
+
+export type TripOperationScalarFieldEnum = (typeof TripOperationScalarFieldEnum)[keyof typeof TripOperationScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1404,6 +1542,20 @@ export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaMod
 
 
 /**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+/**
  * Reference to a field of type 'Json'
  */
 export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -1442,20 +1594,6 @@ export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel,
  * Reference to a field of type 'Decimal[]'
  */
 export type ListDecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal[]'>
-    
-
-
-/**
- * Reference to a field of type 'BigInt'
- */
-export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
-    
-
-
-/**
- * Reference to a field of type 'BigInt[]'
- */
-export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
     
 
 
@@ -1646,6 +1784,7 @@ export type GlobalOmitConfig = {
   tripDispatch?: Prisma.TripDispatchOmit
   outboxEvent?: Prisma.OutboxEventOmit
   inboxEvent?: Prisma.InboxEventOmit
+  tripOperation?: Prisma.TripOperationOmit
 }
 
 /* Types for Logging */

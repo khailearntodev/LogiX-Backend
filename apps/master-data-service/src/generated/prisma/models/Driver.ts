@@ -47,6 +47,7 @@ export type DriverMinAggregateOutputType = {
   updatedAt: Date | null
   version: bigint | null
   deletedAt: Date | null
+  linkLockedAt: Date | null
 }
 
 export type DriverMaxAggregateOutputType = {
@@ -62,6 +63,7 @@ export type DriverMaxAggregateOutputType = {
   updatedAt: Date | null
   version: bigint | null
   deletedAt: Date | null
+  linkLockedAt: Date | null
 }
 
 export type DriverCountAggregateOutputType = {
@@ -77,6 +79,7 @@ export type DriverCountAggregateOutputType = {
   updatedAt: number
   version: number
   deletedAt: number
+  linkLockedAt: number
   _all: number
 }
 
@@ -102,6 +105,7 @@ export type DriverMinAggregateInputType = {
   updatedAt?: true
   version?: true
   deletedAt?: true
+  linkLockedAt?: true
 }
 
 export type DriverMaxAggregateInputType = {
@@ -117,6 +121,7 @@ export type DriverMaxAggregateInputType = {
   updatedAt?: true
   version?: true
   deletedAt?: true
+  linkLockedAt?: true
 }
 
 export type DriverCountAggregateInputType = {
@@ -132,6 +137,7 @@ export type DriverCountAggregateInputType = {
   updatedAt?: true
   version?: true
   deletedAt?: true
+  linkLockedAt?: true
   _all?: true
 }
 
@@ -234,6 +240,7 @@ export type DriverGroupByOutputType = {
   updatedAt: Date
   version: bigint
   deletedAt: Date | null
+  linkLockedAt: Date | null
   _count: DriverCountAggregateOutputType | null
   _avg: DriverAvgAggregateOutputType | null
   _sum: DriverSumAggregateOutputType | null
@@ -272,6 +279,7 @@ export type DriverWhereInput = {
   updatedAt?: Prisma.DateTimeFilter<"Driver"> | Date | string
   version?: Prisma.BigIntFilter<"Driver"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"Driver"> | Date | string | null
+  linkLockedAt?: Prisma.DateTimeNullableFilter<"Driver"> | Date | string | null
 }
 
 export type DriverOrderByWithRelationInput = {
@@ -287,6 +295,7 @@ export type DriverOrderByWithRelationInput = {
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  linkLockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
 }
 
 export type DriverWhereUniqueInput = Prisma.AtLeast<{
@@ -308,6 +317,7 @@ export type DriverWhereUniqueInput = Prisma.AtLeast<{
   updatedAt?: Prisma.DateTimeFilter<"Driver"> | Date | string
   version?: Prisma.BigIntFilter<"Driver"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableFilter<"Driver"> | Date | string | null
+  linkLockedAt?: Prisma.DateTimeNullableFilter<"Driver"> | Date | string | null
 }, "id" | "tenantId_code" | "tenantId_userId" | "tenantId_licenseNumber">
 
 export type DriverOrderByWithAggregationInput = {
@@ -323,6 +333,7 @@ export type DriverOrderByWithAggregationInput = {
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  linkLockedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   _count?: Prisma.DriverCountOrderByAggregateInput
   _avg?: Prisma.DriverAvgOrderByAggregateInput
   _max?: Prisma.DriverMaxOrderByAggregateInput
@@ -346,6 +357,7 @@ export type DriverScalarWhereWithAggregatesInput = {
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Driver"> | Date | string
   version?: Prisma.BigIntWithAggregatesFilter<"Driver"> | bigint | number
   deletedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Driver"> | Date | string | null
+  linkLockedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Driver"> | Date | string | null
 }
 
 export type DriverCreateInput = {
@@ -361,6 +373,7 @@ export type DriverCreateInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  linkLockedAt?: Date | string | null
 }
 
 export type DriverUncheckedCreateInput = {
@@ -376,6 +389,7 @@ export type DriverUncheckedCreateInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  linkLockedAt?: Date | string | null
 }
 
 export type DriverUpdateInput = {
@@ -391,6 +405,7 @@ export type DriverUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  linkLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DriverUncheckedUpdateInput = {
@@ -406,6 +421,7 @@ export type DriverUncheckedUpdateInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  linkLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DriverCreateManyInput = {
@@ -421,6 +437,7 @@ export type DriverCreateManyInput = {
   updatedAt?: Date | string
   version?: bigint | number
   deletedAt?: Date | string | null
+  linkLockedAt?: Date | string | null
 }
 
 export type DriverUpdateManyMutationInput = {
@@ -436,6 +453,7 @@ export type DriverUpdateManyMutationInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  linkLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DriverUncheckedUpdateManyInput = {
@@ -451,6 +469,7 @@ export type DriverUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  linkLockedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 export type DriverTenantIdCodeCompoundUniqueInput = {
@@ -481,6 +500,7 @@ export type DriverCountOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  linkLockedAt?: Prisma.SortOrder
 }
 
 export type DriverAvgOrderByAggregateInput = {
@@ -500,6 +520,7 @@ export type DriverMaxOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  linkLockedAt?: Prisma.SortOrder
 }
 
 export type DriverMinOrderByAggregateInput = {
@@ -515,6 +536,7 @@ export type DriverMinOrderByAggregateInput = {
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
   deletedAt?: Prisma.SortOrder
+  linkLockedAt?: Prisma.SortOrder
 }
 
 export type DriverSumOrderByAggregateInput = {
@@ -536,6 +558,7 @@ export type DriverSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
+  linkLockedAt?: boolean
 }, ExtArgs["result"]["driver"]>
 
 export type DriverSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -551,6 +574,7 @@ export type DriverSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
+  linkLockedAt?: boolean
 }, ExtArgs["result"]["driver"]>
 
 export type DriverSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -566,6 +590,7 @@ export type DriverSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
+  linkLockedAt?: boolean
 }, ExtArgs["result"]["driver"]>
 
 export type DriverSelectScalar = {
@@ -581,9 +606,10 @@ export type DriverSelectScalar = {
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
+  linkLockedAt?: boolean
 }
 
-export type DriverOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "code" | "userId" | "licenseNumber" | "licenseExpiry" | "phone" | "status" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["driver"]>
+export type DriverOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "code" | "userId" | "licenseNumber" | "licenseExpiry" | "phone" | "status" | "createdAt" | "updatedAt" | "version" | "deletedAt" | "linkLockedAt", ExtArgs["result"]["driver"]>
 
 export type $DriverPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Driver"
@@ -601,6 +627,7 @@ export type $DriverPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     updatedAt: Date
     version: bigint
     deletedAt: Date | null
+    linkLockedAt: Date | null
   }, ExtArgs["result"]["driver"]>
   composites: {}
 }
@@ -1036,6 +1063,7 @@ export interface DriverFieldRefs {
   readonly updatedAt: Prisma.FieldRef<"Driver", 'DateTime'>
   readonly version: Prisma.FieldRef<"Driver", 'BigInt'>
   readonly deletedAt: Prisma.FieldRef<"Driver", 'DateTime'>
+  readonly linkLockedAt: Prisma.FieldRef<"Driver", 'DateTime'>
 }
     
 

@@ -72,5 +72,9 @@ export function shipmentView<T>(value: T): unknown {
         throw new Error('Shipment version exceeds safe integer range');
       return number;
     }),
+    (key, item: unknown) => {
+      if (key === 'tripClaimId') return undefined;
+      return item;
+    },
   );
 }

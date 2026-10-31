@@ -20,6 +20,7 @@ import { Kafka } from 'kafkajs';
 import { OrdersInternalController } from './orders.internal.controller.js';
 import { OrdersDispatchInternalController } from './orders-dispatch.internal.controller.js';
 import { OrderDispatchService } from './services/order-dispatch.service.js';
+import { OrderDispatchBatchService } from './services/order-dispatch-batch.service.js';
 import {
   INTERNAL_SERVICE_AUTH_OPTIONS,
   InternalServiceGuard,
@@ -93,6 +94,7 @@ import {
     OrderCommandService,
     OrderQueryService,
     OrderDispatchService,
+    OrderDispatchBatchService,
   ],
 })
 export class OrdersModule {}

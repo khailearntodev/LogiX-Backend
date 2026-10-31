@@ -23,6 +23,120 @@
 
 ## Description
 
+### Internal trip resource reads
+
+`GET /api/v1/internal/trip-resources/warehouses/:id` and
+`GET /api/v1/internal/trip-resources/vehicles/:id` accept only Transport's
+verified internal token and tenant. They delegate to the same owner reads as
+public resource APIs. Dispatch recovery can therefore revalidate current
+resources without persisting a user's access token. They are not Gateway
+public routes and do not relax public resource permissions.
+
+### Driver master data
+
+`/api/v1/drivers` now supports list/detail/create/update and versioned
+enable/disable through the Gateway. `master-data:driver:read` authorizes reads;
+`master-data:driver:manage` authorizes writes and `/drivers/eligible-users`.
+Every query/write uses the verified access-token tenant. User linkage is
+immutable in ordinary updates; driver code may be changed. Conflicting code,
+user or license and stale versions return conflicts; no hard deletion endpoint
+is provided.
+
+### Master-data codes
+
+Creating a customer, warehouse, product, vehicle or driver without a code (or
+with a blank code) assigns the next tenant-scoped code: `CUS-000001`,
+`WH-000001`, `PRD-000001`, `VEH-000001` or `DRV-000001`, respectively. Product
+uses the `sku` field; the other resources use `code`. A caller may still provide
+any nonblank code within the existing field limit (50 characters, or 100 for
+product SKU), and may change it on update. Blank update values leave the code
+unchanged. Existing tenant-scoped uniqueness rules still apply. Allocation
+atomically increments a persistent high-water mark per tenant and resource
+type. On first allocation it seeds that mark from existing codes, including
+soft-deleted records; later code edits therefore never make an allocated number
+available again.
+
+Identity owns names/membership/permissions. The authenticated internal lookup
+requires active tenant membership and both assigned-Driver permissions (or
+effective OWNER/wildcard/Super Admin membership) before create/enable. Historical
+names for existing profiles are still resolved from Identity when a user is
+disabled. An Identity outage is an explicit error, not a fabricated name or empty
+success.
+
+Configure the required variables in [.env.example](.env.example).
+`IDENTITY_SERVICE_URL` is the service origin, not an `/api/v1` URL; the adapter
+appends that API prefix. The internal signing secret must match Identity's and
+must contain at least 32 characters. `TRANSPORT_SERVICE_URL` is also required
+and is an origin; its internal signing secret must match this service. No secret
+defaults or "assume unused" switch are supplied.
+
+#### Correcting a mistaken user link
+
+Both endpoints require the existing `master-data:driver:manage` effective
+permission and verified tenant:
+
+- `POST /api/v1/drivers/:id/relink-user/preview`
+- `POST /api/v1/drivers/:id/relink-user`
+
+Both accept exactly `{ version, expectedUserId, userId, reason }`; UUID bindings,
+safe positive integer version, and trimmed nonblank reason (max 1000 characters)
+are mandatory. Preview returns
+`{ driverId, version, previousUserId, userId, previousDisplayName, displayName, reason }`.
+The UI must show old -> new plus reason, then explicitly confirm with the same
+frozen body. Preview is read/validation-only, not a token or reservation; apply
+repeats every check and returns the ordinary Driver view with incremented version.
+An optional UUID `x-correlation-id` is retained in the audit evidence.
+
+The target must already be an eligible member; nothing grants permissions.
+Code, license, phone, status and historical trip data remain unchanged. No-op,
+stale/changed-old binding, duplicate tenant+user (including deleted profiles),
+cross-tenant/ineligible targets, and any draft/canceled/completed/deleted trip
+reference reject. `DRIVER_LINK_LOCKED` (409, details.reason=`USED`) and
+`DRIVER_LINK_UNCHANGED` (409) are top-level error codes; stale bindings use
+`CONCURRENCY_CONFLICT`, other uniqueness conflicts use `CONFLICT`.
+Super Admin cannot bypass the tenant, lock, usage, or version rules. Missing or
+unavailable Transport/Identity fails closed without changing Driver or outbox.
+
+`POST /api/v1/internal/drivers/:id/link-lock` is **not Gateway exposed**.
+It requires the signed allowlisted Transport caller, tenant/audience binding,
+and `{ version, expectedUserId }`. It atomically checks that binding, permanently
+sets `linkLockedAt`, and returns `{ driverId, userId, version }`. Repeating the
+same binding after a timeout is safe and returns the same current binding;
+versions are not incremented for lock-only metadata. A concurrent profile update
+can make the retry stale: caller must reread/revalidate, never assume the lock
+failed or clear it. The returned version/user is authoritative for assignment.
+
+**Rollout prerequisite:** fence all legacy trip writers; every future Transport
+draft/create/reassignment/import must successfully lock the expected binding
+before persisting a reference, and use the returned binding. Release/cancel/failure
+never clears a lock. Transport DRAFT create/assignment writes enforce this
+binding, and Phase 3 approval preserves it. Deploy
+Transport history reads before enabling this relink API; the history query catches
+legacy rows and never filters lifecycle/soft deletion. No DB transaction spans
+cross-service HTTP. See [database design §6.6](../../docs/architecture/database-design.md#66-drivers).
+
+`GET /api/v1/internal/drivers/:id/trip-eligibility` is also restricted to the
+signed tenant-bound Transport caller, not Gateway exposed. It requires an
+ACTIVE Driver profile and rechecks the linked account's current Identity
+membership/eligibility, returning the actual versioned Driver view for route
+preview/snapshot. It is read-only: no account, permission, relink or assignment
+is created. Ineligible/missing or unavailable Identity fails closed.
+
+The relink transaction writes the standard local `master_data.outbox_events`
+record `DriverUserRelinked` v1 atomically with Driver. Its payload matches the
+AuditLog field vocabulary (trusted JWT actor distinct from target, IDs, reason,
+before/after versions, outcome, timestamp, source and correlation). An insert
+failure rolls back both. Preview/rejections emit no success evidence. This is
+durable local audit evidence, **not proof of centralized Audit ingestion**:
+Audit remains scaffolded; relay/consumer wiring is not implemented by this change.
+
+Run `pnpm --filter master-data-service test:drivers:integration` from the backend
+root for real Gateway/Identity/Transport/PostgreSQL checks. See [test setup](test/README.md).
+The mistaken-link addition has a Prisma-generated lock/outbox migration;
+Transport has a historical driver-reference index migration. All are deployed
+and checked in an isolated database. Future schema changes must use Prisma
+migrate, never `db push`.
+
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
 ## Project setup
