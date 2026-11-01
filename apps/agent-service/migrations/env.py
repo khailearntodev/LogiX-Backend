@@ -17,6 +17,13 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 database_url = os.getenv("DATABASE_URL")
+if not database_url:
+    try:
+        from logix_agent.config import settings
+
+        database_url = settings.database_url
+    except Exception:
+        pass
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url.replace("%", "%%"))
 
