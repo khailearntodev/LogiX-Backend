@@ -5,6 +5,7 @@
     "packageManager": "pnpm@11.6.0",
     "scripts": {
         "dev": "turbo dev",
+        "start": "turbo run start:prod",
         "dev:route": "uv run uvicorn logix_route_optimizer.main:app --reload --port 8003",
         "dev:agent": "uv run uvicorn logix_agent.main:app --reload --port 8001",
         "dev:forecast": "uv run uvicorn logix_forecast.main:app --reload --port 8002",

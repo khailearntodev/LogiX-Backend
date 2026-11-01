@@ -19,6 +19,7 @@ import { OrderProxyMiddleware } from './proxy/order-proxy.middleware.js';
 import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware.js';
 import { TransportProxyMiddleware } from './proxy/transport-proxy.middleware.js';
+import { ForecastProxyMiddleware } from './proxy/forecast-proxy.middleware.js';
 
 @Module({
   imports: [
@@ -112,6 +113,12 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: 'api/v1/orders', method: RequestMethod.ALL },
         { path: 'api/v1/orders/*', method: RequestMethod.ALL },
+      );
+    consumer
+      .apply(ForecastProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/forecast', method: RequestMethod.ALL },
+        { path: 'api/v1/forecast/*', method: RequestMethod.ALL },
       );
   }
 }
