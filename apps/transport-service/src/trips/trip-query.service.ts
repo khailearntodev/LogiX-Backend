@@ -26,15 +26,15 @@ function stopDemand(
   const candidates =
     stop.deletedAt === null
       ? related.filter(
-          (membership) =>
-            (membership.state === 'ACTIVE' ||
-              membership.state === 'RELEASE_PENDING') &&
-            membership.removedAt === null &&
-            membership.deletedAt === null,
-        )
+        (membership) =>
+          (membership.state === 'ACTIVE' ||
+            membership.state === 'RELEASE_PENDING') &&
+          membership.removedAt === null &&
+          membership.deletedAt === null,
+      )
       : related.filter(
-          (membership) => membership.assignedAt <= stop.deletedAt!,
-        );
+        (membership) => membership.assignedAt <= stop.deletedAt!,
+      );
   const selected = candidates.sort(
     (left, right) =>
       right.assignedAt.getTime() - left.assignedAt.getTime() ||
@@ -42,9 +42,9 @@ function stopDemand(
   )[0];
   return selected
     ? {
-        weight: selected.weight.toFixed(3),
-        volume: selected.volume.toFixed(6),
-      }
+      weight: selected.weight.toFixed(3),
+      volume: selected.volume.toFixed(6),
+    }
     : { weight: null, volume: null };
 }
 
@@ -54,7 +54,7 @@ export class TripQueryService {
     private readonly prisma: PrismaService,
     private readonly fulfillment: FulfillmentClient,
     private readonly masterData: MasterDataClient,
-  ) {}
+  ) { }
 
   async list(tenantId: string, query: TripListQueryDto) {
     const where: Prisma.DeliveryTripWhereInput = {
@@ -69,15 +69,15 @@ export class TripQueryService {
         : {}),
       ...(query.plannedStartFrom || query.plannedStartTo
         ? {
-            plannedStartAt: {
-              ...(query.plannedStartFrom
-                ? { gte: new Date(query.plannedStartFrom) }
-                : {}),
-              ...(query.plannedStartTo
-                ? { lte: new Date(query.plannedStartTo) }
-                : {}),
-            },
-          }
+          plannedStartAt: {
+            ...(query.plannedStartFrom
+              ? { gte: new Date(query.plannedStartFrom) }
+              : {}),
+            ...(query.plannedStartTo
+              ? { lte: new Date(query.plannedStartTo) }
+              : {}),
+          },
+        }
         : {}),
     };
     const [rows, total] = await this.prisma.$transaction([
@@ -86,6 +86,12 @@ export class TripQueryService {
         orderBy: [{ plannedStartAt: 'desc' }, { id: 'desc' }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
+        include: {
+          stops: {
+            where: { deletedAt: null },
+            select: { id: true, status: true },
+          },
+        },
       }),
       this.prisma.deliveryTrip.count({ where }),
     ]);
@@ -218,6 +224,7 @@ export class TripQueryService {
     totalWeight: Prisma.Decimal;
     totalVolume: Prisma.Decimal;
     version: bigint;
+    stops?: Array<{ id: string; status: string }>;
   }) {
     return {
       id: trip.id,
@@ -234,6 +241,10 @@ export class TripQueryService {
       depotSnapshot: trip.depotSnapshot,
       vehicleSnapshot: trip.vehicleSnapshot,
       driverSnapshot: trip.driverSnapshot,
+      totalStops: trip.stops ? trip.stops.length : 0,
+      completedStops: trip.stops
+        ? trip.stops.filter((s) => s.status === 'DELIVERED').length
+        : 0,
     };
   }
 }

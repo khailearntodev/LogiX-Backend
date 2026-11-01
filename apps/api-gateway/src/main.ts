@@ -1,10 +1,14 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { Logger } from '@logix/logger';
 import { AppModule } from './app.module.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+
+  // Disable etag generation to prevent 304 empty body responses on cross-origin fetch
+  app.set('etag', false);
 
   // Use Pino as the application-wide logger
   app.useLogger(app.get(Logger));
