@@ -49,28 +49,54 @@ from logix_agent.modules.ai.ports import ModelProfileRegistry
 GATEWAY_BACKEND = "gemini_sdk"
 
 
-def _clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
-    """Gemini FunctionDeclaration schema validator forbids $defs, $ref and title."""
-    defs = schema.get("$defs", {})
+_ALLOWED_GEMINI_SCHEMA_FIELDS = frozenset(types.Schema.model_fields.keys())
 
-    def _resolve(node: Any) -> Any:
+
+def _clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
+    """Gemini FunctionDeclaration schema validator forbids $defs, $ref and extra fields."""
+    defs = schema.get("$defs") or schema.get("definitions") or {}
+
+    def _resolve(node: Any, is_schema: bool = True) -> Any:
         if isinstance(node, dict):
             if "$ref" in node and isinstance(node["$ref"], str):
                 ref_name = node["$ref"].split("/")[-1]
                 if ref_name in defs:
-                    resolved = _resolve(defs[ref_name].copy())
-                    extra = {k: _resolve(v) for k, v in node.items() if k != "$ref"}
+                    resolved = _resolve(defs[ref_name].copy(), is_schema=True)
+                    extra = {k: _resolve(v, is_schema=is_schema) for k, v in node.items() if k != "$ref"}
                     return {**resolved, **extra}
-            return {k: _resolve(v) for k, v in node.items() if k not in ("$defs", "title")}
+
+            cleaned: dict[str, Any] = {}
+            if is_schema:
+                if "exclusiveMinimum" in node and "minimum" not in node:
+                    val = node["exclusiveMinimum"]
+                    cleaned["minimum"] = (val + 1) if (isinstance(val, int) and node.get("type") == "integer") else val
+                if "exclusiveMaximum" in node and "maximum" not in node:
+                    val = node["exclusiveMaximum"]
+                    cleaned["maximum"] = (val - 1) if (isinstance(val, int) and node.get("type") == "integer") else val
+                if "const" in node and "enum" not in node:
+                    cleaned["enum"] = [node["const"]]
+                if "examples" in node and "example" not in node and isinstance(node["examples"], list) and node["examples"]:
+                    cleaned["example"] = node["examples"][0]
+
+            for k, v in node.items():
+                if k in ("$defs", "definitions", "title", "exclusiveMinimum", "exclusiveMaximum", "const", "examples"):
+                    continue
+                if is_schema and k not in _ALLOWED_GEMINI_SCHEMA_FIELDS:
+                    continue
+
+                if k == "properties" and isinstance(v, dict):
+                    cleaned[k] = {prop_name: _resolve(prop_val, is_schema=True) for prop_name, prop_val in v.items()}
+                elif k in ("items", "any_of") and is_schema:
+                    cleaned[k] = _resolve(v, is_schema=True)
+                else:
+                    cleaned[k] = _resolve(v, is_schema=False)
+            return cleaned
+
         if isinstance(node, list):
-            return [_resolve(item) for item in node]
+            return [_resolve(item, is_schema=is_schema) for item in node]
         return node
 
-    cleaned = _resolve(schema)
-    if isinstance(cleaned, dict):
-        cleaned.pop("$defs", None)
-        cleaned.pop("title", None)
-    return cleaned
+    return _resolve(schema, is_schema=True)
 
 
 class GeminiModelGateway:

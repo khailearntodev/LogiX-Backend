@@ -70,6 +70,8 @@ def _build_fallback_points(
                 baseline_moving_average_7=ma7_preds[step],
                 baseline_seasonal_naive_7=snaive_preds[step],
                 confidence_level=confidence_level,
+                trend_component=pred,
+                weekly_component=0.0,
                 model_metadata={
                     "engine": "Moving Average 7 (Fallback)",
                     "used_fallback": True,
@@ -268,6 +270,8 @@ def run_series_forecast_pipeline(
                         baseline_moving_average_7=ma7_preds[idx],
                         baseline_seasonal_naive_7=snaive_preds[idx],
                         confidence_level=confidence_level,
+                        trend_component=pt.trend,
+                        weekly_component=pt.weekly_seasonal,
                         model_metadata={
                             "engine": prophet_res.model_engine,
                             "trend": pt.trend,

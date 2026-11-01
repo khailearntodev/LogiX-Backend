@@ -33,6 +33,8 @@ class DailyForecastPointOut(BaseModel):
     baseline_moving_average_7: float = Field(ge=0.0)
     baseline_seasonal_naive_7: float = Field(ge=0.0)
     confidence_level: float = Field(gt=0.0, lt=1.0)
+    trend_component: float | None = None
+    weekly_component: float | None = None
     model_metadata: dict[str, object] = Field(default_factory=dict)
 
 

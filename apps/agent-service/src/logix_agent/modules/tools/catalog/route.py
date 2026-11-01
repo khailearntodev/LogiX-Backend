@@ -41,7 +41,7 @@ class RoutePlanOut(View):
 
 class ProposeRouteIn(BaseModel):
     trip_id: UUID
-    expected_trip_version: int = Field(gt=0, le=9_007_199_254_740_991)
+    expected_trip_version: int = Field(ge=1, le=9_007_199_254_740_991)
     request_id: UUID = Field(default_factory=uuid.uuid4)
 
 
@@ -53,8 +53,8 @@ class GetRouteComparisonIn(BaseModel):
 class ApproveRouteIn(BaseModel):
     trip_id: UUID
     route_plan_id: UUID
-    expected_version: int = Field(gt=0, le=9_007_199_254_740_991)
-    plan_version: int = Field(gt=0, le=9_007_199_254_740_991)
+    expected_version: int = Field(ge=1, le=9_007_199_254_740_991)
+    plan_version: int = Field(ge=1, le=9_007_199_254_740_991)
     input_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
 
 
