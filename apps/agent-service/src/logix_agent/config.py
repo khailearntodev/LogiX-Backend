@@ -65,6 +65,9 @@ class AgentSettings(BaseSettings):
 
 settings = AgentSettings()
 
+if settings.database_url:
+    os.environ.setdefault("DATABASE_URL", settings.database_url)
+
 if settings.gemini_api_key:
     os.environ.setdefault("GEMINI_API_KEY", settings.gemini_api_key)
     os.environ.setdefault("GOOGLE_API_KEY", settings.gemini_api_key)
