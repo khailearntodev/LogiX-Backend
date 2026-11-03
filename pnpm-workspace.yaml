@@ -5,3 +5,4 @@ allowBuilds:
   '@prisma/engines': true
   bcrypt: true
   prisma: true
+minimumReleaseAge: 0
