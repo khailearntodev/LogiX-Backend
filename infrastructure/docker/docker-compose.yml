@@ -170,14 +170,12 @@ services:
     depends_on:
       db-migrate:
         condition: service_completed_successfully
-      forecast-service:
-        condition: service_healthy
     environment:
       PGHOST: ${POSTGRES_HOST:-postgres}
       PGPORT: ${POSTGRES_PORT:-5432}
       PGUSER: ${POSTGRES_USER:-postgres}
       PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
-      PGSSLMODE: ${PGSSLMODE:-prefer}
+      PGSSLMODE: ${PGSSLMODE:-disable}
     command: ["node", "scripts/seed-demo-all.mjs"]
     networks: [logix]
 

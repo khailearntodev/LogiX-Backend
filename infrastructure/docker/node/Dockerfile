@@ -77,7 +77,7 @@ COPY --from=deps --chown=node:node /repo/package.json ./package.json
 COPY --from=deps --chown=node:node /repo/node_modules ./node_modules
 COPY --from=deps --chown=node:node /repo/libs ./libs
 COPY --from=build --chown=node:node /repo/libs ./libs
-COPY --from=deps --chown=node:node /repo/apps/${SERVICE}/package.json ./apps/${SERVICE}/package.json
+COPY --from=deps --chown=node:node /repo/apps/${SERVICE} ./apps/${SERVICE}
 COPY --from=build --chown=node:node /repo/apps/${SERVICE}/dist ./apps/${SERVICE}/dist
 
 WORKDIR /app/apps/${SERVICE}
