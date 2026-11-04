@@ -1,0 +1,407 @@
+# LogiX backend – full stack (infra + 9 NestJS services + 3 FastAPI services).
+#
+#   cp .env.example .env      # then replace placeholders if needed
+#   docker compose up -d --build
+#   docker compose --profile seed run --rm seed     # optional demo data
+#
+# Profiles:
+#   - local-db : starts local PostgreSQL container (default in .env.example)
+#   - ai       : starts AI services (agent, forecast, route-optimizer)
+#   - seed     : runs demo data seeding script
+#
+# When using an external/cloud database (e.g. Azure Flexible Server):
+#   Set POSTGRES_HOST, remove `local-db` from COMPOSE_PROFILES in `.env`.
+
+name: logix-stack
+
+x-node-build: &node-build
+  context: ../..
+  dockerfile: infrastructure/docker/node/Dockerfile
+
+x-python-build: &python-build
+  context: ../..
+  dockerfile: infrastructure/docker/python/Dockerfile
+
+# Every service receives the same URL/secret map; each one reads only what it needs.
+x-node-env: &node-env
+  NODE_ENV: production
+  JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+  INTERNAL_SERVICE_JWT_SECRET: ${INTERNAL_SERVICE_JWT_SECRET:?Set INTERNAL_SERVICE_JWT_SECRET}
+  FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3009}
+  IDENTITY_SERVICE_URL: http://identity-service:3001
+  ORDER_SERVICE_URL: http://order-service:3002
+  MASTER_DATA_SERVICE_URL: http://master-data-service:3003
+  INVENTORY_SERVICE_URL: http://inventory-service:3004
+  FULFILLMENT_SERVICE_URL: http://fulfillment-service:3005
+  TRANSPORT_SERVICE_URL: http://transport-service:3006
+  FORECAST_SERVICE_URL: ${FORECAST_SERVICE_URL:-http://forecast-service:8002}
+
+x-kafka-env: &kafka-env
+  KAFKA_BROKERS: kafka:29092
+  KAFKA_ORDER_TOPIC: ${KAFKA_ORDER_TOPIC:?Set KAFKA_ORDER_TOPIC}
+  KAFKA_INVENTORY_TOPIC: ${KAFKA_INVENTORY_TOPIC:?Set KAFKA_INVENTORY_TOPIC}
+  KAFKA_FULFILLMENT_TOPIC: ${KAFKA_FULFILLMENT_TOPIC:?Set KAFKA_FULFILLMENT_TOPIC}
+  KAFKA_TRANSPORT_TOPIC: ${KAFKA_TRANSPORT_TOPIC:?Set KAFKA_TRANSPORT_TOPIC}
+  OUTBOX_INTERVAL_MS: "1000"
+  OUTBOX_BATCH_SIZE: "50"
+  OUTBOX_RETRY_BASE_MS: "1000"
+  OUTBOX_RETRY_MAX_MS: "30000"
+  OUTBOX_TRANSACTION_TIMEOUT_MS: "10000"
+
+x-after-migrate: &after-migrate
+  db-migrate:
+    condition: service_completed_successfully
+
+x-after-migrate-kafka: &after-migrate-kafka
+  db-migrate:
+    condition: service_completed_successfully
+  kafka-init:
+    condition: service_completed_successfully
+
+x-python-common: &python-common
+  restart: unless-stopped
+  networks: [logix]
+  profiles: [ai]
+  depends_on:
+    db-migrate:
+      condition: service_completed_successfully
+
+services:
+  # ================================================================ infra
+  postgres:
+    image: postgres:17-bookworm
+    restart: unless-stopped
+    profiles: [local-db]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5434}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Creates the 11 service databases on first start only.
+      - ../postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [logix]
+
+  kafka:
+    image: ${KAFKA_IMAGE:-apache/kafka:4.1.1}
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${KAFKA_EXTERNAL_PORT:-9094}:9092"
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:-NkYyZTI5Y2UtZjA0ZS00Mz}
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: EXTERNAL://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT:-9094},INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: EXTERNAL:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:29092"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [logix]
+
+  # Auto-creation is disabled, so topics are provisioned explicitly (idempotent).
+  kafka-init:
+    image: ${KAFKA_IMAGE:-apache/kafka:4.1.1}
+    restart: "no"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      TOPICS: >-
+        ${KAFKA_ORDER_TOPIC:?Set KAFKA_ORDER_TOPIC}
+        ${KAFKA_INVENTORY_TOPIC:?Set KAFKA_INVENTORY_TOPIC}
+        ${KAFKA_FULFILLMENT_TOPIC:?Set KAFKA_FULFILLMENT_TOPIC}
+        ${KAFKA_TRANSPORT_TOPIC:?Set KAFKA_TRANSPORT_TOPIC}
+      PARTITIONS: ${KAFKA_TOPIC_PARTITIONS:-6}
+      REPLICATION: ${KAFKA_TOPIC_REPLICATION_FACTOR:-1}
+    command:
+      - /bin/bash
+      - -c
+      - |
+        set -e
+        for topic in $$TOPICS; do
+          /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists \
+            --topic "$$topic" --partitions "$$PARTITIONS" --replication-factor "$$REPLICATION" \
+            --config cleanup.policy=delete
+        done
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list
+    networks: [logix]
+
+  # One-shot: Prisma `migrate deploy` for the 8 NestJS databases.
+  # Automatically waits for PostgreSQL (local or cloud) before running.
+  db-migrate:
+    build:
+      context: ../..
+      dockerfile: infrastructure/docker/tools/Dockerfile
+    image: logix/tools:latest
+    restart: "no"
+    environment:
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_SSL_PARAM: ${POSTGRES_SSL_PARAM:-}
+    networks: [logix]
+
+  # Optional: `docker compose --profile seed run --rm seed`
+  # Seeds demo data into both Node databases and Python forecast database.
+  seed:
+    image: logix/tools:latest
+    profiles: [seed]
+    restart: "no"
+    depends_on:
+      db-migrate:
+        condition: service_completed_successfully
+    environment:
+      PGHOST: ${POSTGRES_HOST:-postgres}
+      PGPORT: ${POSTGRES_PORT:-5432}
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      PGSSLMODE: ${PGSSLMODE:-disable}
+    command: ["node", "scripts/seed-demo-all.mjs"]
+    networks: [logix]
+
+  # ============================================================== NestJS
+  api-gateway:
+    build:
+      <<: *node-build
+      args: { SERVICE: api-gateway, PORT: "3000" }
+    image: logix/api-gateway:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *node-env
+      PORT: "3000"
+      SERVICE_NAME: api-gateway
+      AGENT_SERVICE_URL: http://agent-service:8001
+      FORECAST_SERVICE_URL: ${FORECAST_SERVICE_URL:-http://forecast-service:8002}
+    networks: [logix]
+
+  identity-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: identity-service, PORT: "3001" }
+    image: logix/identity-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate
+    environment:
+      <<: *node-env
+      PORT: "3001"
+      SERVICE_NAME: identity-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_identity?schema=identity${POSTGRES_SSL_PARAM:-}
+    networks: [logix]
+
+  master-data-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: master-data-service, PORT: "3003" }
+    image: logix/master-data-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate
+    environment:
+      <<: *node-env
+      PORT: "3003"
+      SERVICE_NAME: master-data-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_master_data?schema=master_data${POSTGRES_SSL_PARAM:-}
+    networks: [logix]
+
+  order-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: order-service, PORT: "3002" }
+    image: logix/order-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate-kafka
+    environment:
+      <<: [*node-env, *kafka-env]
+      PORT: "3002"
+      SERVICE_NAME: order-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_order?schema=orders${POSTGRES_SSL_PARAM:-}
+      ORDER_MAX_LINES: "100"
+      KAFKA_CLIENT_ID: order-service
+      KAFKA_GROUP_ID: logix-order-service
+    networks: [logix]
+
+  inventory-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: inventory-service, PORT: "3004" }
+    image: logix/inventory-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate-kafka
+    environment:
+      <<: [*node-env, *kafka-env]
+      PORT: "3004"
+      SERVICE_NAME: inventory-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_inventory?schema=inventory${POSTGRES_SSL_PARAM:-}
+      KAFKA_CLIENT_ID: inventory-service
+      KAFKA_GROUP_ID: logix-inventory-service
+      RESERVATION_RECONCILE_AGE_MS: "300000"
+      RESERVATION_RECONCILE_INTERVAL_MS: "60000"
+    networks: [logix]
+
+  fulfillment-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: fulfillment-service, PORT: "3005" }
+    image: logix/fulfillment-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate-kafka
+    environment:
+      <<: [*node-env, *kafka-env]
+      PORT: "3005"
+      SERVICE_NAME: fulfillment-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_fulfillment?schema=fulfillment${POSTGRES_SSL_PARAM:-}
+      KAFKA_CLIENT_ID: fulfillment-service
+      KAFKA_GROUP_ID: logix-fulfillment-service
+    networks: [logix]
+
+  transport-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: transport-service, PORT: "3006" }
+    image: logix/transport-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate-kafka
+    environment:
+      <<: [*node-env, *kafka-env]
+      PORT: "3006"
+      SERVICE_NAME: transport-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_transport?schema=transport${POSTGRES_SSL_PARAM:-}
+      TRIP_CANCEL_PREVIEW_SECRET: ${TRIP_CANCEL_PREVIEW_SECRET:?Set TRIP_CANCEL_PREVIEW_SECRET}
+      ROUTE_OPTIMIZER_SERVICE_URL: http://route-optimizer-service:8003
+      ROUTE_OPTIMIZER_TIMEOUT_MS: "30000"
+      KAFKA_CLIENT_ID: transport-service
+      KAFKA_GROUP_ID: logix-transport-service
+      RECOVERY_INTERVAL_MS: "5000"
+    networks: [logix]
+
+  notification-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: notification-service, PORT: "3007" }
+    image: logix/notification-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate
+    environment:
+      NODE_ENV: production
+      PORT: "3007"
+      SERVICE_NAME: notification-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_notification?schema=notification${POSTGRES_SSL_PARAM:-}
+    networks: [logix]
+
+  audit-service:
+    build:
+      <<: *node-build
+      args: { SERVICE: audit-service, PORT: "3008" }
+    image: logix/audit-service:latest
+    restart: unless-stopped
+    depends_on: *after-migrate
+    environment:
+      NODE_ENV: production
+      PORT: "3008"
+      SERVICE_NAME: audit-service
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_audit?schema=audit${POSTGRES_SSL_PARAM:-}
+    networks: [logix]
+
+  # ============================================================== FastAPI
+  agent-service:
+    <<: *python-common
+    build:
+      <<: *python-build
+      args: { SERVICE: agent-service, PACKAGE: logix_agent, PORT: "8001" }
+    image: logix/agent-service:latest
+    ports:
+      - "8001:8001"
+    environment:
+      SERVICE_NAME: agent-service
+      PORT: "8001"
+      ENVIRONMENT: ${AGENT_ENVIRONMENT:-development}
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_agent${POSTGRES_PY_SSL_PARAM:-}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET}
+      IDENTITY_SERVICE_URL: http://identity-service:3001
+      ORDER_SERVICE_URL: http://order-service:3002
+      MASTER_DATA_SERVICE_URL: http://master-data-service:3003
+      INVENTORY_SERVICE_URL: http://inventory-service:3004
+      FULFILLMENT_SERVICE_URL: http://fulfillment-service:3005
+      TRANSPORT_SERVICE_URL: http://transport-service:3006
+      FORECAST_SERVICE_URL: http://forecast-service:8002
+      ROUTE_OPTIMIZER_SERVICE_URL: http://route-optimizer-service:8003
+      TOOL_HTTP_TIMEOUT_SECONDS: "10"
+      TOOL_HTTP_MAX_ATTEMPTS: "2"
+      LLM_GATEWAY_BACKEND: ${LLM_GATEWAY_BACKEND:-fake}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      PLANNER_DEFAULT_MODEL: ${PLANNER_DEFAULT_MODEL:-gemini-3.8-flash}
+      AGENT_MODEL: ${AGENT_MODEL:-google_genai:gemini-3.8-flash}
+      LLM_TIMEOUT_SECONDS: "30"
+      LLM_MAX_ATTEMPTS: "2"
+      LLM_FALLBACK_ENABLED: "false"
+      PROMPT_POLICY_VERSION: v1
+
+  forecast-service:
+    <<: *python-common
+    build:
+      <<: *python-build
+      args: { SERVICE: forecast-service, PACKAGE: logix_forecast, PORT: "8002" }
+    image: logix/forecast-service:latest
+    ports:
+      - "8002:8002"
+    environment:
+      SERVICE_NAME: forecast-service
+      PORT: "8002"
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_forecast${POSTGRES_PY_SSL_PARAM:-}
+
+  route-optimizer-service:
+    <<: *python-common
+    build:
+      <<: *python-build
+      args:
+        SERVICE: route-optimizer-service
+        PACKAGE: logix_route_optimizer
+        PORT: "8003"
+        EXTRAS: optimization # installs Google OR-Tools
+    image: logix/route-optimizer-service:latest
+    ports:
+      - "8003:8003"
+    environment:
+      SERVICE_NAME: route-optimizer-service
+      PORT: "8003"
+      ENVIRONMENT: production
+      LOG_LEVEL: INFO
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_route_optimizer${POSTGRES_PY_SSL_PARAM:-}
+      INTERNAL_SERVICE_JWT_SECRET: ${INTERNAL_SERVICE_JWT_SECRET:?Set INTERNAL_SERVICE_JWT_SECRET}
+      OSRM_URL: ${OSRM_URL:-https://router.project-osrm.org}
+      OSRM_TIMEOUT_SECONDS: "4.0"
+      DEFAULT_VEHICLE_CAPACITY_WEIGHT_KG: "1000.0"
+      DEFAULT_VEHICLE_CAPACITY_VOLUME_M3: "8.0"
+
+networks:
+  logix:
+    name: logix-stack-net
+
+volumes:
+  postgres-data:
+  kafka-data:
