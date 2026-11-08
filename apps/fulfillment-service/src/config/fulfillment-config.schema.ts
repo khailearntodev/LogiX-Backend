@@ -13,5 +13,6 @@ export const fulfillmentConfigSchema = databaseConfigSchema
     INTERNAL_SERVICE_JWT_SECRET: z.string().min(32),
     ORDER_SERVICE_URL: z.string().url(),
     KAFKA_FULFILLMENT_TOPIC: z.string().min(1),
+    KAFKA_TRANSPORT_TOPIC: z.string().min(1),
     KAFKA_GROUP_ID: z.string().min(1),
   });

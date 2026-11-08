@@ -70,7 +70,7 @@ import { ShipmentDispatchBatchService } from './shipment-dispatch-batch.service.
       ) =>
         new KafkaEventConsumer(
           kafka,
-          config.getOrThrow<string>('KAFKA_FULFILLMENT_TOPIC'),
+          config.getOrThrow<string>('KAFKA_TRANSPORT_TOPIC'),
           `${config.getOrThrow<string>('KAFKA_GROUP_ID')}-delivery-results`,
           (event) => events.handle(event),
         ),

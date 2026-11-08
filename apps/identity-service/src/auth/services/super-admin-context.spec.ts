@@ -120,16 +120,11 @@ describe('Super Admin context invariants', () => {
     });
   });
 
-  it('retains the existing all-active-tenant switcher for a Super Admin with no memberships', async () => {
+  it('includes only the injected active tenant for a Super Admin with no memberships', async () => {
     prisma.user.findUnique.mockResolvedValue({ ...user, userTenants: [] });
     const result = await auth.getProfile(user.id, 'B');
     expect(result.activeTenant).toMatchObject({ id: 'B', role: 'SUPER_ADMIN' });
     expect(result.tenants).toEqual([
-      expect.objectContaining({
-        id: 'A',
-        role: 'SUPER_ADMIN',
-        isDefault: false,
-      }),
       expect.objectContaining({
         id: 'B',
         role: 'SUPER_ADMIN',

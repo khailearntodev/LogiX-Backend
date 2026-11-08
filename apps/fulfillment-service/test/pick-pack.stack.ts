@@ -55,7 +55,7 @@ export class PickPackStack {
   readonly internalSecret = randomBytes(48).toString('hex');
   readonly root = resolve(process.cwd(), '..', '..');
   readonly container = this.tag.replaceAll('.', '-');
-  readonly topics = ['orders', 'inventory', 'fulfillment'].map(
+  readonly topics = ['orders', 'inventory', 'fulfillment', 'transport'].map(
     (suffix) => `${this.tag}.${suffix}`,
   );
   readonly processes = new Map<Service, ChildProcess>();
@@ -233,6 +233,7 @@ export class PickPackStack {
         KAFKA_ORDER_TOPIC: this.topics[0],
         KAFKA_INVENTORY_TOPIC: this.topics[1],
         KAFKA_FULFILLMENT_TOPIC: this.topics[2],
+        KAFKA_TRANSPORT_TOPIC: this.topics[3],
         ORDER_SERVICE_URL: this.url('order-service'),
         INVENTORY_SERVICE_URL: this.url('inventory-service'),
         FULFILLMENT_SERVICE_URL: this.url('fulfillment-service'),
