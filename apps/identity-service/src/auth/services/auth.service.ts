@@ -101,10 +101,15 @@ export class AuthService {
           data: { lastLoginAt: new Date() },
         });
 
-        const allTenants = await this.prisma.tenant.findMany({
-          where: { status: 'ACTIVE', deletedAt: null },
-          orderBy: { name: 'asc' },
-        });
+        const activeTenant = selectedTenant
+          ? {
+              id: selectedTenant.id,
+              code: selectedTenant.code,
+              name: selectedTenant.name,
+              logoUrl: selectedTenant.logoUrl,
+              role: SUPER_ADMIN_CONTEXT_ROLE,
+            }
+          : null;
 
         return {
           accessToken,
@@ -117,23 +122,10 @@ export class AuthService {
             avatarUrl: user.avatarUrl,
             isSuperAdmin: true,
           },
-          activeTenant: selectedTenant
-            ? {
-                id: selectedTenant.id,
-                code: selectedTenant.code,
-                name: selectedTenant.name,
-                logoUrl: selectedTenant.logoUrl,
-                role: SUPER_ADMIN_CONTEXT_ROLE,
-              }
-            : null,
-          tenants: allTenants.map((t) => ({
-            id: t.id,
-            code: t.code,
-            name: t.name,
-            logoUrl: t.logoUrl,
-            role: SUPER_ADMIN_CONTEXT_ROLE,
-            isDefault: false,
-          })),
+          activeTenant,
+          tenants: activeTenant
+            ? [{ ...activeTenant, isDefault: false }]
+            : [],
         };
       }
       throw new UnauthorizedException('Bạn chưa tham gia tổ chức nào hoặc tài khoản tại tổ chức đã bị ngưng hoạt động');
@@ -618,7 +610,7 @@ export class AuthService {
       ? user.userTenants.find((ut) => ut.tenantId === currentTenantId)
       : user.userTenants[0];
 
-    let tenantsList = user.userTenants.map((ut) => ({
+    const tenantsList = user.userTenants.map((ut) => ({
       id: ut.tenant.id,
       code: ut.tenant.code,
       name: ut.tenant.name,
@@ -626,21 +618,6 @@ export class AuthService {
       role: ut.role,
       isDefault: ut.isDefault,
     }));
-
-    if (user.isSuperAdmin === true && tenantsList.length === 0) {
-      const allTenants = await this.prisma.tenant.findMany({
-        where: { status: 'ACTIVE', deletedAt: null },
-        orderBy: { name: 'asc' },
-      });
-      tenantsList = allTenants.map((tenant) => ({
-        id: tenant.id,
-        code: tenant.code,
-        name: tenant.name,
-        logoUrl: tenant.logoUrl,
-        role: SUPER_ADMIN_CONTEXT_ROLE,
-        isDefault: false,
-      }));
-    }
 
     let activeTenantData = activeUserTenant
       ? {
