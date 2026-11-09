@@ -34,7 +34,9 @@ x-node-env: &node-env
   INVENTORY_SERVICE_URL: http://inventory-service:3004
   FULFILLMENT_SERVICE_URL: http://fulfillment-service:3005
   TRANSPORT_SERVICE_URL: http://transport-service:3006
+  NOTIFICATION_SERVICE_URL: http://notification-service:3007
   FORECAST_SERVICE_URL: ${FORECAST_SERVICE_URL:-http://forecast-service:8002}
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379}
 
 x-kafka-env: &kafka-env
   KAFKA_BROKERS: kafka:29092
@@ -85,6 +87,28 @@ services:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d postgres"]
       interval: 5s
       timeout: 5s
+      retries: 20
+    networks: [logix]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - "256mb"
+      - --maxmemory-policy
+      - allkeys-lru
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 20
     networks: [logix]
 
@@ -302,12 +326,14 @@ services:
       args: { SERVICE: notification-service, PORT: "3007" }
     image: logix/notification-service:latest
     restart: unless-stopped
-    depends_on: *after-migrate
+    depends_on: *after-migrate-kafka
     environment:
-      NODE_ENV: production
+      <<: [*node-env, *kafka-env]
       PORT: "3007"
       SERVICE_NAME: notification-service
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_notification?schema=notification${POSTGRES_SSL_PARAM:-}
+      KAFKA_CLIENT_ID: notification-service
+      KAFKA_GROUP_ID: logix-notification-service
     networks: [logix]
 
   audit-service:
@@ -404,4 +430,5 @@ networks:
 
 volumes:
   postgres-data:
+  redis-data:
   kafka-data:
