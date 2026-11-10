@@ -28,6 +28,7 @@ from logix_agent.modules.executions.service import (
     SqlAlchemyExecutionRecorder,
 )
 from logix_agent.modules.planner.checkpointer import open_checkpointer
+from logix_agent.modules.telemetry import setup_telemetry, shutdown_telemetry
 from logix_agent.modules.tools.catalog import build_tool_registry
 from logix_agent.modules.tools.http_client import create_service_client
 
@@ -76,6 +77,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         settings.inventory_service_url,
         settings.master_data_service_url,
     )
+    setup_telemetry(settings, app)
     session_factory = None
     try:
         session_factory = get_session_factory()
@@ -137,6 +139,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app_engine = None
         app_session_factory = None
     app_model_gateway = None
+    shutdown_telemetry()
 
 
 app = FastAPI(

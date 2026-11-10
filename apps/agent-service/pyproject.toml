@@ -28,6 +28,10 @@ dependencies = [
   "PyJWT>=2.9,<3",
   "google-genai>=2.24,<3",
   "litellm>=1.40,<2",
+  "opentelemetry-api>=1.27.0",
+  "opentelemetry-sdk>=1.27.0",
+  "opentelemetry-exporter-otlp-proto-http>=1.27.0",
+  "opentelemetry-instrumentation-fastapi>=0.48b0",
 ]
 
 [project.optional-dependencies]

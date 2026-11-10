@@ -53,6 +53,15 @@ class AgentSettings(BaseSettings):
     azure_api_version: str | None = None
     ollama_api_base: str | None = None
 
+    # ── Context window management ────────────────────────────────
+    planner_max_context_tokens: int = 12000
+    planner_max_history_messages: int = 30
+
+    # ── Observability & OpenTelemetry ────────────────────────────
+    otel_enabled: bool = False
+    otel_service_name: str = "logix-agent-service"
+    otel_exporter_otlp_endpoint: str = "http://localhost:4318/v1/traces"
+
     # ── Prompt policy ────────────────────────────────────────────
     prompt_policy_version: str = "v1"
 

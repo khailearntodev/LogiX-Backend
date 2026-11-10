@@ -27,12 +27,27 @@ from langchain_core.messages import (
 from langchain_core.messages.ai import UsageMetadata
 from langchain_core.messages.tool import ToolCallChunk
 from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResult
+from opentelemetry import trace
 from pydantic import ConfigDict
 
 from logix_agent.modules.ai.contracts import ModelRequest, ModelResponse, ToolDefinition
 from logix_agent.modules.ai.ports import ModelGateway
+from logix_agent.modules.telemetry import (
+    GEN_AI_OPERATION_NAME,
+    GEN_AI_REQUEST_MODEL,
+    GEN_AI_RESPONSE_FINISH_REASONS,
+    GEN_AI_SYSTEM,
+    GEN_AI_USAGE_INPUT_TOKENS,
+    GEN_AI_USAGE_OUTPUT_TOKENS,
+    GEN_AI_USAGE_TOTAL_TOKENS,
+    LOGIX_CORRELATION_ID,
+    LOGIX_EXECUTION_ID,
+    LOGIX_TENANT_ID,
+    get_tracer,
+)
 
 logger = logging.getLogger(__name__)
+tracer = get_tracer("logix_agent.ai")
 
 _ROLE_BY_TYPE = {
     "system": "system",
@@ -210,23 +225,61 @@ class ModelGatewayChatModel(BaseChatModel):
             len(tool_defs),
             ", ".join(t.name for t in tool_defs),
         )
-        response = await gateway.generate(request, tools=tool_defs)
-        finish_val = (
-            response.finish_reason.value
-            if hasattr(response.finish_reason, "value")
-            else str(response.finish_reason)
-        )
-        latency_str = f"{response.latency_ms}ms" if response.latency_ms is not None else "n/a"
-        logger.info(
-            "tenant=%s correlation_id=%s ModelGateway finished in %s (finish_reason=%s, %d tool calls: %s)",
-            tenant_id,
-            correlation_id,
-            latency_str,
-            finish_val,
-            len(response.tool_calls),
-            ", ".join(tc.name for tc in response.tool_calls),
-        )
-        return response
+        tracer = get_tracer("logix_agent.ai")
+        with tracer.start_as_current_span("gen_ai.chat", kind=trace.SpanKind.CLIENT) as span:
+            span.set_attribute(GEN_AI_OPERATION_NAME, "chat")
+            span.set_attribute(GEN_AI_REQUEST_MODEL, self.model_profile)
+            if tenant_id:
+                span.set_attribute(LOGIX_TENANT_ID, tenant_id)
+            if correlation_id:
+                span.set_attribute(LOGIX_CORRELATION_ID, correlation_id)
+            execution_id = kwargs.get("execution_id")
+            if execution_id:
+                span.set_attribute(LOGIX_EXECUTION_ID, str(execution_id))
+
+            try:
+                response = await gateway.generate(request, tools=tool_defs)
+            except Exception as exc:
+                span.record_exception(exc)
+                span.set_status(trace.StatusCode.ERROR, str(exc))
+                raise
+
+            span.set_attribute(GEN_AI_SYSTEM, response.provider or "unknown")
+            if response.model:
+                span.set_attribute(GEN_AI_REQUEST_MODEL, response.model)
+
+            finish_val = (
+                response.finish_reason.value
+                if hasattr(response.finish_reason, "value")
+                else str(response.finish_reason)
+            )
+            span.set_attribute(GEN_AI_RESPONSE_FINISH_REASONS, [finish_val])
+
+            usage = response.usage
+            if usage.input_tokens is not None:
+                span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
+            if usage.output_tokens is not None:
+                span.set_attribute(GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
+            if usage.total_tokens is not None:
+                span.set_attribute(GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens)
+
+            latency_str = f"{response.latency_ms}ms" if response.latency_ms is not None else "n/a"
+            tokens_str = (
+                f"tokens=[in={usage.input_tokens}, out={usage.output_tokens}, total={usage.total_tokens}]"
+                if usage.total_tokens is not None
+                else "tokens=n/a"
+            )
+            logger.info(
+                "tenant=%s correlation_id=%s ModelGateway finished in %s (%s, finish_reason=%s, %d tool calls: %s)",
+                tenant_id,
+                correlation_id,
+                latency_str,
+                tokens_str,
+                finish_val,
+                len(response.tool_calls),
+                ", ".join(tc.name for tc in response.tool_calls),
+            )
+            return response
 
     def _generate(
         self,
