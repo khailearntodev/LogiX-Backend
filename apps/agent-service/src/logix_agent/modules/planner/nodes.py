@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -22,6 +23,14 @@ from logix_agent.modules.ai.errors import (
 )
 from logix_agent.modules.auth import Actor
 from logix_agent.modules.confirmations.service import ConfirmationService
+from logix_agent.modules.executions.service import (
+    TOOL_AWAITING_CONFIRMATION,
+    TOOL_FAILED,
+    TOOL_REJECTED,
+    TOOL_STALE,
+    TOOL_SUCCEEDED,
+    ExecutionRecorder,
+)
 from logix_agent.modules.planner.prompts import get_planner_system_prompt
 from logix_agent.modules.planner.state import PlannerState
 from logix_agent.modules.registry.errors import (
@@ -36,6 +45,9 @@ from logix_agent.modules.tools.langchain_adapter import tools_for_actor
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = get_planner_system_prompt("v1")
+
+# Kept in graph state but never shown to the client in the interrupt payload.
+_INTERNAL_PENDING_KEYS = frozenset({"execution_binding", "tool_call_record_id"})
 
 _STATUS_MESSAGES = {
     400: "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.",
@@ -182,6 +194,7 @@ def create_agent_node(model: Any, registry: ToolRegistry):
 def create_preview_node(
     registry: ToolRegistry,
     confirmation_service: ConfirmationService,
+    execution_recorder: ExecutionRecorder,
     confirmation_ttl_seconds: int = 900,
 ):
     async def preview_node(state: PlannerState, config: RunnableConfig) -> dict[str, Any]:
@@ -190,9 +203,7 @@ def create_preview_node(
         configurable = config.get("configurable", {})
         correlation_id = str(configurable.get("correlation_id", ""))
         execution_id = (
-            configurable.get("execution_id")
-            or configurable.get("run_id")
-            or "00000000-0000-0000-0000-000000000000"
+            configurable.get("execution_id") or configurable.get("run_id") or str(uuid.uuid4())
         )
 
         last_message = state["messages"][-1]
@@ -232,11 +243,33 @@ def create_preview_node(
 
         expires_at = datetime.now(UTC) + timedelta(seconds=confirmation_ttl_seconds)
 
+        # The confirmation row references both by foreign key, so they must exist first.
+        await execution_recorder.ensure_execution(
+            tenant_id=actor.tenant_id,
+            user_id=actor.user_id,
+            execution_id=execution_id,
+            thread_id=str(configurable.get("thread_id") or execution_id),
+            correlation_id=correlation_id,
+            prompt_policy_version=str(configurable.get("prompt_policy_version", "v1")),
+        )
+        spec = registry.get(tool_name)
+        tool_call_record_id = await execution_recorder.start_tool_call(
+            tenant_id=actor.tenant_id,
+            execution_id=execution_id,
+            tool_name=tool_name,
+            tool_version=spec.version,
+            required_permission=spec.required_permission,
+            risk_level=spec.risk_level.value,
+            input_data=tool_args,
+            target_service=spec.target_service,
+            status=TOOL_AWAITING_CONFIRMATION,
+        )
+
         record = await confirmation_service.create_request(
             tenant_id=actor.tenant_id,
             user_id=actor.user_id,
             agent_execution_id=execution_id,
-            tool_call_id="00000000-0000-0000-0000-000000000000",
+            tool_call_id=tool_call_record_id,
             action_type=tool_name,
             target_type=preview.target_type,
             target_id=preview.target_id,
@@ -260,6 +293,7 @@ def create_preview_node(
             "pending_approval": {
                 "execution_binding": preview.execution_binding,
                 "approval_id": str(record.id),
+                "tool_call_record_id": str(tool_call_record_id),
                 "action": tool_name,
                 "target_type": preview.target_type,
                 "target_id": str(preview.target_id),
@@ -283,7 +317,13 @@ def create_confirm_node():
             pending.get("approval_id"),
             pending.get("action"),
         )
-        resume_val = interrupt({key: value for key, value in pending.items() if key != "execution_binding"})
+        resume_val = interrupt(
+            {
+                key: value
+                for key, value in pending.items()
+                if key not in _INTERNAL_PENDING_KEYS
+            }
+        )
         logger.info(
             "[CONFIRM_NODE:RESUMED] received user decision: %s for approval_id=%s",
             resume_val,
@@ -297,6 +337,7 @@ def create_confirm_node():
 def create_revalidate_and_execute_node(
     registry: ToolRegistry,
     confirmation_service: ConfirmationService,
+    execution_recorder: ExecutionRecorder,
 ):
     async def revalidate_and_execute_node(
         state: PlannerState, config: RunnableConfig
@@ -310,6 +351,24 @@ def create_revalidate_and_execute_node(
         configurable = config.get("configurable", {})
         correlation_id = str(configurable.get("correlation_id", ""))
         context = ToolContext(actor=actor, correlation_id=correlation_id)
+
+        async def finish_record(
+            status: str, *, error_code: str | None = None, latency_ms: int | None = None
+        ) -> None:
+            # Bookkeeping only: it must never turn an executed action into a reported failure.
+            record_id = pending.get("tool_call_record_id")
+            if not record_id:
+                return
+            try:
+                await execution_recorder.finish_tool_call(
+                    actor.tenant_id,
+                    record_id,
+                    status,
+                    error_code=error_code,
+                    latency_ms=latency_ms,
+                )
+            except Exception:
+                logger.exception("%s failed to record tool call outcome (%s)", tag, status)
 
         tool_call = pending["tool_call"]
         tool_name = tool_call["name"]
@@ -343,6 +402,7 @@ def create_revalidate_and_execute_node(
                 approval_id,
                 tool_name,
             )
+            await finish_record(TOOL_REJECTED)
             return {
                 "messages": [
                     ToolMessage(
@@ -376,6 +436,7 @@ def create_revalidate_and_execute_node(
                     fresh_preview.target_version,
                 )
                 await confirmation_service.mark_stale(actor.tenant_id, approval_id)
+                await finish_record(TOOL_STALE, error_code="VERSION_CONFLICT")
                 return {
                     "messages": [
                         ToolMessage(
@@ -404,6 +465,7 @@ def create_revalidate_and_execute_node(
             result = await registry.invoke(tool_name, exec_context, tool_args)
             elapsed = time.monotonic() - t0
             await confirmation_service.mark_consumed(actor.tenant_id, approval_id)
+            await finish_record(TOOL_SUCCEEDED, latency_ms=int(elapsed * 1000))
             logger.info(
                 "%s [REVALIDATE_AND_EXECUTE:SUCCESS] tool '%s' finished in %.2fs (approval_id=%s consumed)",
                 tag,
@@ -430,6 +492,7 @@ def create_revalidate_and_execute_node(
                 exc,
             )
             err_msg = _format_tool_error(exc)
+            await finish_record(TOOL_FAILED, error_code=type(exc).__name__[:100])
             return {
                 "messages": [
                     ToolMessage(

@@ -13,6 +13,10 @@ from logix_agent.modules.confirmations.service import (
     ConfirmationService,
     InMemoryConfirmationStore,
 )
+from logix_agent.modules.executions.service import (
+    ExecutionRecorder,
+    InMemoryExecutionRecorder,
+)
 from logix_agent.modules.planner.nodes import (
     create_agent_node,
     create_confirm_node,
@@ -33,6 +37,7 @@ def build_planner_graph(
     *,
     model: BaseChatModel | None = None,
     confirmation_service: ConfirmationService | None = None,
+    execution_recorder: ExecutionRecorder | None = None,
     max_steps: int = 10,
 ) -> CompiledStateGraph:
     """Build and compile the multi-node planner graph with confirmation gate."""
@@ -42,10 +47,15 @@ def build_planner_graph(
     if confirmation_service is None:
         confirmation_service = ConfirmationService(InMemoryConfirmationStore())
 
+    if execution_recorder is None:
+        execution_recorder = InMemoryExecutionRecorder()
+
     agent_node = create_agent_node(model, registry)
-    preview_node = create_preview_node(registry, confirmation_service)
+    preview_node = create_preview_node(registry, confirmation_service, execution_recorder)
     confirm_node = create_confirm_node()
-    revalidate_and_execute_node = create_revalidate_and_execute_node(registry, confirmation_service)
+    revalidate_and_execute_node = create_revalidate_and_execute_node(
+        registry, confirmation_service, execution_recorder
+    )
     execute_tool_node = create_execute_tool_node(registry)
 
     route_after_agent = create_route_after_agent(registry)
