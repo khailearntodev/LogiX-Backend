@@ -30,6 +30,7 @@ from logix_agent.modules.confirmations.service import (
     ConfirmationService,
     InMemoryConfirmationStore,
 )
+from logix_agent.modules.executions.service import InMemoryExecutionRecorder
 from logix_agent.modules.planner.graph import build_planner_graph
 from logix_agent.modules.registry import (
     PreviewResult,
@@ -247,6 +248,7 @@ async def test_sensitive_tool_interrupts_and_resumes_on_approval():
     observed_bindings: list[object] = []
     registry = _build_test_registry(order_versions, backend_tokens=backend_tokens, observed_bindings=observed_bindings)
     confirmation_service = ConfirmationService(InMemoryConfirmationStore())
+    recorder = InMemoryExecutionRecorder()
     checkpointer = InMemorySaver()
 
     model = FakeToolModel(
@@ -267,6 +269,7 @@ async def test_sensitive_tool_interrupts_and_resumes_on_approval():
         checkpointer,
         model=model,
         confirmation_service=confirmation_service,
+        execution_recorder=recorder,
     )
 
     thread_cfg = {
@@ -317,6 +320,13 @@ async def test_sensitive_tool_interrupts_and_resumes_on_approval():
     rec = await confirmation_service.get_request("tenant-1", approval_id)
     assert rec is not None
     assert rec.status == "CONSUMED"
+
+    # The confirmation points at a real tool call (FK-safe), not a placeholder id.
+    assert str(rec.tool_call_id) != "00000000-0000-0000-0000-000000000000"
+    tool_call = recorder.tool_calls[(rec.tenant_id, rec.tool_call_id)]
+    assert tool_call.tool_name == "confirm_order"
+    assert tool_call.status == "SUCCEEDED"
+    assert (rec.tenant_id, rec.agent_execution_id) in recorder.executions
 
 
 async def test_sensitive_tool_interrupts_and_cancels_on_rejection():

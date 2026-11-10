@@ -7,7 +7,7 @@ import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Protocol
-from uuid import NAMESPACE_DNS, UUID, uuid4, uuid5
+from uuid import UUID, uuid4
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -20,19 +20,11 @@ from logix_agent.modules.confirmations.errors import (
     ConfirmationStateError,
 )
 from logix_agent.modules.confirmations.models import ConfirmationRequest
+from logix_agent.modules.executions.ids import to_uuid as _to_uuid
 
 
 def _now() -> datetime:
     return datetime.now(UTC)
-
-
-def _to_uuid(val: str | UUID) -> UUID:
-    if isinstance(val, UUID):
-        return val
-    try:
-        return UUID(str(val))
-    except (ValueError, TypeError, AttributeError):
-        return uuid5(NAMESPACE_DNS, str(val))
 
 
 def compute_context_hash(

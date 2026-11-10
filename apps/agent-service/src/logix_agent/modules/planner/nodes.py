@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import time
+import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -12,7 +13,9 @@ from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END
 from langgraph.types import interrupt
+from opentelemetry import trace
 
+from logix_agent.config import settings
 from logix_agent.modules.ai.errors import (
     FallbackExhaustedError,
     ModelGatewayError,
@@ -22,8 +25,17 @@ from logix_agent.modules.ai.errors import (
 )
 from logix_agent.modules.auth import Actor
 from logix_agent.modules.confirmations.service import ConfirmationService
+from logix_agent.modules.executions.service import (
+    TOOL_AWAITING_CONFIRMATION,
+    TOOL_FAILED,
+    TOOL_REJECTED,
+    TOOL_STALE,
+    TOOL_SUCCEEDED,
+    ExecutionRecorder,
+)
 from logix_agent.modules.planner.prompts import get_planner_system_prompt
 from logix_agent.modules.planner.state import PlannerState
+from logix_agent.modules.planner.trimming import trim_conversation_history
 from logix_agent.modules.registry.errors import (
     ApprovalRequiredError,
     ToolPermissionError,
@@ -31,11 +43,23 @@ from logix_agent.modules.registry.errors import (
 )
 from logix_agent.modules.registry.registry import ToolRegistry
 from logix_agent.modules.registry.spec import ApprovedAction, ToolContext
+from logix_agent.modules.telemetry import (
+    LOGIX_ACTOR_ROLE,
+    LOGIX_ACTOR_USER_ID,
+    LOGIX_CORRELATION_ID,
+    LOGIX_TENANT_ID,
+    LOGIX_TOOL_NAME,
+    get_tracer,
+)
 from logix_agent.modules.tools.langchain_adapter import tools_for_actor
 
 logger = logging.getLogger(__name__)
+tracer = get_tracer("logix_agent.planner")
 
 SYSTEM_PROMPT = get_planner_system_prompt("v1")
+
+# Kept in graph state but never shown to the client in the interrupt payload.
+_INTERNAL_PENDING_KEYS = frozenset({"execution_binding", "tool_call_record_id"})
 
 _STATUS_MESSAGES = {
     400: "Yêu cầu không hợp lệ. Vui lòng kiểm tra lại thông tin.",
@@ -133,48 +157,78 @@ def create_agent_node(model: Any, registry: ToolRegistry):
         if not history or not isinstance(history[0], SystemMessage):
             history = [SystemMessage(content=active_prompt), *history]
 
+        configurable = config.get("configurable", {})
+        max_tokens = int(
+            configurable.get("max_context_tokens", settings.planner_max_context_tokens)
+        )
+        max_messages = int(
+            configurable.get("max_history_messages", settings.planner_max_history_messages)
+        )
+        trimmed_history = trim_conversation_history(
+            history, max_tokens=max_tokens, max_messages=max_messages
+        )
+
         tool_names = [t.name for t in tools] if tools else []
         logger.info(
-            "%s [AGENT_NODE:START] user=%s role=%s history=%d tools_available=%d (%s)",
+            "%s [AGENT_NODE:START] user=%s role=%s history=%d (trimmed=%d) tools_available=%d (%s)",
             tag,
             actor.user_id,
             actor.role,
             len(history),
+            len(trimmed_history),
             len(tool_names),
             ", ".join(tool_names),
         )
 
-        correlation_id = str(config.get("configurable", {}).get("correlation_id", ""))
-        try:
-            response = await bound_model.ainvoke(
-                history,
-                config,
-                tenant_id=actor.tenant_id,
-                correlation_id=correlation_id,
-            )
-        except ModelGatewayError as exc:
-            logger.warning("%s [AGENT_NODE:ERROR] Model call gateway error: %s", tag, exc)
-            raise ChatRunError(_classify(exc)) from exc
+        correlation_id = str(configurable.get("correlation_id", ""))
+        tracer = get_tracer("logix_agent.planner")
+        with tracer.start_as_current_span("planner.agent_node") as span:
+            span.set_attribute(LOGIX_TENANT_ID, actor.tenant_id)
+            span.set_attribute(LOGIX_ACTOR_USER_ID, actor.user_id)
+            span.set_attribute(LOGIX_ACTOR_ROLE, actor.role)
+            if correlation_id:
+                span.set_attribute(LOGIX_CORRELATION_ID, correlation_id)
 
-        tool_calls = getattr(response, "tool_calls", []) or []
-        if tool_calls:
-            tc_summary = [f"{tc['name']}({tc.get('args', {})})" for tc in tool_calls]
-            logger.info(
-                "%s [AGENT_NODE:RESPONSE] LLM returned %d tool call(s): %s",
-                tag,
-                len(tool_calls),
-                "; ".join(tc_summary),
-            )
-        else:
-            snippet = (response.content or "")[:120].replace("\n", " ")
-            logger.info(
-                "%s [AGENT_NODE:RESPONSE] LLM returned text (no tool calls): %s%s",
-                tag,
-                snippet,
-                "..." if len(response.content or "") > 120 else "",
-            )
+            try:
+                response = await bound_model.ainvoke(
+                    trimmed_history,
+                    config,
+                    tenant_id=actor.tenant_id,
+                    correlation_id=correlation_id,
+                )
+            except ModelGatewayError as exc:
+                span.record_exception(exc)
+                span.set_status(trace.StatusCode.ERROR, str(exc))
+                logger.warning("%s [AGENT_NODE:ERROR] Model call gateway error: %s", tag, exc)
+                raise ChatRunError(_classify(exc)) from exc
 
-        return {"messages": [response]}
+            tool_calls = getattr(response, "tool_calls", []) or []
+            usage = getattr(response, "usage_metadata", None) or {}
+            tokens_info = (
+                f" (tokens: in={usage.get('input_tokens')}, out={usage.get('output_tokens')}, total={usage.get('total_tokens')})"
+                if usage.get("total_tokens") is not None
+                else ""
+            )
+            if tool_calls:
+                tc_summary = [f"{tc['name']}({tc.get('args', {})})" for tc in tool_calls]
+                logger.info(
+                    "%s [AGENT_NODE:RESPONSE]%s LLM returned %d tool call(s): %s",
+                    tag,
+                    tokens_info,
+                    len(tool_calls),
+                    "; ".join(tc_summary),
+                )
+            else:
+                snippet = (response.content or "")[:120].replace("\n", " ")
+                logger.info(
+                    "%s [AGENT_NODE:RESPONSE]%s LLM returned text (no tool calls): %s%s",
+                    tag,
+                    tokens_info,
+                    snippet,
+                    "..." if len(response.content or "") > 120 else "",
+                )
+
+            return {"messages": [response]}
 
     return agent_node
 
@@ -182,6 +236,7 @@ def create_agent_node(model: Any, registry: ToolRegistry):
 def create_preview_node(
     registry: ToolRegistry,
     confirmation_service: ConfirmationService,
+    execution_recorder: ExecutionRecorder,
     confirmation_ttl_seconds: int = 900,
 ):
     async def preview_node(state: PlannerState, config: RunnableConfig) -> dict[str, Any]:
@@ -190,9 +245,7 @@ def create_preview_node(
         configurable = config.get("configurable", {})
         correlation_id = str(configurable.get("correlation_id", ""))
         execution_id = (
-            configurable.get("execution_id")
-            or configurable.get("run_id")
-            or "00000000-0000-0000-0000-000000000000"
+            configurable.get("execution_id") or configurable.get("run_id") or str(uuid.uuid4())
         )
 
         last_message = state["messages"][-1]
@@ -232,11 +285,33 @@ def create_preview_node(
 
         expires_at = datetime.now(UTC) + timedelta(seconds=confirmation_ttl_seconds)
 
+        # The confirmation row references both by foreign key, so they must exist first.
+        await execution_recorder.ensure_execution(
+            tenant_id=actor.tenant_id,
+            user_id=actor.user_id,
+            execution_id=execution_id,
+            thread_id=str(configurable.get("thread_id") or execution_id),
+            correlation_id=correlation_id,
+            prompt_policy_version=str(configurable.get("prompt_policy_version", "v1")),
+        )
+        spec = registry.get(tool_name)
+        tool_call_record_id = await execution_recorder.start_tool_call(
+            tenant_id=actor.tenant_id,
+            execution_id=execution_id,
+            tool_name=tool_name,
+            tool_version=spec.version,
+            required_permission=spec.required_permission,
+            risk_level=spec.risk_level.value,
+            input_data=tool_args,
+            target_service=spec.target_service,
+            status=TOOL_AWAITING_CONFIRMATION,
+        )
+
         record = await confirmation_service.create_request(
             tenant_id=actor.tenant_id,
             user_id=actor.user_id,
             agent_execution_id=execution_id,
-            tool_call_id="00000000-0000-0000-0000-000000000000",
+            tool_call_id=tool_call_record_id,
             action_type=tool_name,
             target_type=preview.target_type,
             target_id=preview.target_id,
@@ -260,6 +335,7 @@ def create_preview_node(
             "pending_approval": {
                 "execution_binding": preview.execution_binding,
                 "approval_id": str(record.id),
+                "tool_call_record_id": str(tool_call_record_id),
                 "action": tool_name,
                 "target_type": preview.target_type,
                 "target_id": str(preview.target_id),
@@ -283,7 +359,13 @@ def create_confirm_node():
             pending.get("approval_id"),
             pending.get("action"),
         )
-        resume_val = interrupt({key: value for key, value in pending.items() if key != "execution_binding"})
+        resume_val = interrupt(
+            {
+                key: value
+                for key, value in pending.items()
+                if key not in _INTERNAL_PENDING_KEYS
+            }
+        )
         logger.info(
             "[CONFIRM_NODE:RESUMED] received user decision: %s for approval_id=%s",
             resume_val,
@@ -297,6 +379,7 @@ def create_confirm_node():
 def create_revalidate_and_execute_node(
     registry: ToolRegistry,
     confirmation_service: ConfirmationService,
+    execution_recorder: ExecutionRecorder,
 ):
     async def revalidate_and_execute_node(
         state: PlannerState, config: RunnableConfig
@@ -310,6 +393,24 @@ def create_revalidate_and_execute_node(
         configurable = config.get("configurable", {})
         correlation_id = str(configurable.get("correlation_id", ""))
         context = ToolContext(actor=actor, correlation_id=correlation_id)
+
+        async def finish_record(
+            status: str, *, error_code: str | None = None, latency_ms: int | None = None
+        ) -> None:
+            # Bookkeeping only: it must never turn an executed action into a reported failure.
+            record_id = pending.get("tool_call_record_id")
+            if not record_id:
+                return
+            try:
+                await execution_recorder.finish_tool_call(
+                    actor.tenant_id,
+                    record_id,
+                    status,
+                    error_code=error_code,
+                    latency_ms=latency_ms,
+                )
+            except Exception:
+                logger.exception("%s failed to record tool call outcome (%s)", tag, status)
 
         tool_call = pending["tool_call"]
         tool_name = tool_call["name"]
@@ -343,6 +444,7 @@ def create_revalidate_and_execute_node(
                 approval_id,
                 tool_name,
             )
+            await finish_record(TOOL_REJECTED)
             return {
                 "messages": [
                     ToolMessage(
@@ -376,6 +478,7 @@ def create_revalidate_and_execute_node(
                     fresh_preview.target_version,
                 )
                 await confirmation_service.mark_stale(actor.tenant_id, approval_id)
+                await finish_record(TOOL_STALE, error_code="VERSION_CONFLICT")
                 return {
                     "messages": [
                         ToolMessage(
@@ -401,9 +504,22 @@ def create_revalidate_and_execute_node(
                 actor=actor, correlation_id=correlation_id, approval=approved_action
             )
             t0 = time.monotonic()
-            result = await registry.invoke(tool_name, exec_context, tool_args)
+            tracer = get_tracer("logix_agent.planner")
+            with tracer.start_as_current_span(f"tool.{tool_name}") as span:
+                span.set_attribute(LOGIX_TOOL_NAME, tool_name)
+                span.set_attribute(LOGIX_TENANT_ID, actor.tenant_id)
+                span.set_attribute(LOGIX_ACTOR_USER_ID, actor.user_id)
+                if correlation_id:
+                    span.set_attribute(LOGIX_CORRELATION_ID, correlation_id)
+                try:
+                    result = await registry.invoke(tool_name, exec_context, tool_args)
+                except Exception as exc:
+                    span.record_exception(exc)
+                    span.set_status(trace.StatusCode.ERROR, str(exc))
+                    raise
             elapsed = time.monotonic() - t0
             await confirmation_service.mark_consumed(actor.tenant_id, approval_id)
+            await finish_record(TOOL_SUCCEEDED, latency_ms=int(elapsed * 1000))
             logger.info(
                 "%s [REVALIDATE_AND_EXECUTE:SUCCESS] tool '%s' finished in %.2fs (approval_id=%s consumed)",
                 tag,
@@ -430,6 +546,7 @@ def create_revalidate_and_execute_node(
                 exc,
             )
             err_msg = _format_tool_error(exc)
+            await finish_record(TOOL_FAILED, error_code=type(exc).__name__[:100])
             return {
                 "messages": [
                     ToolMessage(
@@ -465,34 +582,45 @@ def create_execute_tool_node(registry: ToolRegistry):
         )
 
         tool_messages: list[ToolMessage] = []
+        tracer = get_tracer("logix_agent.planner")
         for tc in last_message.tool_calls:
             name = tc["name"]
             args = tc.get("args", {})
             call_id = tc.get("id") or "call_1"
             t0 = time.monotonic()
             logger.info("%s [EXECUTE_TOOL] invoking '%s' args=%s", tag, name, str(args)[:200])
-            try:
-                result = await registry.invoke(name, context, args)
-                elapsed = time.monotonic() - t0
-                logger.info(
-                    "%s [EXECUTE_TOOL:SUCCESS] tool '%s' finished in %.2fs", tag, name, elapsed
-                )
-                tool_messages.append(
-                    ToolMessage(content=result.model_dump_json(), name=name, tool_call_id=call_id)
-                )
-            except Exception as exc:
-                elapsed = time.monotonic() - t0
-                logger.warning(
-                    "%s [EXECUTE_TOOL:ERROR] tool '%s' failed after %.2fs: %s",
-                    tag,
-                    name,
-                    elapsed,
-                    exc,
-                )
-                err_msg = _format_tool_error(exc)
-                tool_messages.append(
-                    ToolMessage(content=err_msg, name=name, status="error", tool_call_id=call_id)
-                )
+
+            with tracer.start_as_current_span(f"tool.{name}") as span:
+                span.set_attribute(LOGIX_TOOL_NAME, name)
+                span.set_attribute(LOGIX_TENANT_ID, actor.tenant_id)
+                span.set_attribute(LOGIX_ACTOR_USER_ID, actor.user_id)
+                if correlation_id:
+                    span.set_attribute(LOGIX_CORRELATION_ID, correlation_id)
+
+                try:
+                    result = await registry.invoke(name, context, args)
+                    elapsed = time.monotonic() - t0
+                    logger.info(
+                        "%s [EXECUTE_TOOL:SUCCESS] tool '%s' finished in %.2fs", tag, name, elapsed
+                    )
+                    tool_messages.append(
+                        ToolMessage(content=result.model_dump_json(), name=name, tool_call_id=call_id)
+                    )
+                except Exception as exc:
+                    elapsed = time.monotonic() - t0
+                    span.record_exception(exc)
+                    span.set_status(trace.StatusCode.ERROR, str(exc))
+                    logger.warning(
+                        "%s [EXECUTE_TOOL:ERROR] tool '%s' failed after %.2fs: %s",
+                        tag,
+                        name,
+                        elapsed,
+                        exc,
+                    )
+                    err_msg = _format_tool_error(exc)
+                    tool_messages.append(
+                        ToolMessage(content=err_msg, name=name, status="error", tool_call_id=call_id)
+                    )
 
         return {
             "messages": tool_messages,

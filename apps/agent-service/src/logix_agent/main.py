@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from collections.abc import AsyncIterator
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
@@ -13,8 +13,6 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from logix_agent.config import settings
 from logix_agent.db import model_registry  # noqa: F401
 from logix_agent.db.session import create_engine, create_session_factory
-from logix_agent.modules.agent.router import build_official_runtime
-from logix_agent.modules.agent.router import router as official_agent_router
 from logix_agent.modules.agui.router import build_agui_runtime
 from logix_agent.modules.agui.router import router as agui_router
 from logix_agent.modules.ai.factory import create_model_gateway
@@ -24,7 +22,13 @@ from logix_agent.modules.confirmations.service import (
     InMemoryConfirmationStore,
     SqlAlchemyConfirmationStore,
 )
-from logix_agent.modules.planner.checkpointer import create_checkpointer
+from logix_agent.modules.executions.service import (
+    ExecutionRecorder,
+    InMemoryExecutionRecorder,
+    SqlAlchemyExecutionRecorder,
+)
+from logix_agent.modules.planner.checkpointer import open_checkpointer
+from logix_agent.modules.telemetry import setup_telemetry, shutdown_telemetry
 from logix_agent.modules.tools.catalog import build_tool_registry
 from logix_agent.modules.tools.http_client import create_service_client
 
@@ -73,19 +77,33 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         settings.inventory_service_url,
         settings.master_data_service_url,
     )
+    setup_telemetry(settings, app)
     session_factory = None
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:
             await session.execute(text("SELECT 1"))
     except Exception as exc:
-        print(f"[{settings.service_name}] Database connection warning on startup: {exc}")
+        logger.warning("Database connection warning on startup: %s", exc)
 
     service_client = create_service_client(settings)
     app.state.tool_registry = build_tool_registry(service_client)
 
-    checkpointer = create_checkpointer(settings)
-    if session_factory is not None and settings.database_url and settings.environment != "development":
+    # Fail fast outside development if Postgres checkpointing cannot start.
+    checkpointer_stack = AsyncExitStack()
+    checkpointer = await checkpointer_stack.enter_async_context(open_checkpointer(settings))
+    use_database = (
+        session_factory is not None
+        and bool(settings.database_url)
+        and settings.environment != "development"
+    )
+    execution_recorder: ExecutionRecorder
+    if use_database:
+        execution_recorder = SqlAlchemyExecutionRecorder(session_factory)
+        logger.info("Using SqlAlchemyExecutionRecorder with PostgreSQL persistence.")
+    else:
+        execution_recorder = InMemoryExecutionRecorder()
+    if use_database:
         try:
             confirmation_store = SqlAlchemyConfirmationStore(session_factory)
             logger.info("Using SqlAlchemyConfirmationStore with PostgreSQL persistence.")
@@ -103,29 +121,25 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             registry=app.state.tool_registry,
             checkpointer=checkpointer,
             confirmation_service=app.state.confirmation_service,
+            execution_recorder=execution_recorder,
             prompt_policy_version=settings.prompt_policy_version,
         )
-    except Exception as exc:
-        print(f"[{settings.service_name}] Model gateway initialization warning: {exc}")
-
-    try:
-        app.state.official_runtime = build_official_runtime()
-        logger.info("create_agent flow ready at /api/v1/agent/official/runs")
     except Exception:
-        logger.exception("create_agent flow failed to initialize")
+        logger.exception("Model gateway / agent runtime initialization failed")
 
     yield
 
     app.state.agui_runtime = None
-    app.state.official_runtime = None
     app.state.tool_registry = None
     app.state.confirmation_service = None
     await service_client.aclose()
+    await checkpointer_stack.aclose()
     if app_engine is not None:
         await app_engine.dispose()
         app_engine = None
         app_session_factory = None
     app_model_gateway = None
+    shutdown_telemetry()
 
 
 app = FastAPI(
@@ -135,7 +149,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(agui_router)
-app.include_router(official_agent_router)
 
 
 @app.exception_handler(StarletteHTTPException)

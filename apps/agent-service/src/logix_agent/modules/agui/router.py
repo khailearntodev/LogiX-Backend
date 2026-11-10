@@ -37,6 +37,14 @@ from logix_agent.modules.confirmations.service import (
     ConfirmationService,
     InMemoryConfirmationStore,
 )
+from logix_agent.modules.executions.service import (
+    EXECUTION_FAILED,
+    EXECUTION_RUNNING,
+    EXECUTION_SUCCEEDED,
+    EXECUTION_WAITING_CONFIRMATION,
+    ExecutionRecorder,
+    InMemoryExecutionRecorder,
+)
 from logix_agent.modules.planner.graph import build_planner_graph
 from logix_agent.modules.planner.nodes import INTERNAL, PUBLIC_MESSAGES
 from logix_agent.modules.registry.registry import ToolRegistry
@@ -64,6 +72,8 @@ class AguiRuntime:
     threads: ThreadRegistry
     confirmation_service: ConfirmationService
     registry: ToolRegistry
+    execution_recorder: ExecutionRecorder
+    prompt_policy_version: str = "v1"
 
 
 def build_agui_runtime(
@@ -72,6 +82,7 @@ def build_agui_runtime(
     registry: ToolRegistry | None = None,
     checkpointer: BaseCheckpointSaver | None = None,
     confirmation_service: ConfirmationService | None = None,
+    execution_recorder: ExecutionRecorder | None = None,
     prompt_policy_version: str = "v1",
 ) -> AguiRuntime:
     """Build the unified planner runtime supporting ToolRegistry and Confirmation Gate."""
@@ -83,6 +94,9 @@ def build_agui_runtime(
 
     if confirmation_service is None:
         confirmation_service = ConfirmationService(InMemoryConfirmationStore())
+
+    if execution_recorder is None:
+        execution_recorder = InMemoryExecutionRecorder()
 
     model: BaseChatModel | None = None
     if isinstance(gateway_or_model, BaseChatModel):
@@ -97,6 +111,7 @@ def build_agui_runtime(
         checkpointer=checkpointer,
         model=model,
         confirmation_service=confirmation_service,
+        execution_recorder=execution_recorder,
     )
 
     agent = LangGraphAgent(
@@ -110,6 +125,8 @@ def build_agui_runtime(
         threads=ThreadRegistry(),
         confirmation_service=confirmation_service,
         registry=registry,
+        execution_recorder=execution_recorder,
+        prompt_policy_version=prompt_policy_version,
     )
 
 
@@ -133,6 +150,32 @@ def _sanitize(event: object) -> object:
     return event.model_copy(update={"code": INTERNAL, "message": PUBLIC_MESSAGES[INTERNAL]})
 
 
+def _next_status(current: str, event: object) -> str:
+    """Execution status implied by a stream event; errors outrank an interrupt."""
+    if current == EXECUTION_FAILED:
+        return current
+    if isinstance(event, RunErrorEvent):
+        return EXECUTION_FAILED
+    if getattr(event, "name", None) == "on_interrupt":
+        return EXECUTION_WAITING_CONFIRMATION
+    return current
+
+
+async def _record_final_status(
+    runtime: AguiRuntime, actor: Actor, execution_id: str, status: str, tag: str
+) -> None:
+    # Bookkeeping must never break a response that has already been streamed.
+    try:
+        await runtime.execution_recorder.set_execution_status(
+            actor.tenant_id,
+            execution_id,
+            status,
+            error_code="RUN_ERROR" if status == EXECUTION_FAILED else None,
+        )
+    except Exception:
+        logger.exception("%s failed to record execution status %s", tag, status)
+
+
 @router.post("/runs")
 async def run_agent(
     input_data: RunAgentInput,
@@ -153,6 +196,16 @@ async def run_agent(
         ) from None
 
     tag = f"run={input_data.run_id[:8]} tenant={actor.tenant_id}"
+    correlation_id = request.headers.get("x-correlation-id") or input_data.run_id
+    # Created before streaming starts so a persistence failure is a clean error response.
+    await runtime.execution_recorder.ensure_execution(
+        tenant_id=actor.tenant_id,
+        user_id=actor.user_id,
+        execution_id=input_data.run_id,
+        thread_id=input_data.thread_id,
+        correlation_id=correlation_id,
+        prompt_policy_version=runtime.prompt_policy_version,
+    )
     agent = runtime.agent.clone()
     agent.config = {
         "configurable": {
@@ -162,7 +215,7 @@ async def run_agent(
             "permissions": list(actor.permissions),
             "access_token": actor.access_token,
             "actor": actor,
-            "correlation_id": request.headers.get("x-correlation-id") or input_data.run_id,
+            "correlation_id": correlation_id,
             "execution_id": input_data.run_id,
             "run_id": input_data.run_id,
         }
@@ -181,12 +234,18 @@ async def run_agent(
             actor.user_id,
             len(input_data.messages),
         )
+        status_now = EXECUTION_SUCCEEDED
         try:
             async for event in agent.run(safe_input):
                 if isinstance(event, RunErrorEvent):
                     logger.warning("%s agent run error: %s", tag, event.message)
+                status_now = _next_status(status_now, event)
                 yield encoder.encode(_sanitize(event))
+        except BaseException:
+            status_now = EXECUTION_FAILED
+            raise
         finally:
+            await _record_final_status(runtime, actor, input_data.run_id, status_now, tag)
             logger.info("%s agent run ended", tag)
 
     return StreamingResponse(
@@ -261,6 +320,18 @@ async def submit_decision(
         ) from None
 
     tag = f"resume={execution_id[:8]} tenant={actor.tenant_id}"
+    correlation_id = request.headers.get("x-correlation-id") or execution_id
+    await runtime.execution_recorder.ensure_execution(
+        tenant_id=actor.tenant_id,
+        user_id=actor.user_id,
+        execution_id=execution_id,
+        thread_id=thread_id,
+        correlation_id=correlation_id,
+        prompt_policy_version=runtime.prompt_policy_version,
+    )
+    await runtime.execution_recorder.set_execution_status(
+        actor.tenant_id, execution_id, EXECUTION_RUNNING
+    )
     agent = runtime.agent.clone()
     agent.config = {
         "configurable": {
@@ -271,7 +342,7 @@ async def submit_decision(
             "permissions": list(actor.permissions),
             "access_token": actor.access_token,
             "actor": actor,
-            "correlation_id": request.headers.get("x-correlation-id") or execution_id,
+            "correlation_id": correlation_id,
             "execution_id": execution_id,
             "run_id": execution_id,
         }
@@ -312,12 +383,18 @@ async def submit_decision(
 
     async def event_stream() -> AsyncIterator[str]:
         logger.info("%s resuming graph execution on thread %s", tag, thread_id)
+        status_now = EXECUTION_SUCCEEDED
         try:
             async for event in agent.run(resume_input):
                 if isinstance(event, RunErrorEvent):
                     logger.warning("%s resume run error: %s", tag, event.message)
+                status_now = _next_status(status_now, event)
                 yield encoder.encode(_sanitize(event))
+        except BaseException:
+            status_now = EXECUTION_FAILED
+            raise
         finally:
+            await _record_final_status(runtime, actor, execution_id, status_now, tag)
             logger.info("%s resume execution ended", tag)
 
     return StreamingResponse(

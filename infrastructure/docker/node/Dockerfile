@@ -25,6 +25,7 @@ WORKDIR /repo
 FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json .npmrc ./
 COPY libs/auth/package.json libs/auth/
+COPY libs/cache/package.json libs/cache/
 COPY libs/common/package.json libs/common/
 COPY libs/config/package.json libs/config/
 COPY libs/database/package.json libs/database/
