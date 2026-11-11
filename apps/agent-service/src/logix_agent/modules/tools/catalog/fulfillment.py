@@ -40,12 +40,14 @@ class ShipmentSummaryOut(View):
 class ShipmentItemOut(View):
     id: UUID
     order_line_id: UUID
-    line_number: int
+    line_number: int | None = None
     product_id: UUID
     sku_snapshot: str
     product_name_snapshot: str
     unit_snapshot: str
     quantity: str | float
+    weight: str | float | None = None
+    volume: str | float | None = None
 
 
 class ShipmentDetailOut(ShipmentSummaryOut):

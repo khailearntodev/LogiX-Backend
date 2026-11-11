@@ -216,7 +216,7 @@ class ModelGatewayChatModel(BaseChatModel):
             messages=_to_gateway_messages(messages),
             system_policy_version=self.system_policy_version,
         )
-        logger.info(
+        logger.debug(
             "tenant=%s correlation_id=%s calling ModelGateway profile='%s' (%d messages, %d tools: %s)",
             tenant_id,
             correlation_id,
