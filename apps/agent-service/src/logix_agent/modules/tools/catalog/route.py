@@ -100,9 +100,24 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
         raw = await client.request("transport", "POST", f"/api/v1/trips/{args.trip_id}/route-approval-preview", ctx, json=selection(args))
         if not isinstance(raw, dict) or not isinstance(raw.get("previewToken"), str) or raw.get("tripId") != str(args.trip_id) or raw.get("action") != "APPROVE" or any(raw.get(key) != value for key, value in selection(args).items()):
             raise ToolError("TOOL_BAD_RESPONSE", "Backend không trả preview tuyến hợp lệ.")
+        ui = {
+            "title": "Phê duyệt lộ trình chuyến xe",
+            "subtitle": f"Chuyến xe #{str(args.trip_id)[:16]}",
+            "icon": "map-pin",
+            "severity": "info",
+            "impact": "Lộ trình tối ưu sẽ được áp dụng chính thức cho chuyến xe này.",
+            "attributes": [
+                {"label": "Mã chuyến xe", "value": str(args.trip_id)[:16]},
+                {"label": "Kế hoạch lộ trình", "value": str(args.route_plan_id)[:16]},
+                {"label": "Phiên bản chuyến xe", "value": str(args.expected_version)},
+                {"label": "Phiên bản kế hoạch", "value": str(args.plan_version)},
+            ],
+        }
+        summary = {key: value for key, value in raw.items() if key != "previewToken"}
+        summary["ui"] = ui
         return PreviewResult(
             target_type="delivery_trip", target_id=str(args.trip_id), target_version=args.expected_version,
-            summary={key: value for key, value in raw.items() if key != "previewToken"},
+            summary=summary,
             execution_binding={"previewToken": raw["previewToken"], **selection(args)},
         )
 
