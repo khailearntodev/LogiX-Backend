@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationError
@@ -134,11 +135,122 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
         if not isinstance(raw, dict) or "version" not in raw:
             raise ToolError(TOOL_BAD_RESPONSE, "Dịch vụ đơn hàng trả về preview không hợp lệ.")
         version = int(raw["version"])
+
+        # Enrich with order details (order number, customer, warehouse, item snapshots)
+        order_detail: dict[str, Any] = {}
+        try:
+            detail_res = await client.request(
+                "order",
+                "GET",
+                f"{BASE}/{args.order_id}",
+                ctx,
+            )
+            if isinstance(detail_res, dict):
+                order_detail = detail_res
+        except Exception:
+            pass
+
+        order_number = (
+            order_detail.get("orderNumber")
+            or order_detail.get("order_number")
+            or str(args.order_id)[:16]
+        )
+        customer = (
+            order_detail.get("customerName")
+            or order_detail.get("customer_name")
+            or order_detail.get("customerCode")
+            or order_detail.get("customer_code")
+        )
+        warehouse = (
+            order_detail.get("warehouseName")
+            or order_detail.get("warehouse_name")
+            or order_detail.get("warehouseCode")
+            or order_detail.get("warehouse_code")
+        )
+        total_quantity = (
+            order_detail.get("totalQuantity")
+            or order_detail.get("total_quantity")
+        )
+
+        raw_order_lines = order_detail.get("lines") or []
+        product_map: dict[str, dict[str, Any]] = {}
+        if isinstance(raw_order_lines, list):
+            for line in raw_order_lines:
+                if isinstance(line, dict):
+                    pid = str(line.get("productId") or line.get("product_id") or "")
+                    if pid:
+                        product_map[pid] = line
+
+        raw_lines = raw.get("lines") or []
+        has_insufficient = False
+        table_rows: list[dict[str, Any]] = []
+
+        if isinstance(raw_lines, list):
+            for item in raw_lines:
+                if not isinstance(item, dict):
+                    continue
+                pid = str(item.get("productId") or item.get("product_id") or "")
+                matched = product_map.get(pid, {})
+                p_name = (
+                    matched.get("productNameSnapshot")
+                    or matched.get("product_name_snapshot")
+                    or matched.get("productName")
+                    or matched.get("name")
+                    or (f"Sản phẩm {pid[:8]}" if pid else "Sản phẩm")
+                )
+                sku = (
+                    matched.get("skuSnapshot")
+                    or matched.get("sku_snapshot")
+                    or matched.get("sku")
+                )
+                product_label = f"{p_name} ({sku})" if sku and sku not in str(p_name) else str(p_name)
+
+                sufficient = item.get("sufficient")
+                if sufficient is False:
+                    has_insufficient = True
+
+                table_rows.append({
+                    "product": product_label,
+                    "required": item.get("required"),
+                    "available": item.get("available"),
+                    "sufficient": sufficient,
+                })
+
+        attributes: list[dict[str, str]] = [
+            {"label": "Mã đơn hàng", "value": str(order_number)},
+        ]
+        if customer:
+            attributes.append({"label": "Khách hàng", "value": str(customer)})
+        if warehouse:
+            attributes.append({"label": "Kho xuất", "value": str(warehouse)})
+        if total_quantity:
+            attributes.append({"label": "Tổng số lượng", "value": f"{total_quantity} sản phẩm"})
+
+        ui: dict[str, Any] = {
+            "title": "Xác nhận đơn hàng",
+            "subtitle": f"Đơn hàng #{order_number}",
+            "icon": "package",
+            "severity": "warning" if has_insufficient else "info",
+            "impact": "Một số sản phẩm không đủ tồn kho để giữ hàng!" if has_insufficient else None,
+            "attributes": attributes,
+        }
+        if table_rows:
+            ui["table"] = {
+                "title": f"Kiểm tra khả dụng tồn kho ({len(table_rows)} mặt hàng)",
+                "columns": [
+                    {"key": "product", "label": "Sản phẩm", "align": "left"},
+                    {"key": "required", "label": "Cần xuất", "align": "right"},
+                    {"key": "available", "label": "Khả dụng", "align": "right"},
+                    {"key": "sufficient", "label": "Đủ hàng", "align": "center"},
+                ],
+                "rows": table_rows,
+            }
+
         return PreviewResult(
             target_type="sales_order",
             target_id=str(args.order_id),
             target_version=version,
-            summary=raw,
+            summary={**raw, "ui": ui},
         )
 
     async def handle_confirm(ctx: ToolContext, args: BaseModel) -> BaseModel:

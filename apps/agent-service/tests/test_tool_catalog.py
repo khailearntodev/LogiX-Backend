@@ -313,6 +313,11 @@ async def test_confirm_order_preview() -> None:
     assert preview.target_id == ORDER_ID
     assert preview.target_version == 2
     assert preview.summary["lines"][0]["sufficient"] is True
+    assert "ui" in preview.summary
+    assert preview.summary["ui"]["title"] == "Xác nhận đơn hàng"
+    assert preview.summary["ui"]["icon"] == "package"
+    assert preview.summary["ui"]["severity"] == "info"
+    assert len(preview.summary["ui"]["table"]["rows"]) == 1
 
 
 async def test_confirm_order_requires_approval() -> None:
@@ -429,6 +434,9 @@ async def test_dispatch_shipment_preview_and_execute() -> None:
     assert seen[0].url.path == f"/api/v1/shipments/{SHIPMENT_ID}/dispatch-preview"
     assert preview.target_type == "shipment"
     assert preview.target_version == 1
+    assert "ui" in preview.summary
+    assert preview.summary["ui"]["title"] == "Xuất kho vận chuyển"
+    assert preview.summary["ui"]["icon"] == "truck"
 
     # 2. Invoke without approval fails
     with pytest.raises(ApprovalRequiredError):

@@ -38,6 +38,7 @@ from logix_agent.modules.planner.state import PlannerState
 from logix_agent.modules.planner.trimming import trim_conversation_history
 from logix_agent.modules.registry.errors import (
     ApprovalRequiredError,
+    ToolError,
     ToolPermissionError,
     UnknownToolError,
 )
@@ -96,6 +97,8 @@ def _format_tool_error(exc: Exception) -> str:
         return "Bạn không có quyền sử dụng công cụ này."
     if isinstance(exc, ApprovalRequiredError):
         return "Thao tác này bắt buộc phải có sự xác nhận của người dùng."
+    if isinstance(exc, ToolError):
+        return str(exc)
     if isinstance(exc, httpx.HTTPStatusError):
         status = exc.response.status_code
         if status in _STATUS_MESSAGES:
@@ -170,14 +173,13 @@ def create_agent_node(model: Any, registry: ToolRegistry):
 
         tool_names = [t.name for t in tools] if tools else []
         logger.info(
-            "%s [AGENT_NODE:START] user=%s role=%s history=%d (trimmed=%d) tools_available=%d (%s)",
+            "%s [AGENT_NODE:START] user=%s role=%s history=%d (trimmed=%d) tools=%d",
             tag,
             actor.user_id,
             actor.role,
             len(history),
             len(trimmed_history),
             len(tool_names),
-            ", ".join(tool_names),
         )
 
         correlation_id = str(configurable.get("correlation_id", ""))
@@ -574,7 +576,7 @@ def create_execute_tool_node(registry: ToolRegistry):
             logger.warning("%s [EXECUTE_TOOL] No tool calls in last message to execute", tag)
             return {"step_count": state.get("step_count", 0) + 1}
 
-        logger.info(
+        logger.debug(
             "%s [EXECUTE_TOOL:START] executing %d tool(s): %s",
             tag,
             len(last_message.tool_calls),
@@ -634,11 +636,11 @@ def create_route_after_agent(registry: ToolRegistry):
     def route_after_agent(state: PlannerState) -> str:
         messages = state.get("messages", [])
         if not messages:
-            logger.info("[ROUTING:AFTER_AGENT] messages empty -> END")
+            logger.debug("[ROUTING:AFTER_AGENT] messages empty -> END")
             return END
         last_message = messages[-1]
         if not isinstance(last_message, AIMessage) or not last_message.tool_calls:
-            logger.info("[ROUTING:AFTER_AGENT] no tool calls -> END")
+            logger.debug("[ROUTING:AFTER_AGENT] no tool calls -> END")
             return END
 
         first_call = last_message.tool_calls[0]
@@ -646,11 +648,11 @@ def create_route_after_agent(registry: ToolRegistry):
         try:
             spec = registry.get(tool_name)
             if spec.is_sensitive:
-                logger.info("[ROUTING:AFTER_AGENT] tool '%s' is sensitive -> preview", tool_name)
+                logger.debug("[ROUTING:AFTER_AGENT] tool '%s' is sensitive -> preview", tool_name)
                 return "preview"
         except UnknownToolError:
             pass
-        logger.info("[ROUTING:AFTER_AGENT] tool '%s' -> execute_tool", tool_name)
+        logger.debug("[ROUTING:AFTER_AGENT] tool '%s' -> execute_tool", tool_name)
         return "execute_tool"
 
     return route_after_agent
@@ -659,9 +661,9 @@ def create_route_after_agent(registry: ToolRegistry):
 def create_route_after_preview():
     def route_after_preview(state: PlannerState) -> str:
         if state.get("pending_approval"):
-            logger.info("[ROUTING:AFTER_PREVIEW] pending_approval present -> confirm")
+            logger.debug("[ROUTING:AFTER_PREVIEW] pending_approval present -> confirm")
             return "confirm"
-        logger.info("[ROUTING:AFTER_PREVIEW] no pending_approval -> agent")
+        logger.debug("[ROUTING:AFTER_PREVIEW] no pending_approval -> agent")
         return "agent"
 
     return route_after_preview
@@ -677,7 +679,7 @@ def create_route_after_tool(max_steps: int = 10):
                 max_steps,
             )
             return END
-        logger.info(
+        logger.debug(
             "[ROUTING:AFTER_TOOL] step_count=%d < max_steps=%d -> loop back to agent",
             step_count,
             max_steps,

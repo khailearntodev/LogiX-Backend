@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field, ValidationError
@@ -40,12 +41,14 @@ class ShipmentSummaryOut(View):
 class ShipmentItemOut(View):
     id: UUID
     order_line_id: UUID
-    line_number: int
+    line_number: int | None = None
     product_id: UUID
     sku_snapshot: str
     product_name_snapshot: str
     unit_snapshot: str
     quantity: str | float
+    weight: str | float | None = None
+    volume: str | float | None = None
 
 
 class ShipmentDetailOut(ShipmentSummaryOut):
@@ -126,11 +129,36 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
                 TOOL_BAD_RESPONSE, "Dịch vụ vận chuyển trả về preview không hợp lệ."
             )
         version = int(raw["version"])
+
+        shipment_number = (
+            raw.get("shipmentNumber")
+            or raw.get("shipment_number")
+            or str(args.shipment_id)[:16]
+        )
+        order_id = raw.get("orderId") or raw.get("order_id")
+
+        attributes: list[dict[str, str]] = [
+            {"label": "Mã vận đơn", "value": str(shipment_number)},
+        ]
+        if order_id:
+            attributes.append({"label": "Mã đơn hàng", "value": str(order_id)[:16]})
+        if "orderVersion" in raw:
+            attributes.append({"label": "Phiên bản đơn hàng", "value": str(raw["orderVersion"])})
+
+        ui: dict[str, Any] = {
+            "title": "Xuất kho vận chuyển",
+            "subtitle": f"Vận đơn #{shipment_number}",
+            "icon": "truck",
+            "severity": "info",
+            "impact": "Thao tác này sẽ cập nhật trạng thái vận đơn sang Đang vận chuyển và xuất hàng khỏi kho.",
+            "attributes": attributes,
+        }
+
         return PreviewResult(
             target_type="shipment",
             target_id=str(args.shipment_id),
             target_version=version,
-            summary=raw,
+            summary={**raw, "ui": ui},
         )
 
     async def handle_dispatch(ctx: ToolContext, args: BaseModel) -> BaseModel:

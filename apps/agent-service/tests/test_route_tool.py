@@ -109,6 +109,9 @@ async def test_approval_uses_original_backend_preview_token_and_stable_confirmat
     tool = tools.get("approve_trip_route")
     preview = await tool.preview(context(APPROVE_ROUTE), command)
     assert "previewToken" not in preview.summary
+    assert "ui" in preview.summary
+    assert preview.summary["ui"]["title"] == "Phê duyệt lộ trình chuyến xe"
+    assert preview.summary["ui"]["icon"] == "map-pin"
     approval = ApprovedAction(approval_id=str(uuid4()), target_type="delivery_trip", target_id=wire["tripId"],
                               target_version=3, execution_binding=preview.execution_binding)
     result = await tool.handler(context(APPROVE_ROUTE, approval=approval), command)
