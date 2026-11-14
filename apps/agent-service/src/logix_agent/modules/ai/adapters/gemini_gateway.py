@@ -58,6 +58,18 @@ def _clean_schema_for_gemini(schema: dict[str, Any]) -> dict[str, Any]:
 
     def _resolve(node: Any, is_schema: bool = True) -> Any:
         if isinstance(node, dict):
+            if is_schema and "anyOf" in node and isinstance(node["anyOf"], list):
+                non_null = [
+                    opt
+                    for opt in node["anyOf"]
+                    if isinstance(opt, dict) and opt.get("type") != "null"
+                ]
+                if len(non_null) == 1:
+                    merged = {**non_null[0], **{k: v for k, v in node.items() if k != "anyOf"}}
+                    if len(non_null) < len(node["anyOf"]):
+                        merged.setdefault("nullable", True)
+                    node = merged
+
             if "$ref" in node and isinstance(node["$ref"], str):
                 ref_name = node["$ref"].split("/")[-1]
                 if ref_name in defs:
@@ -250,7 +262,10 @@ class GeminiModelGateway:
                     else:
                         parts.append(types.Part.from_function_call(name=fn_name, args=fn_args))
                 if parts:
-                    contents.append(types.Content(role="model", parts=parts))
+                    if contents and contents[-1].role == "model":
+                        contents[-1].parts.extend(parts)
+                    else:
+                        contents.append(types.Content(role="model", parts=parts))
             elif role in ("tool", "function"):
                 # Tool response message
                 fn_name = msg.get("name") or "tool_result"
@@ -294,6 +309,21 @@ class GeminiModelGateway:
                         parts=[types.Part.from_text(text=content_str)],
                     )
                 )
+
+        # Gemini requires contents to start on a plain user turn (not model or function_response)
+        first_user = next(
+            (
+                i
+                for i, c in enumerate(contents)
+                if c.role == "user"
+                and not any(
+                    getattr(p, "function_response", None) is not None for p in (c.parts or ())
+                )
+            ),
+            0,
+        )
+        if first_user > 0:
+            contents = contents[first_user:]
 
         system_instruction = "\n\n".join(system_parts) if system_parts else None
         return contents, system_instruction

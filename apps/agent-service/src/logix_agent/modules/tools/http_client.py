@@ -74,6 +74,7 @@ class ServiceClient:
         *,
         params: Mapping[str, str | int | float | bool] | None = None,
         json: object | None = None,
+        headers: Mapping[str, str] | None = None,
     ) -> object:
         base_url = self._base_urls.get(service)
         if base_url is None:
@@ -84,12 +85,15 @@ class ServiceClient:
 
         method = method.upper()
         attempts = self._max_attempts if method in _RETRYABLE_METHODS else 1
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "X-Correlation-Id": context.correlation_id,
-        }
+        req_headers = dict(headers) if headers else {}
+        req_headers.update(
+            {
+                "Authorization": f"Bearer {token}",
+                "X-Correlation-Id": context.correlation_id,
+            }
+        )
         if context.actor.tenant_id:
-            headers["X-Tenant-Id"] = context.actor.tenant_id
+            req_headers["X-Tenant-Id"] = context.actor.tenant_id
 
         for attempt in range(1, attempts + 1):
             try:
@@ -98,7 +102,7 @@ class ServiceClient:
                     f"{base_url}/{path.lstrip('/')}",
                     params=params,
                     json=json,
-                    headers=headers,
+                    headers=req_headers,
                 )
             except httpx.TimeoutException:
                 error = ToolError(

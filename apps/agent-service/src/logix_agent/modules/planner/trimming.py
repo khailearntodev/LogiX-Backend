@@ -17,6 +17,7 @@ from collections.abc import Sequence
 from langchain_core.messages import (
     AIMessage,
     BaseMessage,
+    HumanMessage,
     SystemMessage,
     ToolMessage,
     trim_messages,
@@ -74,12 +75,12 @@ def trim_conversation_history(
     """Trim messages to fit within model context limits.
 
     Uses `trim_messages` with approximate token counting, strategy="last",
-    and post-processes to repair any fractured tool call pairs.
+    and aligns cuts to a HumanMessage boundary so providers never receive a
+    leading function_call or orphan ToolMessage.
     """
     if not messages:
         return []
 
-    # If count is within limit and approximate tokens fit, return copy unchanged
     msg_list = list(messages)
     approx_tokens = count_tokens_approximately(msg_list)
     if len(msg_list) <= max_messages and approx_tokens <= max_tokens:
@@ -100,15 +101,39 @@ def trim_conversation_history(
         strategy="last",
         include_system=True,
         allow_partial=False,
-        start_on=("human", "ai"),
+        start_on="human",
     )
 
-    # If message count still exceeds max_messages, take system message + last (max_messages - 1)
+    # If the current turn alone exceeded max_tokens, keep from the last HumanMessage onward
+    if not any(not isinstance(m, SystemMessage) for m in trimmed):
+        last_human = next(
+            (i for i in range(len(msg_list) - 1, -1, -1) if isinstance(msg_list[i], HumanMessage)),
+            None,
+        )
+        if last_human is not None:
+            sys_msgs = [m for m in msg_list if isinstance(m, SystemMessage)]
+            trimmed = sys_msgs + msg_list[last_human:]
+
+    # Align count-based cut to a HumanMessage instead of slicing between AIMessage and ToolMessage
     if len(trimmed) > max_messages:
         sys_msg = [m for m in trimmed if isinstance(m, SystemMessage)]
         non_sys = [m for m in trimmed if not isinstance(m, SystemMessage)]
-        keep_count = max_messages - len(sys_msg)
-        trimmed = sys_msg + non_sys[-keep_count:]
+        keep_count = max(0, max_messages - len(sys_msg))
+        if keep_count == 0:
+            trimmed = sys_msg[:max_messages]
+        else:
+            slice_start = max(0, len(non_sys) - keep_count)
+            human_start = next(
+                (i for i in range(slice_start, len(non_sys)) if isinstance(non_sys[i], HumanMessage)),
+                None,
+            )
+            if human_start is None:
+                # Current turn itself is > keep_count messages: rewind to its HumanMessage
+                human_start = next(
+                    (i for i in range(slice_start - 1, -1, -1) if isinstance(non_sys[i], HumanMessage)),
+                    slice_start,
+                )
+            trimmed = sys_msg + non_sys[human_start:]
 
     repaired = _repair_orphan_tool_messages(trimmed, msg_list)
     logger.info("Trimmed conversation history down to %d messages", len(repaired))

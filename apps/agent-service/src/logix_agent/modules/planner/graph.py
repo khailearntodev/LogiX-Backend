@@ -50,7 +50,7 @@ def build_planner_graph(
     if execution_recorder is None:
         execution_recorder = InMemoryExecutionRecorder()
 
-    agent_node = create_agent_node(model, registry)
+    agent_node = create_agent_node(model, registry, max_steps=max_steps)
     preview_node = create_preview_node(registry, confirmation_service, execution_recorder)
     confirm_node = create_confirm_node()
     revalidate_and_execute_node = create_revalidate_and_execute_node(

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -310,13 +310,19 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
                 if isinstance(raw_addrs, dict)
                 else []
             )
-            default_addr = next((a for a in addr_list if a.get("isDefault")), None) or (
-                addr_list[0] if addr_list else None
+            shipping_addrs = [
+                a
+                for a in addr_list
+                if a.get("addressType", "SHIPPING") == "SHIPPING"
+                and a.get("status", "ACTIVE") == "ACTIVE"
+            ]
+            default_addr = next((a for a in shipping_addrs if a.get("isDefault")), None) or (
+                shipping_addrs[0] if shipping_addrs else None
             )
             if not default_addr or "id" not in default_addr:
                 raise ToolError(
                     "ADDRESS_NOT_FOUND",
-                    "Khách hàng chưa có địa chỉ giao hàng trong hệ thống.",
+                    "Khách hàng chưa có địa chỉ giao hàng (SHIPPING/ACTIVE) trong hệ thống.",
                 )
             delivery_address_id = UUID(default_addr["id"])
 
@@ -349,6 +355,7 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             BASE,
             ctx,
             json=payload,
+            headers={"Idempotency-Key": f"agent-{uuid4().hex}"},
         )
         try:
             return OrderDetailOut.model_validate(raw)
