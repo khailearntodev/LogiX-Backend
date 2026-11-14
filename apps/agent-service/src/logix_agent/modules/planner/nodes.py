@@ -9,7 +9,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
-from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END
 from langgraph.types import interrupt
@@ -141,7 +141,7 @@ def _classify(exc: ModelGatewayError) -> str:
     return INTERNAL
 
 
-def create_agent_node(model: Any, registry: ToolRegistry):
+def create_agent_node(model: Any, registry: ToolRegistry, max_steps: int = 10):
     async def agent_node(state: PlannerState, config: RunnableConfig) -> dict[str, Any]:
         actor = _get_actor_from_config(config)
         tag = _get_tag(config, actor)
@@ -156,6 +156,10 @@ def create_agent_node(model: Any, registry: ToolRegistry):
         prompt_version = str(config.get("configurable", {}).get("prompt_policy_version", "v1"))
         active_prompt = get_planner_system_prompt(prompt_version)
         history = list(state.get("messages", []))
+        is_new_user_turn = bool(history) and isinstance(history[-1], HumanMessage)
+        current_step = 0 if is_new_user_turn else state.get("step_count", 0)
+        reached_step_limit = not is_new_user_turn and current_step >= max_steps
+
         # Ensure system prompt is present at the front of conversation
         if not history or not isinstance(history[0], SystemMessage):
             history = [SystemMessage(content=active_prompt), *history]
@@ -170,6 +174,18 @@ def create_agent_node(model: Any, registry: ToolRegistry):
         trimmed_history = trim_conversation_history(
             history, max_tokens=max_tokens, max_messages=max_messages
         )
+        if reached_step_limit and trimmed_history and isinstance(trimmed_history[0], SystemMessage):
+            trimmed_history = [
+                SystemMessage(
+                    content=(
+                        f"{trimmed_history[0].content}\n\n"
+                        "You have reached the maximum tool call limit for this turn. "
+                        "Do NOT call any tools. Reply concisely to the user summarizing "
+                        "what succeeded or what prevented completion."
+                    )
+                ),
+                *trimmed_history[1:],
+            ]
 
         tool_names = [t.name for t in tools] if tools else []
         logger.info(
@@ -230,7 +246,23 @@ def create_agent_node(model: Any, registry: ToolRegistry):
                     "..." if len(response.content or "") > 120 else "",
                 )
 
-            return {"messages": [response]}
+            if reached_step_limit and tool_calls:
+                logger.warning(
+                    "%s [AGENT_NODE:STEP_LIMIT] model returned tool calls at step_count=%d; returning fallback reply",
+                    tag,
+                    current_step,
+                )
+                fallback_text = (
+                    response.content
+                    if isinstance(response.content, str) and response.content.strip()
+                    else "Đã đạt giới hạn số bước xử lý liên tiếp cho yêu cầu này mà chưa hoàn tất. Vui lòng kiểm tra lại dữ liệu hoặc thử lại."
+                )
+                response = AIMessage(content=fallback_text)
+
+            update: dict[str, Any] = {"messages": [response]}
+            if is_new_user_turn:
+                update["step_count"] = 0
+            return update
 
     return agent_node
 
@@ -672,15 +704,15 @@ def create_route_after_preview():
 def create_route_after_tool(max_steps: int = 10):
     def route_after_tool(state: PlannerState) -> str:
         step_count = state.get("step_count", 0)
-        if step_count >= max_steps:
+        if step_count > max_steps:
             logger.warning(
-                "[ROUTING:AFTER_TOOL] step_count=%d reached max_steps=%d -> END",
+                "[ROUTING:AFTER_TOOL] step_count=%d exceeded max_steps=%d -> END",
                 step_count,
                 max_steps,
             )
             return END
         logger.debug(
-            "[ROUTING:AFTER_TOOL] step_count=%d < max_steps=%d -> loop back to agent",
+            "[ROUTING:AFTER_TOOL] step_count=%d <= max_steps=%d -> loop back to agent",
             step_count,
             max_steps,
         )
