@@ -15,10 +15,15 @@ from logix_agent.modules.tools.catalog.route import (
     APPROVE_ROUTE,
     OPTIMIZE_ROUTE,
     READ_ROUTE,
+    READ_TRIP,
     ApproveRouteIn,
     GetRouteComparisonIn,
+    GetTripIn,
+    ListTripsIn,
     ProposeRouteIn,
     RoutePlanOut,
+    TripDetailOut,
+    TripSummaryOut,
     selection,
 )
 from logix_agent.modules.tools.http_client import ServiceClient
@@ -137,3 +142,97 @@ async def test_preview_rejects_unbound_backend_reply(wire: dict) -> None:
     }))
     with pytest.raises(ToolError):
         await tools.get("approve_trip_route").preview(context(APPROVE_ROUTE), command)
+
+
+@pytest.mark.asyncio
+async def test_list_and_get_trips_query_real_transport_endpoints() -> None:
+    trip_id = str(uuid4())
+    wh_id = str(uuid4())
+    shipment_id = str(uuid4())
+    stop_id = str(uuid4())
+    seen: list[httpx.Request] = []
+
+    trip_summary = {
+        "id": trip_id,
+        "tripNumber": "TRIP-DEMO-01",
+        "warehouseId": wh_id,
+        "vehicleId": None,
+        "driverId": None,
+        "status": "DRAFT",
+        "plannedStartAt": "2026-11-14T08:00:00.000Z",
+        "totalWeight": "120.500",
+        "totalVolume": "1.250000",
+        "version": 3,
+        "totalStops": 1,
+        "completedStops": 0,
+    }
+    trip_detail = {
+        **trip_summary,
+        "approvedRoutePlanId": None,
+        "actualStartAt": None,
+        "dispatchedAt": None,
+        "completedAt": None,
+        "canceledAt": None,
+        "cancelReason": None,
+        "shipments": [
+            {
+                "id": str(uuid4()),
+                "shipmentId": shipment_id,
+                "orderId": str(uuid4()),
+                "warehouseId": wh_id,
+                "state": "ACTIVE",
+                "weight": "120.500",
+                "volume": "1.250000",
+            }
+        ],
+        "stops": [
+            {
+                "id": stop_id,
+                "shipmentId": shipment_id,
+                "deliveryAddressId": str(uuid4()),
+                "latitude": "10.801234",
+                "longitude": "106.654321",
+                "weight": "120.500",
+                "volume": "1.250000",
+                "plannedSequence": 1,
+                "approvedSequence": None,
+                "status": "PENDING",
+            }
+        ],
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.url.path == "/api/v1/trips":
+            return httpx.Response(
+                200, json={"items": [trip_summary], "page": 1, "pageSize": 10, "total": 1}
+            )
+        if request.url.path == f"/api/v1/trips/{trip_id}":
+            return httpx.Response(200, json=trip_detail)
+        return httpx.Response(404)
+
+    tools = registry(handler)
+    assert not {s.name for s in tools.list_for(context().actor)} & {"list_trips", "get_trip"}
+    ctx = context(READ_TRIP)
+
+    list_args = ListTripsIn(search="TRIP-DEMO-01", status="DRAFT")
+    list_res = await tools.invoke("list_trips", ctx, list_args.model_dump(mode="json", exclude_none=True))
+    assert seen[0].url.path == "/api/v1/trips"
+    assert dict(seen[0].url.params) == {
+        "page": "1",
+        "pageSize": "10",
+        "search": "TRIP-DEMO-01",
+        "status": "DRAFT",
+    }
+    assert isinstance(list_res.items[0], TripSummaryOut)
+    assert str(list_res.items[0].id) == trip_id
+    assert list_res.items[0].version == 3
+
+    detail_args = GetTripIn(trip_id=trip_id)
+    detail_res = await tools.invoke("get_trip", ctx, detail_args.model_dump(mode="json"))
+    assert seen[1].url.path == f"/api/v1/trips/{trip_id}"
+    assert isinstance(detail_res, TripDetailOut)
+    assert detail_res.trip_number == "TRIP-DEMO-01"
+    assert detail_res.version == 3
+    assert len(detail_res.shipments) == 1
+    assert len(detail_res.stops) == 1

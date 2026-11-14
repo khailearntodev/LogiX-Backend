@@ -95,13 +95,13 @@ class StockoutRisksOut(View):
 
 
 class GetSkuDemandForecastIn(BaseModel):
-    warehouse_id: UUID | None = Field(
-        None,
-        description="UUID of the target warehouse. Omit to use the default primary warehouse.",
+    warehouse_id: UUID = Field(
+        ...,
+        description="UUID of the target warehouse.",
     )
-    product_id: UUID | None = Field(
-        None,
-        description="UUID of the target product (SKU). Omit to use the default sample SKU.",
+    product_id: UUID = Field(
+        ...,
+        description="UUID of the target product (SKU).",
     )
     horizon_days: int = Field(
         7,
@@ -110,24 +110,24 @@ class GetSkuDemandForecastIn(BaseModel):
         description="Forecast horizon in days (default: 7).",
     )
     available_stock: float = Field(
-        280.0,
+        0.0,
         ge=0.0,
         description="Current available inventory stock used for stockout risk assessment.",
     )
 
 
 class TriggerDemandForecastIn(BaseModel):
-    warehouse_id: UUID | None = Field(
-        None,
-        description="UUID of the target warehouse. Omit to use the default primary warehouse.",
+    warehouse_id: UUID = Field(
+        ...,
+        description="UUID of the target warehouse.",
     )
-    product_id: UUID | None = Field(
-        None,
-        description="UUID of the target product (SKU). Omit to use the default sample SKU.",
+    product_id: UUID = Field(
+        ...,
+        description="UUID of the target product (SKU).",
     )
     sku_code: str | None = Field(
         None,
-        description="SKU code identifier (e.g., SKU-FMCG-001).",
+        description="SKU code identifier (e.g., SP-SN-18L).",
     )
     product_name: str | None = Field(
         None,
@@ -140,15 +140,15 @@ class TriggerDemandForecastIn(BaseModel):
         description="Forecast horizon in days (default: 7).",
     )
     available_stock: float = Field(
-        280.0,
+        0.0,
         ge=0.0,
         description="Current available inventory stock used for stockout risk assessment.",
     )
 
 
 class CheckStockoutRiskIn(BaseModel):
-    warehouse_id: UUID | None = Field(
-        None,
+    warehouse_id: UUID = Field(
+        ...,
         description="UUID of the warehouse to evaluate for stockout risks.",
     )
     horizon_days: int = Field(

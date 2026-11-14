@@ -15,12 +15,80 @@ from logix_agent.modules.registry import (
     ToolRegistry,
     ToolSpec,
 )
-from logix_agent.modules.tools.catalog._base import View
+from logix_agent.modules.tools.catalog._base import Page, PageIn, View, read_tool
 from logix_agent.modules.tools.http_client import ServiceClient
 
+READ_TRIP = "transport:trip:read"
 OPTIMIZE_ROUTE = "transport:route:optimize"
 READ_ROUTE = "transport:route:read"
 APPROVE_ROUTE = "transport:route:approve"
+TRIPS_BASE = "/api/v1/trips"
+
+
+class TripSummaryOut(View):
+    id: UUID
+    trip_number: str
+    warehouse_id: UUID
+    vehicle_id: UUID | None = None
+    driver_id: UUID | None = None
+    status: str
+    planned_start_at: str
+    total_weight: str | float
+    total_volume: str | float
+    version: int
+    total_stops: int = 0
+    completed_stops: int = 0
+
+
+class TripShipmentOut(View):
+    id: UUID
+    shipment_id: UUID
+    order_id: UUID | None = None
+    warehouse_id: UUID
+    state: str
+    weight: str | float
+    volume: str | float
+
+
+class TripStopOut(View):
+    id: UUID
+    shipment_id: UUID
+    delivery_address_id: UUID | None = None
+    latitude: str | float | None = None
+    longitude: str | float | None = None
+    weight: str | float | None = None
+    volume: str | float | None = None
+    planned_sequence: int
+    approved_sequence: int | None = None
+    status: str
+
+
+class TripDetailOut(TripSummaryOut):
+    approved_route_plan_id: UUID | None = None
+    actual_start_at: str | None = None
+    dispatched_at: str | None = None
+    completed_at: str | None = None
+    canceled_at: str | None = None
+    cancel_reason: str | None = None
+    shipments: list[TripShipmentOut] = Field(default_factory=list)
+    stops: list[TripStopOut] = Field(default_factory=list)
+
+
+class ListTripsIn(PageIn):
+    search: str | None = Field(
+        None, description="Tìm kiếm theo mã chuyến xe (ví dụ: TRIP-DEMO-01)"
+    )
+    warehouse_id: UUID | None = Field(None, description="Lọc theo UUID kho xuất phát")
+    status: str | None = Field(
+        None,
+        description="Lọc theo trạng thái chuyến xe (DRAFT, APPROVED, IN_PROGRESS, COMPLETED, CANCELED)",
+    )
+    vehicle_id: UUID | None = Field(None, description="Lọc theo UUID xe tải")
+    driver_id: UUID | None = Field(None, description="Lọc theo UUID tài xế")
+
+
+class GetTripIn(BaseModel):
+    trip_id: UUID = Field(description="UUID của chuyến xe cần xem chi tiết")
 
 
 class RoutePlanOut(View):
@@ -71,6 +139,31 @@ def selection(args: ApproveRouteIn) -> dict[str, object]:
 
 
 def register(registry: ToolRegistry, client: ServiceClient) -> None:
+    registry.register(
+        read_tool(
+            client=client,
+            name="list_trips",
+            description="Danh sách các chuyến xe vận chuyển (lọc theo mã chuyến search, kho warehouse_id, trạng thái status, xe vehicle_id, tài xế driver_id) để lấy trip_id và version hiện tại.",
+            service="transport",
+            path=TRIPS_BASE,
+            input_model=ListTripsIn,
+            output_model=Page[TripSummaryOut],
+            permission=READ_TRIP,
+        )
+    )
+    registry.register(
+        read_tool(
+            client=client,
+            name="get_trip",
+            description="Xem chi tiết một chuyến xe vận chuyển bao gồm version hiện tại, danh sách vận đơn (shipments) và các điểm dừng giao hàng (stops).",
+            service="transport",
+            path=f"{TRIPS_BASE}/{{trip_id}}",
+            input_model=GetTripIn,
+            output_model=TripDetailOut,
+            permission=READ_TRIP,
+        )
+    )
+
     async def propose(ctx: ToolContext, args: BaseModel) -> BaseModel:
         assert isinstance(args, ProposeRouteIn)
         raw = await client.request("transport", "POST", f"/api/v1/trips/{args.trip_id}/route-optimizations", ctx,

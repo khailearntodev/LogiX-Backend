@@ -5,12 +5,7 @@ from uuid import UUID
 
 from logix_forecast.engine.pipeline import run_series_forecast_pipeline
 from logix_forecast.engine.schemas import DemandObservationIn
-from logix_forecast.modules.forecasts.defaults import (
-    SAMPLE_SKUS,
-    build_default_observations,
-)
 from logix_forecast.modules.forecasts.schemas import (
-    DEFAULT_WAREHOUSE_ID,
     ForecastMetricsComparisonOut,
     ForecastRunOut,
     ForecastRunRequest,
@@ -32,12 +27,16 @@ class ForecastEngineService:
         db_observations: list[DemandObservationIn] | None = None,
         run_id: UUID | None = None,
     ) -> ForecastRunOut:
-        if request.observations is not None:
-            observations = request.observations
-        elif db_observations:
-            observations = db_observations
-        else:
-            observations = build_default_observations()
+        observations = (
+            request.observations
+            if request.observations is not None
+            else (db_observations or [])
+        )
+
+        warehouse_name = request.warehouse_name
+        sku_code = request.sku_code
+        product_name = request.product_name
+        available_stock = request.available_stock
 
         pipeline_res = run_series_forecast_pipeline(
             observations,
@@ -50,29 +49,36 @@ class ForecastEngineService:
         total_upper = round(
             sum(pt.upper_bound for pt in pipeline_res.forecast_points), 3
         )
-        shortfall = max(0.0, round(total_pred - request.available_stock, 3))
-        stockout_risk = shortfall > 0.0
 
-        if stockout_risk:
+        if pipeline_res.status == "INSUFFICIENT_DATA":
+            shortfall = 0.0
+            stockout_risk = False
             recommended_action = (
-                f"Stockout risk detected: 7-day forecast requires {total_pred:.1f} units "
-                f"(upper bound {total_upper:.1f}), exceeding available stock ({request.available_stock:.1f}). "
-                f"Advisory: replenish at least {shortfall:.1f} units."
+                "Insufficient historical demand data in database to compute forecast."
             )
         else:
-            recommended_action = (
-                f"Stock level is sufficient: available stock ({request.available_stock:.1f}) "
-                f"covers the {request.horizon_days}-day predicted demand ({total_pred:.1f} units)."
-            )
+            shortfall = max(0.0, round(total_pred - available_stock, 3))
+            stockout_risk = shortfall > 0.0
+            if stockout_risk:
+                recommended_action = (
+                    f"Stockout risk detected: {request.horizon_days}-day forecast requires {total_pred:.1f} units "
+                    f"(upper bound {total_upper:.1f}), exceeding available stock ({available_stock:.1f}). "
+                    f"Advisory: replenish at least {shortfall:.1f} units."
+                )
+            else:
+                recommended_action = (
+                    f"Stock level is sufficient: available stock ({available_stock:.1f}) "
+                    f"covers the {request.horizon_days}-day predicted demand ({total_pred:.1f} units)."
+                )
 
         return ForecastRunOut(
             forecast_run_id=run_id or uuid.uuid4(),
             forecast_series_id=uuid.uuid4(),
             warehouse_id=request.warehouse_id,
-            warehouse_name=request.warehouse_name,
+            warehouse_name=warehouse_name,
             product_id=request.product_id,
-            sku_code=request.sku_code,
-            product_name=request.product_name,
+            sku_code=sku_code,
+            product_name=product_name,
             status=pipeline_res.status,
             model_name=pipeline_res.model_name,
             used_fallback=pipeline_res.used_fallback,
@@ -85,7 +91,7 @@ class ForecastEngineService:
             dataset_hash=pipeline_res.dataset_hash,
             total_predicted_7d=total_pred,
             total_upper_bound_7d=total_upper,
-            available_stock=request.available_stock,
+            available_stock=available_stock,
             stockout_risk=stockout_risk,
             shortfall_quantity=shortfall,
             recommended_action=recommended_action,
@@ -132,62 +138,77 @@ class ForecastEngineService:
             analysis_summary=summary,
         )
 
+    @staticmethod
+    def _to_stockout_risk_item(res: ForecastRunOut) -> tuple[StockoutRiskItemOut, bool]:
+        safety_shortfall = max(
+            0.0, round(res.total_upper_bound_7d - res.available_stock, 3)
+        )
+        if res.stockout_risk:
+            risk_level = "HIGH"
+            is_at_risk = True
+        elif safety_shortfall > 0.0:
+            risk_level = "MEDIUM"
+            is_at_risk = True
+        else:
+            risk_level = "LOW"
+            is_at_risk = False
+
+        item = StockoutRiskItemOut(
+            warehouse_id=res.warehouse_id,
+            warehouse_name=res.warehouse_name,
+            product_id=res.product_id,
+            sku_code=res.sku_code,
+            product_name=res.product_name,
+            horizon_days=res.horizon_days,
+            total_predicted_demand=res.total_predicted_7d,
+            total_upper_bound_demand=res.total_upper_bound_7d,
+            available_stock=res.available_stock,
+            shortfall_quantity=res.shortfall_quantity,
+            risk_level=risk_level,
+            recommended_replenishment=max(res.shortfall_quantity, safety_shortfall),
+            recommended_action=res.recommended_action,
+        )
+        return item, is_at_risk
+
     def evaluate_stockout_risks(
         self,
         *,
-        warehouse_id: UUID = DEFAULT_WAREHOUSE_ID,
+        warehouse_id: UUID,
         horizon_days: int = 7,
+        db_series_by_product: dict[UUID, list[DemandObservationIn]] | None = None,
     ) -> StockoutRisksResponseOut:
+        if not db_series_by_product:
+            return StockoutRisksResponseOut(
+                warehouse_id=warehouse_id,
+                checked_sku_count=0,
+                at_risk_count=0,
+                items=[],
+            )
+
         items: list[StockoutRiskItemOut] = []
         at_risk_count = 0
 
-        for sku in SAMPLE_SKUS:
-            obs = build_default_observations(
-                base_demand=float(sku["base_demand"]),  # type: ignore[arg-type]
-                daily_trend=float(sku["daily_trend"]),  # type: ignore[arg-type]
-            )
+        for product_id, observations in db_series_by_product.items():
             req = ForecastRunRequest(
                 warehouse_id=warehouse_id,
-                product_id=sku["product_id"],  # type: ignore[arg-type]
-                sku_code=str(sku["sku_code"]),
-                product_name=str(sku["product_name"]),
+                product_id=product_id,
                 horizon_days=horizon_days,
-                available_stock=float(sku["available_stock"]),  # type: ignore[arg-type]
-                observations=obs,
+                observations=observations,
             )
-            res = self.compute_forecast(req)
-            safety_shortfall = max(
-                0.0, round(res.total_upper_bound_7d - res.available_stock, 3)
-            )
-
-            if res.stockout_risk:
-                risk_level = "HIGH"
+            res = self.compute_forecast(req, db_observations=observations)
+            item, is_at_risk = self._to_stockout_risk_item(res)
+            if is_at_risk:
                 at_risk_count += 1
-            elif safety_shortfall > 0.0:
-                risk_level = "MEDIUM"
-                at_risk_count += 1
-            else:
-                risk_level = "LOW"
+            items.append(item)
 
-            items.append(
-                StockoutRiskItemOut(
-                    warehouse_id=res.warehouse_id,
-                    warehouse_name=res.warehouse_name,
-                    product_id=res.product_id,
-                    sku_code=res.sku_code,
-                    product_name=res.product_name,
-                    horizon_days=res.horizon_days,
-                    total_predicted_demand=res.total_predicted_7d,
-                    total_upper_bound_demand=res.total_upper_bound_7d,
-                    available_stock=res.available_stock,
-                    shortfall_quantity=res.shortfall_quantity,
-                    risk_level=risk_level,
-                    recommended_replenishment=max(
-                        res.shortfall_quantity, safety_shortfall
-                    ),
-                    recommended_action=res.recommended_action,
-                )
+        priority = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
+        items.sort(
+            key=lambda it: (
+                priority.get(it.risk_level, 3),
+                -it.recommended_replenishment,
+                it.sku_code,
             )
+        )
 
         return StockoutRisksResponseOut(
             warehouse_id=warehouse_id,
