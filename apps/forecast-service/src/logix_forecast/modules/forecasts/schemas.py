@@ -12,20 +12,15 @@ from logix_forecast.engine.schemas import (
     MethodMetricsOut,
 )
 
-DEFAULT_TENANT_ID = UUID("00000000-0000-0000-0000-000000000001")
-DEFAULT_WAREHOUSE_ID = UUID("00000000-0000-0000-0000-000000000101")
-DEFAULT_PRODUCT_ID = UUID("00000000-0000-0000-0000-000000000201")
-
-
 class ForecastRunRequest(BaseModel):
-    tenant_id: UUID = Field(default=DEFAULT_TENANT_ID)
-    warehouse_id: UUID = Field(default=DEFAULT_WAREHOUSE_ID)
-    product_id: UUID = Field(default=DEFAULT_PRODUCT_ID)
-    warehouse_name: str = Field(default="Kho Tổng Miền Nam (Tân Bình)")
-    sku_code: str = Field(default="SKU-FMCG-001")
-    product_name: str = Field(default="Thùng Nước Giải Khát 24 Lon")
+    tenant_id: UUID | None = None
+    warehouse_id: UUID
+    product_id: UUID
+    warehouse_name: str = ""
+    sku_code: str = ""
+    product_name: str = ""
     horizon_days: int = Field(default=7, ge=1, le=30)
-    available_stock: float = Field(default=280.0, ge=0.0)
+    available_stock: float = Field(default=0.0, ge=0.0)
     observations: list[DemandObservationIn] | None = None
     idempotency_key: str | None = None
 

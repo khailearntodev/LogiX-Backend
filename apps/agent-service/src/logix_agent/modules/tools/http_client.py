@@ -88,6 +88,8 @@ class ServiceClient:
             "Authorization": f"Bearer {token}",
             "X-Correlation-Id": context.correlation_id,
         }
+        if context.actor.tenant_id:
+            headers["X-Tenant-Id"] = context.actor.tenant_id
 
         for attempt in range(1, attempts + 1):
             try:

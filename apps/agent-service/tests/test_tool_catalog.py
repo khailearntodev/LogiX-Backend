@@ -70,10 +70,10 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 22
+    assert len(specs) == 24
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 19
+    assert len(read_tools) == 21
     assert len(sensitive_tools) == 3
     assert {s.name for s in sensitive_tools} == {
         "confirm_order",
@@ -109,6 +109,9 @@ def test_tools_are_filtered_by_permission() -> None:
     assert "dispatch_shipment" not in names("fulfillment:shipment:read")
     assert "dispatch_shipment" in names("fulfillment:shipment:dispatch")
     assert "propose_trip_route" not in names("fulfillment:shipment:read")
+    assert "list_trips" not in names("fulfillment:shipment:read")
+    assert "list_trips" in names("transport:trip:read")
+    assert "get_trip" in names("transport:trip:read")
     assert "propose_trip_route" in names("transport:route:optimize")
     assert "get_route_plan_comparison" in names("transport:route:read")
     assert "approve_trip_route" not in names("transport:route:optimize")
