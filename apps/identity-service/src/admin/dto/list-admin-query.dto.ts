@@ -13,6 +13,7 @@ import {
   ADMIN_DEFAULT_PAGE_SIZE,
   ADMIN_MAX_PAGE_SIZE,
   ADMIN_MAX_SEARCH_LENGTH,
+  AdminContactLeadStatus,
   AdminOrganizationStatus,
   AdminUserStatus,
 } from '../admin.constants.js';
@@ -55,4 +56,10 @@ export class ListUsersQueryDto extends ListAdminQueryDto {
   @IsOptional()
   @IsEnum(AdminUserStatus)
   status?: AdminUserStatus;
+}
+
+export class ListContactLeadsQueryDto extends ListAdminQueryDto {
+  @IsOptional()
+  @IsEnum(AdminContactLeadStatus)
+  status?: AdminContactLeadStatus;
 }
