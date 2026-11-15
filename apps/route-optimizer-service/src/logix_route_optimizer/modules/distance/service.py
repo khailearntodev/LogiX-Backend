@@ -10,6 +10,9 @@ from logix_route_optimizer.modules.distance.haversine import (
     estimate_duration_seconds,
 )
 from logix_route_optimizer.modules.distance.osrm import OSRMProvider
+from logix_route_optimizer.modules.distance.vietnam_corridor import (
+    build_vietnam_corridor_waypoints,
+)
 
 
 @dataclass(slots=True)
@@ -83,27 +86,33 @@ class ResilientDistanceService:
                     provider_name="OSRM Road Network Driving API",
                 )
 
-        # Fallback straight legs geometry
+        # Fallback domestic Vietnam corridor geometry
         total_dist_m = 0.0
         total_dur_s = 0
         legs: list[dict[str, Any]] = []
-        straight_coords: list[list[float]] = []
+        corridor_coords: list[list[float]] = []
 
         for i in range(len(ordered_coordinates)):
             lat, lon = ordered_coordinates[i]
-            straight_coords.append([lon, lat])
-            if i > 0:
-                prev_lat, prev_lon = ordered_coordinates[i - 1]
-                leg_dist = road_distance_estimate_m(prev_lat, prev_lon, lat, lon)
-                leg_dur = estimate_duration_seconds(leg_dist)
-                total_dist_m += leg_dist
-                total_dur_s += leg_dur
-                legs.append({"distance": leg_dist, "duration": leg_dur})
+            if i == 0:
+                corridor_coords.append([lon, lat])
+                continue
+
+            prev_lat, prev_lon = ordered_coordinates[i - 1]
+            leg_waypoints = build_vietnam_corridor_waypoints(prev_lat, prev_lon, lat, lon)
+            for wp_lat, wp_lon in leg_waypoints[1:]:
+                corridor_coords.append([wp_lon, wp_lat])
+
+            leg_dist = road_distance_estimate_m(prev_lat, prev_lon, lat, lon)
+            leg_dur = estimate_duration_seconds(leg_dist)
+            total_dist_m += leg_dist
+            total_dur_s += leg_dur
+            legs.append({"distance": leg_dist, "duration": leg_dur})
 
         return RouteGeometryResult(
-            geometry_coords=straight_coords,
+            geometry_coords=corridor_coords,
             total_distance_m=total_dist_m,
             total_duration_s=total_dur_s,
             legs=legs,
-            provider_name="Haversine Straight-line Geometry (Fallback)",
+            provider_name="Haversine Vietnam Domestic Corridor Geometry (Fallback)",
         )

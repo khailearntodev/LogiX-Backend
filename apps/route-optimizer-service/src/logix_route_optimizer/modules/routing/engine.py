@@ -75,6 +75,28 @@ class RouteEngine:
         total += matrix[current][0]  # Return to depot
         return total
 
+    def _consolidate_colocated_stops(
+        self, ordered_indices: list[int], matrix: list[list[float]]
+    ) -> list[int]:
+        """
+        Ensure stops at the exact same location (or within 50m of each other) are visited
+        consecutively at the first visit, rather than split between outbound and return legs.
+        """
+        if len(ordered_indices) <= 2:
+            return ordered_indices
+        consolidated: list[int] = []
+        visited: set[int] = set()
+        for idx in ordered_indices:
+            if idx in visited:
+                continue
+            consolidated.append(idx)
+            visited.add(idx)
+            for other_idx in ordered_indices:
+                if other_idx not in visited and matrix[idx][other_idx] <= 50.0:
+                    consolidated.append(other_idx)
+                    visited.add(other_idx)
+        return consolidated
+
     async def compute_route(self, request: RouteOptimizationRequest) -> ProposedRouteOut:
         trip_id = request.trip_id or uuid.uuid4()
         route_plan_id = uuid.uuid4()
@@ -145,8 +167,10 @@ class RouteEngine:
                 capacity_volume_m3=vehicle.capacity_volume_m3,
             )
             if check_report.is_valid:
-                chosen_indices = solver_result.ordered_stop_indices
-                total_distance_m = solver_result.total_distance_m
+                chosen_indices = self._consolidate_colocated_stops(
+                    solver_result.ordered_stop_indices, dist_matrix
+                )
+                total_distance_m = self._calc_tour_distance(dist_matrix, chosen_indices)
                 solver_method = f"Google OR-Tools CVRP ({solver_result.status})"
             else:
                 logger.warning("SolutionChecker reported violations: %s; falling back to Nearest Neighbor", check_report.violations)
