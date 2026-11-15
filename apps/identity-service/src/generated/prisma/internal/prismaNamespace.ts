@@ -406,7 +406,8 @@ export const ModelName = {
   UserRole: 'UserRole',
   Session: 'Session',
   PasswordResetToken: 'PasswordResetToken',
-  TenantInvitation: 'TenantInvitation'
+  TenantInvitation: 'TenantInvitation',
+  ContactLead: 'ContactLead'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -422,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "tenant" | "user" | "userTenant" | "role" | "permission" | "rolePermission" | "userRole" | "session" | "passwordResetToken" | "tenantInvitation"
+    modelProps: "tenant" | "user" | "userTenant" | "role" | "permission" | "rolePermission" | "userRole" | "session" | "passwordResetToken" | "tenantInvitation" | "contactLead"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1166,6 +1167,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ContactLead: {
+      payload: Prisma.$ContactLeadPayload<ExtArgs>
+      fields: Prisma.ContactLeadFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ContactLeadFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ContactLeadFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>
+        }
+        findFirst: {
+          args: Prisma.ContactLeadFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ContactLeadFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>
+        }
+        findMany: {
+          args: Prisma.ContactLeadFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>[]
+        }
+        create: {
+          args: Prisma.ContactLeadCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>
+        }
+        createMany: {
+          args: Prisma.ContactLeadCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ContactLeadCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>[]
+        }
+        delete: {
+          args: Prisma.ContactLeadDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>
+        }
+        update: {
+          args: Prisma.ContactLeadUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>
+        }
+        deleteMany: {
+          args: Prisma.ContactLeadDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ContactLeadUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ContactLeadUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>[]
+        }
+        upsert: {
+          args: Prisma.ContactLeadUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ContactLeadPayload>
+        }
+        aggregate: {
+          args: Prisma.ContactLeadAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateContactLead>
+        }
+        groupBy: {
+          args: Prisma.ContactLeadGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContactLeadGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ContactLeadCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ContactLeadCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -1381,6 +1456,24 @@ export const TenantInvitationScalarFieldEnum = {
 } as const
 
 export type TenantInvitationScalarFieldEnum = (typeof TenantInvitationScalarFieldEnum)[keyof typeof TenantInvitationScalarFieldEnum]
+
+
+export const ContactLeadScalarFieldEnum = {
+  id: 'id',
+  fullName: 'fullName',
+  email: 'email',
+  phoneNumber: 'phoneNumber',
+  companyName: 'companyName',
+  needs: 'needs',
+  otherNeedDetail: 'otherNeedDetail',
+  status: 'status',
+  contactedAt: 'contactedAt',
+  contactedBy: 'contactedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContactLeadScalarFieldEnum = (typeof ContactLeadScalarFieldEnum)[keyof typeof ContactLeadScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1680,6 +1773,7 @@ export type GlobalOmitConfig = {
   session?: Prisma.SessionOmit
   passwordResetToken?: Prisma.PasswordResetTokenOmit
   tenantInvitation?: Prisma.TenantInvitationOmit
+  contactLead?: Prisma.ContactLeadOmit
 }
 
 /* Types for Logging */

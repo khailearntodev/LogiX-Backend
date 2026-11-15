@@ -67,3 +67,8 @@ export type PasswordResetToken = Prisma.PasswordResetTokenModel
  * 
  */
 export type TenantInvitation = Prisma.TenantInvitationModel
+/**
+ * Model ContactLead
+ * 
+ */
+export type ContactLead = Prisma.ContactLeadModel

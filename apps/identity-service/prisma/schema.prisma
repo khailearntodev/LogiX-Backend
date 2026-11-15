@@ -68,6 +68,7 @@ model User {
   rolePermissionsGranted RolePermission[]     @relation("RolePermissionGrantedBy")
   userRolesGranted       UserRole[]           @relation("UserRoleGrantedBy")
   invitationsSent        TenantInvitation[]   @relation("InvitationInvitedBy")
+  contactLeadsHandled    ContactLead[]        @relation("ContactLeadContactedBy")
 
   @@index([status, createdAt(sort: Desc)], map: "ix_users_status")
   @@map("users")
@@ -239,5 +240,27 @@ model TenantInvitation {
   @@index([tenantId, status], map: "ix_tenant_invitations_tenant_status")
   @@index([email], map: "ix_tenant_invitations_email")
   @@map("tenant_invitations")
+  @@schema("identity")
+}
+
+model ContactLead {
+  id              String    @id @default(uuid()) @db.Uuid
+  fullName        String    @map("full_name") @db.VarChar(200)
+  email           String    @db.VarChar(320)
+  phoneNumber     String?   @map("phone_number") @db.VarChar(50)
+  companyName     String    @map("company_name") @db.VarChar(255)
+  needs           String[]  @db.VarChar(50)
+  otherNeedDetail String?   @map("other_need_detail") @db.Text
+  status          String    @default("NEW") @db.VarChar(30)
+  contactedAt     DateTime? @map("contacted_at") @db.Timestamptz(6)
+  contactedBy     String?   @map("contacted_by") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  contactedByUser User? @relation("ContactLeadContactedBy", fields: [contactedBy], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt(sort: Desc)], map: "ix_contact_leads_status_created")
+  @@index([email], map: "ix_contact_leads_email")
+  @@map("contact_leads")
   @@schema("identity")
 }

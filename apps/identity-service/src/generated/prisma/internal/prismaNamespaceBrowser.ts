@@ -60,7 +60,8 @@ export const ModelName = {
   UserRole: 'UserRole',
   Session: 'Session',
   PasswordResetToken: 'PasswordResetToken',
-  TenantInvitation: 'TenantInvitation'
+  TenantInvitation: 'TenantInvitation',
+  ContactLead: 'ContactLead'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -255,6 +256,24 @@ export const TenantInvitationScalarFieldEnum = {
 } as const
 
 export type TenantInvitationScalarFieldEnum = (typeof TenantInvitationScalarFieldEnum)[keyof typeof TenantInvitationScalarFieldEnum]
+
+
+export const ContactLeadScalarFieldEnum = {
+  id: 'id',
+  fullName: 'fullName',
+  email: 'email',
+  phoneNumber: 'phoneNumber',
+  companyName: 'companyName',
+  needs: 'needs',
+  otherNeedDetail: 'otherNeedDetail',
+  status: 'status',
+  contactedAt: 'contactedAt',
+  contactedBy: 'contactedBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ContactLeadScalarFieldEnum = (typeof ContactLeadScalarFieldEnum)[keyof typeof ContactLeadScalarFieldEnum]
 
 
 export const SortOrder = {

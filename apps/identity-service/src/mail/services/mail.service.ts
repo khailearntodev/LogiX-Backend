@@ -12,6 +12,10 @@ import {
   renderResetPasswordEmail,
   ResetPasswordEmailOptions,
 } from '../templates/reset-password.template.js';
+import {
+  renderContactLeadReplyEmail,
+  type ContactLeadReplyEmailOptions,
+} from '../templates/contact-lead-reply.template.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -195,6 +199,50 @@ export class MailService implements OnModuleInit {
       return true;
     } catch (err: any) {
       this.logger.error(`❌ Lỗi gửi thư khôi phục mật khẩu tới [${options.toEmail}]:`, err?.message || err);
+      return false;
+    }
+  }
+
+  /**
+   * Gửi thư phản hồi khách hàng đăng ký tư vấn / đặt lịch demo
+   */
+  async sendContactLeadReplyEmail(
+    options: ContactLeadReplyEmailOptions,
+  ): Promise<boolean> {
+    if (!this.transporter) {
+      this.initTransporter();
+    }
+    if (!this.transporter) {
+      this.logger.error(
+        `[MailService] Không thể gửi email phản hồi demo tới ${options.toEmail}: SMTP chưa cấu hình.`,
+      );
+      return false;
+    }
+
+    try {
+      const fromName = process.env.MAIL_FROM_NAME || 'LogiX Platform';
+      const fromAddress = process.env.MAIL_FROM_ADDRESS || process.env.SMTP_USER;
+
+      const { subject, html } = renderContactLeadReplyEmail(options);
+      const attachments = this.getLogoAttachment();
+
+      const info = await this.transporter.sendMail({
+        from: `"${fromName}" <${fromAddress}>`,
+        to: options.toEmail,
+        subject,
+        html,
+        attachments,
+      });
+
+      this.logger.log(
+        `✉️ Đã gửi thư phản hồi tư vấn demo tới [${options.toEmail}], messageId=${info.messageId}`,
+      );
+      return true;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `❌ Lỗi gửi thư phản hồi tư vấn demo tới [${options.toEmail}]: ${message}`,
+      );
       return false;
     }
   }
