@@ -28,6 +28,7 @@ from logix_agent.modules.executions.service import (
     SqlAlchemyExecutionRecorder,
 )
 from logix_agent.modules.planner.checkpointer import open_checkpointer
+from logix_agent.modules.planner.store import open_store
 from logix_agent.modules.telemetry import setup_telemetry, shutdown_telemetry
 from logix_agent.modules.tools.catalog import build_tool_registry
 from logix_agent.modules.tools.http_client import create_service_client
@@ -89,9 +90,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     service_client = create_service_client(settings)
     app.state.tool_registry = build_tool_registry(service_client)
 
-    # Fail fast outside development if Postgres checkpointing cannot start.
+    # Fail fast outside development if Postgres checkpointing/store cannot start.
     checkpointer_stack = AsyncExitStack()
     checkpointer = await checkpointer_stack.enter_async_context(open_checkpointer(settings))
+    store_stack = AsyncExitStack()
+    try:
+        store = await store_stack.enter_async_context(open_store(settings))
+    except Exception:
+        await checkpointer_stack.aclose()
+        raise
     use_database = (
         session_factory is not None
         and bool(settings.database_url)
@@ -120,8 +127,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             app_model_gateway,
             registry=app.state.tool_registry,
             checkpointer=checkpointer,
+            store=store,
             confirmation_service=app.state.confirmation_service,
             execution_recorder=execution_recorder,
+            service_client=service_client,
             prompt_policy_version=settings.prompt_policy_version,
         )
     except Exception:
@@ -133,6 +142,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.tool_registry = None
     app.state.confirmation_service = None
     await service_client.aclose()
+    await store_stack.aclose()
     await checkpointer_stack.aclose()
     if app_engine is not None:
         await app_engine.dispose()

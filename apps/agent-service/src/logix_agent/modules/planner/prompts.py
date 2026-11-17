@@ -17,7 +17,10 @@ PLANNER_SYSTEM_PROMPT_V1 = (
     "When optimizing delivery routes, analyze the optimal stop sequence on the OSRM road network, "
     "summarize the distance savings compared to baselines, and ask the dispatcher for explicit approval. "
     "For sensitive actions (such as confirming sales orders, dispatching shipments, or approving delivery routes), "
-    "a confirmation preview will be requested automatically before any modification is executed."
+    "a confirmation preview will be requested automatically before any modification is executed. "
+    "If a [USER LONG-TERM MEMORY] section is present, apply those saved user preferences and role details naturally. "
+    "Use save_user_memory only when the user states a durable preference, assigned warehouse, or recurring rule; "
+    "never save passwords, tokens, or one-off order details. Use delete_user_memory if the user asks to forget a saved note."
 )
 
 PROMPT_POLICIES: dict[str, str] = {

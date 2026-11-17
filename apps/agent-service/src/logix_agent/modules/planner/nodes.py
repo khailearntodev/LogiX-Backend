@@ -6,12 +6,13 @@ import logging
 import time
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Any
+from typing import TYPE_CHECKING, Any, Optional
 
 import httpx
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import END
+from langgraph.store.base import BaseStore
 from langgraph.types import interrupt
 from opentelemetry import trace
 
@@ -33,6 +34,7 @@ from logix_agent.modules.executions.service import (
     TOOL_SUCCEEDED,
     ExecutionRecorder,
 )
+from logix_agent.modules.planner.memory import inject_memory_context, load_memory_context_block
 from logix_agent.modules.planner.prompts import get_planner_system_prompt
 from logix_agent.modules.planner.state import PlannerState
 from logix_agent.modules.planner.trimming import trim_conversation_history
@@ -53,6 +55,9 @@ from logix_agent.modules.telemetry import (
     get_tracer,
 )
 from logix_agent.modules.tools.langchain_adapter import tools_for_actor
+
+if TYPE_CHECKING:
+    from logix_agent.modules.tools.http_client import ServiceClient
 
 logger = logging.getLogger(__name__)
 tracer = get_tracer("logix_agent.planner")
@@ -141,8 +146,20 @@ def _classify(exc: ModelGatewayError) -> str:
     return INTERNAL
 
 
-def create_agent_node(model: Any, registry: ToolRegistry, max_steps: int = 10):
-    async def agent_node(state: PlannerState, config: RunnableConfig) -> dict[str, Any]:
+def create_agent_node(
+    model: Any,
+    registry: ToolRegistry,
+    max_steps: int = 10,
+    *,
+    service_client: ServiceClient | None = None,
+):
+    async def agent_node(
+        state: PlannerState,
+        config: RunnableConfig,
+        *,
+        # LangGraph 1.2 matches "Optional[BaseStore]" literally under PEP 563, not "BaseStore | None".
+        store: Optional[BaseStore] = None,  # noqa: UP045
+    ) -> dict[str, Any]:
         actor = _get_actor_from_config(config)
         tag = _get_tag(config, actor)
         tools = tools_for_actor(registry, actor)
@@ -165,6 +182,21 @@ def create_agent_node(model: Any, registry: ToolRegistry, max_steps: int = 10):
             history = [SystemMessage(content=active_prompt), *history]
 
         configurable = config.get("configurable", {})
+        correlation_id = str(configurable.get("correlation_id", ""))
+        if store is not None:
+            try:
+                memory_block = await load_memory_context_block(
+                    store,
+                    actor,
+                    service_client=service_client,
+                    correlation_id=correlation_id,
+                    max_items=settings.planner_memory_max_items,
+                    max_chars=settings.planner_memory_max_chars,
+                )
+                history = inject_memory_context(history, memory_block)
+            except Exception as exc:
+                logger.warning("%s [AGENT_NODE:MEMORY_WARN] failed to load long-term memory: %s", tag, exc)
+
         max_tokens = int(
             configurable.get("max_context_tokens", settings.planner_max_context_tokens)
         )
@@ -198,7 +230,6 @@ def create_agent_node(model: Any, registry: ToolRegistry, max_steps: int = 10):
             len(tool_names),
         )
 
-        correlation_id = str(configurable.get("correlation_id", ""))
         tracer = get_tracer("logix_agent.planner")
         with tracer.start_as_current_span("planner.agent_node") as span:
             span.set_attribute(LOGIX_TENANT_ID, actor.tenant_id)
@@ -596,12 +627,18 @@ def create_revalidate_and_execute_node(
 
 
 def create_execute_tool_node(registry: ToolRegistry):
-    async def execute_tool_node(state: PlannerState, config: RunnableConfig) -> dict[str, Any]:
+    async def execute_tool_node(
+        state: PlannerState,
+        config: RunnableConfig,
+        *,
+        # LangGraph 1.2 matches "Optional[BaseStore]" literally under PEP 563, not "BaseStore | None".
+        store: Optional[BaseStore] = None,  # noqa: UP045
+    ) -> dict[str, Any]:
         actor = _get_actor_from_config(config)
         tag = _get_tag(config, actor)
         configurable = config.get("configurable", {})
         correlation_id = str(configurable.get("correlation_id", ""))
-        context = ToolContext(actor=actor, correlation_id=correlation_id)
+        context = ToolContext(actor=actor, correlation_id=correlation_id, store=store)
 
         last_message = state["messages"][-1]
         if not isinstance(last_message, AIMessage) or not last_message.tool_calls:

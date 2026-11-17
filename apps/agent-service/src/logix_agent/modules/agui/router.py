@@ -7,7 +7,7 @@ import re
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from ag_ui.core import ResumeEntry, RunAgentInput, RunErrorEvent
 from ag_ui.encoder import EventEncoder
@@ -17,6 +17,8 @@ from fastapi.responses import StreamingResponse
 from langchain_core.language_models import BaseChatModel
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.store.base import BaseStore
+from langgraph.store.memory import InMemoryStore
 from pydantic import BaseModel, Field
 
 from logix_agent.modules.agui.thread_registry import (
@@ -49,6 +51,9 @@ from logix_agent.modules.planner.graph import build_planner_graph
 from logix_agent.modules.planner.nodes import INTERNAL, PUBLIC_MESSAGES
 from logix_agent.modules.registry.registry import ToolRegistry
 
+if TYPE_CHECKING:
+    from logix_agent.modules.tools.http_client import ServiceClient
+
 logger = logging.getLogger(__name__)
 
 AGENT_NAME = "logix-copilot"
@@ -73,6 +78,7 @@ class AguiRuntime:
     confirmation_service: ConfirmationService
     registry: ToolRegistry
     execution_recorder: ExecutionRecorder
+    store: BaseStore | None = None
     prompt_policy_version: str = "v1"
 
 
@@ -81,8 +87,10 @@ def build_agui_runtime(
     *,
     registry: ToolRegistry | None = None,
     checkpointer: BaseCheckpointSaver | None = None,
+    store: BaseStore | None = None,
     confirmation_service: ConfirmationService | None = None,
     execution_recorder: ExecutionRecorder | None = None,
+    service_client: ServiceClient | None = None,
     prompt_policy_version: str = "v1",
 ) -> AguiRuntime:
     """Build the unified planner runtime supporting ToolRegistry and Confirmation Gate."""
@@ -91,6 +99,9 @@ def build_agui_runtime(
 
     if checkpointer is None:
         checkpointer = InMemorySaver()
+
+    if store is None:
+        store = InMemoryStore()
 
     if confirmation_service is None:
         confirmation_service = ConfirmationService(InMemoryConfirmationStore())
@@ -112,6 +123,8 @@ def build_agui_runtime(
         model=model,
         confirmation_service=confirmation_service,
         execution_recorder=execution_recorder,
+        store=store,
+        service_client=service_client,
     )
 
     agent = LangGraphAgent(
@@ -126,6 +139,7 @@ def build_agui_runtime(
         confirmation_service=confirmation_service,
         registry=registry,
         execution_recorder=execution_recorder,
+        store=store,
         prompt_policy_version=prompt_policy_version,
     )
 

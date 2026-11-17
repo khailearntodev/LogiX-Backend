@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from langchain.chat_models import init_chat_model
 from langchain_core.language_models import BaseChatModel
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.graph.state import CompiledStateGraph
+from langgraph.store.base import BaseStore
 
 from logix_agent.config import settings
 from logix_agent.modules.confirmations.service import (
@@ -30,6 +33,9 @@ from logix_agent.modules.planner.nodes import (
 from logix_agent.modules.planner.state import PlannerState
 from logix_agent.modules.registry.registry import ToolRegistry
 
+if TYPE_CHECKING:
+    from logix_agent.modules.tools.http_client import ServiceClient
+
 
 def build_planner_graph(
     registry: ToolRegistry,
@@ -38,6 +44,8 @@ def build_planner_graph(
     model: BaseChatModel | None = None,
     confirmation_service: ConfirmationService | None = None,
     execution_recorder: ExecutionRecorder | None = None,
+    store: BaseStore | None = None,
+    service_client: ServiceClient | None = None,
     max_steps: int = 10,
 ) -> CompiledStateGraph:
     """Build and compile the multi-node planner graph with confirmation gate."""
@@ -50,7 +58,9 @@ def build_planner_graph(
     if execution_recorder is None:
         execution_recorder = InMemoryExecutionRecorder()
 
-    agent_node = create_agent_node(model, registry, max_steps=max_steps)
+    agent_node = create_agent_node(
+        model, registry, max_steps=max_steps, service_client=service_client
+    )
     preview_node = create_preview_node(registry, confirmation_service, execution_recorder)
     confirm_node = create_confirm_node()
     revalidate_and_execute_node = create_revalidate_and_execute_node(
@@ -105,4 +115,4 @@ def build_planner_graph(
         },
     )
 
-    return builder.compile(checkpointer=checkpointer)
+    return builder.compile(checkpointer=checkpointer, store=store)
