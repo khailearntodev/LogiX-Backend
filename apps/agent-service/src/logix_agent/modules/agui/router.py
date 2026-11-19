@@ -1,4 +1,4 @@
-"""AG-UI endpoint serving the unified planner graph and confirmation decisions over SSE."""
+"""AG-UI endpoint serving the unified planner graph, thread management and confirmation decisions."""
 
 from __future__ import annotations
 
@@ -7,12 +7,13 @@ import re
 import uuid
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
-from ag_ui.core import ResumeEntry, RunAgentInput, RunErrorEvent
+from ag_ui.core import EventType, ResumeEntry, RunAgentInput, RunErrorEvent
 from ag_ui.encoder import EventEncoder
 from ag_ui_langgraph import LangGraphAgent
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from langchain_core.language_models import BaseChatModel
 from langgraph.checkpoint.base import BaseCheckpointSaver
@@ -22,9 +23,10 @@ from langgraph.store.memory import InMemoryStore
 from pydantic import BaseModel, Field
 
 from logix_agent.modules.agui.thread_registry import (
+    InMemoryThreadStore,
     InvalidThreadIdError,
     ThreadNotFoundError,
-    ThreadRegistry,
+    ThreadStore,
 )
 from logix_agent.modules.ai.langchain_adapter import ModelGatewayChatModel
 from logix_agent.modules.ai.ports import ModelGateway
@@ -39,6 +41,7 @@ from logix_agent.modules.confirmations.service import (
     ConfirmationService,
     InMemoryConfirmationStore,
 )
+from logix_agent.modules.conversations.recorder import ConversationRecorder
 from logix_agent.modules.executions.service import (
     EXECUTION_FAILED,
     EXECUTION_RUNNING,
@@ -71,10 +74,27 @@ class DecisionPayload(BaseModel):
     reason: str | None = Field(default=None, description="Optional reason for the decision")
 
 
+class ThreadSummaryResponse(BaseModel):
+    threadId: str
+    title: str | None = None
+    createdAt: datetime
+    updatedAt: datetime
+
+
+class ConversationMessageResponse(BaseModel):
+    id: str
+    role: str
+    content: str
+    sequence: int
+    modelMessageId: str | None = None
+    createdAt: datetime
+
+
 @dataclass
 class AguiRuntime:
     agent: LangGraphAgent
-    threads: ThreadRegistry
+    threads: ThreadStore
+    conversation_recorder: ConversationRecorder
     confirmation_service: ConfirmationService
     registry: ToolRegistry
     execution_recorder: ExecutionRecorder
@@ -90,6 +110,7 @@ def build_agui_runtime(
     store: BaseStore | None = None,
     confirmation_service: ConfirmationService | None = None,
     execution_recorder: ExecutionRecorder | None = None,
+    thread_store: ThreadStore | None = None,
     service_client: ServiceClient | None = None,
     prompt_policy_version: str = "v1",
 ) -> AguiRuntime:
@@ -108,6 +129,9 @@ def build_agui_runtime(
 
     if execution_recorder is None:
         execution_recorder = InMemoryExecutionRecorder()
+
+    if thread_store is None:
+        thread_store = InMemoryThreadStore()
 
     model: BaseChatModel | None = None
     if isinstance(gateway_or_model, BaseChatModel):
@@ -135,7 +159,8 @@ def build_agui_runtime(
     )
     return AguiRuntime(
         agent=agent,
-        threads=ThreadRegistry(),
+        threads=thread_store,
+        conversation_recorder=ConversationRecorder(thread_store),
         confirmation_service=confirmation_service,
         registry=registry,
         execution_recorder=execution_recorder,
@@ -176,29 +201,74 @@ def _next_status(current: str, event: object) -> str:
 
 
 async def _record_final_status(
-    runtime: AguiRuntime, actor: Actor, execution_id: str, status: str, tag: str
+    runtime: AguiRuntime, actor: Actor, execution_id: str, status_now: str, tag: str
 ) -> None:
     # Bookkeeping must never break a response that has already been streamed.
     try:
         await runtime.execution_recorder.set_execution_status(
             actor.tenant_id,
             execution_id,
-            status,
-            error_code="RUN_ERROR" if status == EXECUTION_FAILED else None,
+            status_now,
+            error_code="RUN_ERROR" if status_now == EXECUTION_FAILED else None,
         )
     except Exception:
-        logger.exception("%s failed to record execution status %s", tag, status)
+        logger.exception("%s failed to record execution status %s", tag, status_now)
 
 
-@router.post("/runs")
-async def run_agent(
-    input_data: RunAgentInput,
-    request: Request,
-    actor: Actor = Depends(get_current_actor),
-    runtime: AguiRuntime = Depends(get_agui_runtime),
+def _stream_agent_events(
+    *,
+    agent: LangGraphAgent,
+    agent_input: RunAgentInput,
+    encoder: EventEncoder,
+    runtime: AguiRuntime,
+    actor: Actor,
+    execution_id: str,
+    thread_id: str,
+    tag: str,
+    start_log: str,
+    end_log: str,
 ) -> StreamingResponse:
+    async def event_stream() -> AsyncIterator[str]:
+        logger.info(start_log)
+        status_now = EXECUTION_SUCCEEDED
+        assistant_buffer = runtime.conversation_recorder.new_assistant_buffer(
+            fallback_message_id=execution_id
+        )
+        try:
+            async for event in agent.run(agent_input):
+                if isinstance(event, RunErrorEvent):
+                    logger.warning("%s agent run error: %s", tag, event.message)
+                elif getattr(event, "type", None) == EventType.TEXT_MESSAGE_CONTENT:
+                    assistant_buffer.append_delta(
+                        getattr(event, "delta", None),
+                        message_id=getattr(event, "message_id", None),
+                    )
+                status_now = _next_status(status_now, event)
+                yield encoder.encode(_sanitize(event))
+        except BaseException:
+            status_now = EXECUTION_FAILED
+            raise
+        finally:
+            if status_now != EXECUTION_FAILED:
+                await runtime.conversation_recorder.record_completed_assistant_message(
+                    tenant_id=actor.tenant_id,
+                    thread_id=thread_id,
+                    buffer=assistant_buffer,
+                    tag=tag,
+                )
+            await _record_final_status(runtime, actor, execution_id, status_now, tag)
+            logger.info(end_log)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type=encoder.get_content_type(),
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+async def _claim_thread_or_404(runtime: AguiRuntime, thread_id: str, actor: Actor) -> uuid.UUID:
     try:
-        runtime.threads.claim(input_data.thread_id, actor)
+        return await runtime.threads.claim(thread_id, actor)
     except InvalidThreadIdError:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -208,6 +278,84 @@ async def run_agent(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
         ) from None
+
+
+@router.get("/threads", response_model=list[ThreadSummaryResponse])
+async def list_threads(
+    limit: int = Query(default=50, ge=1, le=100),
+    actor: Actor = Depends(get_current_actor),
+    runtime: AguiRuntime = Depends(get_agui_runtime),
+) -> list[ThreadSummaryResponse]:
+    threads = await runtime.threads.list_threads(actor, limit=limit)
+    return [
+        ThreadSummaryResponse(
+            threadId=t.thread_id,
+            title=t.title,
+            createdAt=t.created_at,
+            updatedAt=t.updated_at,
+        )
+        for t in threads
+    ]
+
+
+@router.get("/threads/{thread_id}/messages", response_model=list[ConversationMessageResponse])
+async def list_thread_messages(
+    thread_id: str,
+    actor: Actor = Depends(get_current_actor),
+    runtime: AguiRuntime = Depends(get_agui_runtime),
+) -> list[ConversationMessageResponse]:
+    try:
+        messages = await runtime.threads.list_messages(thread_id, actor)
+    except InvalidThreadIdError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid threadId",
+        ) from None
+    except ThreadNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
+        ) from None
+    return [
+        ConversationMessageResponse(
+            id=str(m.id),
+            role=m.role,
+            content=m.content,
+            sequence=m.sequence,
+            modelMessageId=m.model_message_id,
+            createdAt=m.created_at,
+        )
+        for m in messages
+    ]
+
+
+@router.delete("/threads/{thread_id}")
+async def delete_thread(
+    thread_id: str,
+    actor: Actor = Depends(get_current_actor),
+    runtime: AguiRuntime = Depends(get_agui_runtime),
+) -> dict[str, object]:
+    try:
+        await runtime.threads.delete_thread(thread_id, actor)
+    except InvalidThreadIdError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid threadId",
+        ) from None
+    except ThreadNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
+        ) from None
+    return {"threadId": thread_id, "deleted": True}
+
+
+@router.post("/runs")
+async def run_agent(
+    input_data: RunAgentInput,
+    request: Request,
+    actor: Actor = Depends(get_current_actor),
+    runtime: AguiRuntime = Depends(get_agui_runtime),
+) -> StreamingResponse:
+    conversation_id = await _claim_thread_or_404(runtime, input_data.thread_id, actor)
 
     tag = f"run={input_data.run_id[:8]} tenant={actor.tenant_id}"
     correlation_id = request.headers.get("x-correlation-id") or input_data.run_id
@@ -219,7 +367,14 @@ async def run_agent(
         thread_id=input_data.thread_id,
         correlation_id=correlation_id,
         prompt_policy_version=runtime.prompt_policy_version,
+        conversation_id=conversation_id,
     )
+    await runtime.conversation_recorder.record_user_message(
+        tenant_id=actor.tenant_id,
+        thread_id=input_data.thread_id,
+        messages=input_data.messages,
+    )
+
     agent = runtime.agent.clone()
     agent.config = {
         "configurable": {
@@ -240,32 +395,20 @@ async def run_agent(
     )
     encoder = EventEncoder(accept=request.headers.get("accept"))
 
-    async def event_stream() -> AsyncIterator[str]:
-        logger.info(
-            "%s agent run started (thread=%s user=%s messages=%d)",
-            tag,
-            input_data.thread_id,
-            actor.user_id,
-            len(input_data.messages),
-        )
-        status_now = EXECUTION_SUCCEEDED
-        try:
-            async for event in agent.run(safe_input):
-                if isinstance(event, RunErrorEvent):
-                    logger.warning("%s agent run error: %s", tag, event.message)
-                status_now = _next_status(status_now, event)
-                yield encoder.encode(_sanitize(event))
-        except BaseException:
-            status_now = EXECUTION_FAILED
-            raise
-        finally:
-            await _record_final_status(runtime, actor, input_data.run_id, status_now, tag)
-            logger.info("%s agent run ended", tag)
-
-    return StreamingResponse(
-        event_stream(),
-        media_type=encoder.get_content_type(),
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    return _stream_agent_events(
+        agent=agent,
+        agent_input=safe_input,
+        encoder=encoder,
+        runtime=runtime,
+        actor=actor,
+        execution_id=input_data.run_id,
+        thread_id=input_data.thread_id,
+        tag=tag,
+        start_log=(
+            f"{tag} agent run started (thread={input_data.thread_id} "
+            f"user={actor.user_id} messages={len(input_data.messages)})"
+        ),
+        end_log=f"{tag} agent run ended",
     )
 
 
@@ -321,17 +464,7 @@ async def submit_decision(
             detail="thread_id is required to resume execution",
         )
 
-    try:
-        runtime.threads.claim(thread_id, actor)
-    except InvalidThreadIdError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid threadId",
-        ) from None
-    except ThreadNotFoundError:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Thread not found"
-        ) from None
+    conversation_id = await _claim_thread_or_404(runtime, thread_id, actor)
 
     tag = f"resume={execution_id[:8]} tenant={actor.tenant_id}"
     correlation_id = request.headers.get("x-correlation-id") or execution_id
@@ -342,6 +475,7 @@ async def submit_decision(
         thread_id=thread_id,
         correlation_id=correlation_id,
         prompt_policy_version=runtime.prompt_policy_version,
+        conversation_id=conversation_id,
     )
     await runtime.execution_recorder.set_execution_status(
         actor.tenant_id, execution_id, EXECUTION_RUNNING
@@ -395,24 +529,15 @@ async def submit_decision(
     )
     encoder = EventEncoder(accept=request.headers.get("accept"))
 
-    async def event_stream() -> AsyncIterator[str]:
-        logger.info("%s resuming graph execution on thread %s", tag, thread_id)
-        status_now = EXECUTION_SUCCEEDED
-        try:
-            async for event in agent.run(resume_input):
-                if isinstance(event, RunErrorEvent):
-                    logger.warning("%s resume run error: %s", tag, event.message)
-                status_now = _next_status(status_now, event)
-                yield encoder.encode(_sanitize(event))
-        except BaseException:
-            status_now = EXECUTION_FAILED
-            raise
-        finally:
-            await _record_final_status(runtime, actor, execution_id, status_now, tag)
-            logger.info("%s resume execution ended", tag)
-
-    return StreamingResponse(
-        event_stream(),
-        media_type=encoder.get_content_type(),
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    return _stream_agent_events(
+        agent=agent,
+        agent_input=resume_input,
+        encoder=encoder,
+        runtime=runtime,
+        actor=actor,
+        execution_id=execution_id,
+        thread_id=thread_id,
+        tag=tag,
+        start_log=f"{tag} resuming graph execution on thread {thread_id}",
+        end_log=f"{tag} resume execution ended",
     )

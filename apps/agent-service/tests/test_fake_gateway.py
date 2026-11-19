@@ -85,3 +85,31 @@ async def test_fake_gateway_with_error():
     with pytest.raises(ModelTimeoutError) as exc_info:
         await gateway.generate(_request())
     assert exc_info.value.retryable is True
+
+
+@pytest.mark.asyncio
+async def test_fake_gateway_stream_emits_multiple_deltas_and_terminal_chunk():
+    gateway = FakeModelGateway.with_text("Hello streaming world")
+
+    chunks = [chunk async for chunk in gateway.stream(_request("planner-fallback"))]
+
+    deltas = [c.content_delta for c in chunks if c.content_delta]
+    assert deltas == ["Hello ", "streaming ", "world"]
+    assert "".join(deltas) == "Hello streaming world"
+
+    terminal = chunks[-1]
+    assert terminal.content_delta == ""
+    assert terminal.model_profile == "planner-fallback"
+    assert terminal.gateway_backend == "fake"
+    assert terminal.finish_reason == FinishReason.STOP
+    assert terminal.usage is not None
+    assert terminal.usage.total_tokens == 15
+
+
+@pytest.mark.asyncio
+async def test_fake_gateway_stream_with_error():
+    gateway = FakeModelGateway.with_error(ModelTimeoutError("Simulated stream timeout"))
+
+    with pytest.raises(ModelTimeoutError):
+        async for _ in gateway.stream(_request()):
+            pass

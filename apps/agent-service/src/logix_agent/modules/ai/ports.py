@@ -7,13 +7,14 @@ Concrete implementations live in ``adapters/`` and are wired at startup.
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from typing import Protocol, runtime_checkable
 
 from logix_agent.modules.ai.contracts import (
     ModelProfile,
     ModelRequest,
     ModelResponse,
+    ModelStreamChunk,
     ToolDefinition,
 )
 
@@ -37,6 +38,15 @@ class ModelGateway(Protocol):
         tools: Sequence[ToolDefinition] = (),
     ) -> ModelResponse:
         """Generate a model response, optionally with tool definitions."""
+        ...
+
+    def stream(
+        self,
+        request: ModelRequest,
+        *,
+        tools: Sequence[ToolDefinition] = (),
+    ) -> AsyncIterator[ModelStreamChunk]:
+        """Stream incremental model response chunks, optionally with tool definitions."""
         ...
 
 

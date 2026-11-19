@@ -22,6 +22,11 @@ from logix_agent.modules.confirmations.service import (
     InMemoryConfirmationStore,
     SqlAlchemyConfirmationStore,
 )
+from logix_agent.modules.conversations.service import (
+    InMemoryThreadStore,
+    SqlAlchemyThreadStore,
+    ThreadStore,
+)
 from logix_agent.modules.executions.service import (
     ExecutionRecorder,
     InMemoryExecutionRecorder,
@@ -120,6 +125,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     else:
         confirmation_store = InMemoryConfirmationStore()
     app.state.confirmation_service = ConfirmationService(confirmation_store)
+    thread_store: ThreadStore
+    if use_database:
+        thread_store = SqlAlchemyThreadStore(session_factory)
+        logger.info("Using SqlAlchemyThreadStore with PostgreSQL persistence.")
+    else:
+        thread_store = InMemoryThreadStore()
 
     try:
         app_model_gateway = create_model_gateway(settings)
@@ -130,6 +141,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             store=store,
             confirmation_service=app.state.confirmation_service,
             execution_recorder=execution_recorder,
+            thread_store=thread_store,
             service_client=service_client,
             prompt_policy_version=settings.prompt_policy_version,
         )
