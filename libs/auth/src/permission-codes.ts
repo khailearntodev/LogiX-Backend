@@ -15,6 +15,11 @@ export const MASTER_DATA_DRIVER_PERMISSIONS = {
   MANAGE: 'master-data:driver:manage',
 } as const;
 
+export const AGENT_MODEL_CONFIG_PERMISSIONS = {
+  READ: 'agent:model-config:read',
+  MANAGE: 'agent:model-config:manage',
+} as const;
+
 export const MEMBER_RESTRICTED_PERMISSIONS = [
   MASTER_DATA_DRIVER_PERMISSIONS.READ,
   TRANSPORT_PERMISSIONS.DRIVER_READ,
