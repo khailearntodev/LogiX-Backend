@@ -1295,6 +1295,10 @@ export const TenantScalarFieldEnum = {
   district: 'district',
   province: 'province',
   postalCode: 'postalCode',
+  aiCustomInstructions: 'aiCustomInstructions',
+  aiInstructionsEnabled: 'aiInstructionsEnabled',
+  aiInstructionsUpdatedAt: 'aiInstructionsUpdatedAt',
+  aiInstructionsUpdatedBy: 'aiInstructionsUpdatedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   version: 'version',
@@ -1551,6 +1555,13 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'Boolean'
+ */
+export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -1575,13 +1586,6 @@ export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 
  * Reference to a field of type 'BigInt[]'
  */
 export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
-    
-
-
-/**
- * Reference to a field of type 'Boolean'
- */
-export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
 
 

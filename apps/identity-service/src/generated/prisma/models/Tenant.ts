@@ -48,6 +48,10 @@ export type TenantMinAggregateOutputType = {
   district: string | null
   province: string | null
   postalCode: string | null
+  aiCustomInstructions: string | null
+  aiInstructionsEnabled: boolean | null
+  aiInstructionsUpdatedAt: Date | null
+  aiInstructionsUpdatedBy: string | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -68,6 +72,10 @@ export type TenantMaxAggregateOutputType = {
   district: string | null
   province: string | null
   postalCode: string | null
+  aiCustomInstructions: string | null
+  aiInstructionsEnabled: boolean | null
+  aiInstructionsUpdatedAt: Date | null
+  aiInstructionsUpdatedBy: string | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -89,6 +97,10 @@ export type TenantCountAggregateOutputType = {
   district: number
   province: number
   postalCode: number
+  aiCustomInstructions: number
+  aiInstructionsEnabled: number
+  aiInstructionsUpdatedAt: number
+  aiInstructionsUpdatedBy: number
   createdAt: number
   updatedAt: number
   version: number
@@ -119,6 +131,10 @@ export type TenantMinAggregateInputType = {
   district?: true
   province?: true
   postalCode?: true
+  aiCustomInstructions?: true
+  aiInstructionsEnabled?: true
+  aiInstructionsUpdatedAt?: true
+  aiInstructionsUpdatedBy?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -139,6 +155,10 @@ export type TenantMaxAggregateInputType = {
   district?: true
   province?: true
   postalCode?: true
+  aiCustomInstructions?: true
+  aiInstructionsEnabled?: true
+  aiInstructionsUpdatedAt?: true
+  aiInstructionsUpdatedBy?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -160,6 +180,10 @@ export type TenantCountAggregateInputType = {
   district?: true
   province?: true
   postalCode?: true
+  aiCustomInstructions?: true
+  aiInstructionsEnabled?: true
+  aiInstructionsUpdatedAt?: true
+  aiInstructionsUpdatedBy?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -268,6 +292,10 @@ export type TenantGroupByOutputType = {
   district: string | null
   province: string | null
   postalCode: string | null
+  aiCustomInstructions: string | null
+  aiInstructionsEnabled: boolean
+  aiInstructionsUpdatedAt: Date | null
+  aiInstructionsUpdatedBy: string | null
   createdAt: Date
   updatedAt: Date
   version: bigint
@@ -312,6 +340,10 @@ export type TenantWhereInput = {
   district?: Prisma.StringNullableFilter<"Tenant"> | string | null
   province?: Prisma.StringNullableFilter<"Tenant"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  aiCustomInstructions?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  aiInstructionsEnabled?: Prisma.BoolFilter<"Tenant"> | boolean
+  aiInstructionsUpdatedAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.UuidNullableFilter<"Tenant"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   version?: Prisma.BigIntFilter<"Tenant"> | bigint | number
@@ -323,6 +355,7 @@ export type TenantWhereInput = {
   sessions?: Prisma.SessionListRelationFilter
   passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
   invitations?: Prisma.TenantInvitationListRelationFilter
+  aiInstructionsUpdatedByUser?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }
 
 export type TenantOrderByWithRelationInput = {
@@ -340,6 +373,10 @@ export type TenantOrderByWithRelationInput = {
   district?: Prisma.SortOrderInput | Prisma.SortOrder
   province?: Prisma.SortOrderInput | Prisma.SortOrder
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiCustomInstructions?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiInstructionsEnabled?: Prisma.SortOrder
+  aiInstructionsUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiInstructionsUpdatedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -351,6 +388,7 @@ export type TenantOrderByWithRelationInput = {
   sessions?: Prisma.SessionOrderByRelationAggregateInput
   passwordResetTokens?: Prisma.PasswordResetTokenOrderByRelationAggregateInput
   invitations?: Prisma.TenantInvitationOrderByRelationAggregateInput
+  aiInstructionsUpdatedByUser?: Prisma.UserOrderByWithRelationInput
 }
 
 export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -371,6 +409,10 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   district?: Prisma.StringNullableFilter<"Tenant"> | string | null
   province?: Prisma.StringNullableFilter<"Tenant"> | string | null
   postalCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  aiCustomInstructions?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  aiInstructionsEnabled?: Prisma.BoolFilter<"Tenant"> | boolean
+  aiInstructionsUpdatedAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.UuidNullableFilter<"Tenant"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
   version?: Prisma.BigIntFilter<"Tenant"> | bigint | number
@@ -382,6 +424,7 @@ export type TenantWhereUniqueInput = Prisma.AtLeast<{
   sessions?: Prisma.SessionListRelationFilter
   passwordResetTokens?: Prisma.PasswordResetTokenListRelationFilter
   invitations?: Prisma.TenantInvitationListRelationFilter
+  aiInstructionsUpdatedByUser?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
 }, "id">
 
 export type TenantOrderByWithAggregationInput = {
@@ -399,6 +442,10 @@ export type TenantOrderByWithAggregationInput = {
   district?: Prisma.SortOrderInput | Prisma.SortOrder
   province?: Prisma.SortOrderInput | Prisma.SortOrder
   postalCode?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiCustomInstructions?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiInstructionsEnabled?: Prisma.SortOrder
+  aiInstructionsUpdatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  aiInstructionsUpdatedBy?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -428,6 +475,10 @@ export type TenantScalarWhereWithAggregatesInput = {
   district?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
   province?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
   postalCode?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  aiCustomInstructions?: Prisma.StringNullableWithAggregatesFilter<"Tenant"> | string | null
+  aiInstructionsEnabled?: Prisma.BoolWithAggregatesFilter<"Tenant"> | boolean
+  aiInstructionsUpdatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.UuidNullableWithAggregatesFilter<"Tenant"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Tenant"> | Date | string
   version?: Prisma.BigIntWithAggregatesFilter<"Tenant"> | bigint | number
@@ -449,6 +500,9 @@ export type TenantCreateInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -460,6 +514,7 @@ export type TenantCreateInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateInput = {
@@ -477,6 +532,10 @@ export type TenantUncheckedCreateInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -505,6 +564,9 @@ export type TenantUpdateInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -516,6 +578,7 @@ export type TenantUpdateInput = {
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateInput = {
@@ -533,6 +596,10 @@ export type TenantUncheckedUpdateInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -561,6 +628,10 @@ export type TenantCreateManyInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -582,6 +653,9 @@ export type TenantUpdateManyMutationInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -603,6 +677,10 @@ export type TenantUncheckedUpdateManyInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -624,6 +702,10 @@ export type TenantCountOrderByAggregateInput = {
   district?: Prisma.SortOrder
   province?: Prisma.SortOrder
   postalCode?: Prisma.SortOrder
+  aiCustomInstructions?: Prisma.SortOrder
+  aiInstructionsEnabled?: Prisma.SortOrder
+  aiInstructionsUpdatedAt?: Prisma.SortOrder
+  aiInstructionsUpdatedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -648,6 +730,10 @@ export type TenantMaxOrderByAggregateInput = {
   district?: Prisma.SortOrder
   province?: Prisma.SortOrder
   postalCode?: Prisma.SortOrder
+  aiCustomInstructions?: Prisma.SortOrder
+  aiInstructionsEnabled?: Prisma.SortOrder
+  aiInstructionsUpdatedAt?: Prisma.SortOrder
+  aiInstructionsUpdatedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -668,6 +754,10 @@ export type TenantMinOrderByAggregateInput = {
   district?: Prisma.SortOrder
   province?: Prisma.SortOrder
   postalCode?: Prisma.SortOrder
+  aiCustomInstructions?: Prisma.SortOrder
+  aiInstructionsEnabled?: Prisma.SortOrder
+  aiInstructionsUpdatedAt?: Prisma.SortOrder
+  aiInstructionsUpdatedBy?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -676,6 +766,16 @@ export type TenantMinOrderByAggregateInput = {
 
 export type TenantSumOrderByAggregateInput = {
   version?: Prisma.SortOrder
+}
+
+export type TenantListRelationFilter = {
+  every?: Prisma.TenantWhereInput
+  some?: Prisma.TenantWhereInput
+  none?: Prisma.TenantWhereInput
+}
+
+export type TenantOrderByRelationAggregateInput = {
+  _count?: Prisma.SortOrder
 }
 
 export type TenantScalarRelationFilter = {
@@ -691,6 +791,14 @@ export type NullableStringFieldUpdateOperationsInput = {
   set?: string | null
 }
 
+export type BoolFieldUpdateOperationsInput = {
+  set?: boolean
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
 }
@@ -703,8 +811,46 @@ export type BigIntFieldUpdateOperationsInput = {
   divide?: bigint | number
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
+export type TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput> | Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput[] | Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput[]
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput[]
+  createMany?: Prisma.TenantCreateManyAiInstructionsUpdatedByUserInputEnvelope
+  connect?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+}
+
+export type TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput> | Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput[] | Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput[]
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput[]
+  createMany?: Prisma.TenantCreateManyAiInstructionsUpdatedByUserInputEnvelope
+  connect?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+}
+
+export type TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput> | Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput[] | Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput[]
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput[]
+  upsert?: Prisma.TenantUpsertWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantUpsertWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput[]
+  createMany?: Prisma.TenantCreateManyAiInstructionsUpdatedByUserInputEnvelope
+  set?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  disconnect?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  delete?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  connect?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  update?: Prisma.TenantUpdateWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantUpdateWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput[]
+  updateMany?: Prisma.TenantUpdateManyWithWhereWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantUpdateManyWithWhereWithoutAiInstructionsUpdatedByUserInput[]
+  deleteMany?: Prisma.TenantScalarWhereInput | Prisma.TenantScalarWhereInput[]
+}
+
+export type TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput = {
+  create?: Prisma.XOR<Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput> | Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput[] | Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput[]
+  connectOrCreate?: Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput[]
+  upsert?: Prisma.TenantUpsertWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantUpsertWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput[]
+  createMany?: Prisma.TenantCreateManyAiInstructionsUpdatedByUserInputEnvelope
+  set?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  disconnect?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  delete?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  connect?: Prisma.TenantWhereUniqueInput | Prisma.TenantWhereUniqueInput[]
+  update?: Prisma.TenantUpdateWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantUpdateWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput[]
+  updateMany?: Prisma.TenantUpdateManyWithWhereWithoutAiInstructionsUpdatedByUserInput | Prisma.TenantUpdateManyWithWhereWithoutAiInstructionsUpdatedByUserInput[]
+  deleteMany?: Prisma.TenantScalarWhereInput | Prisma.TenantScalarWhereInput[]
 }
 
 export type TenantCreateNestedOneWithoutUserTenantsInput = {
@@ -805,6 +951,122 @@ export type TenantUpdateOneRequiredWithoutInvitationsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.TenantUpdateToOneWithWhereWithoutInvitationsInput, Prisma.TenantUpdateWithoutInvitationsInput>, Prisma.TenantUncheckedUpdateWithoutInvitationsInput>
 }
 
+export type TenantCreateWithoutAiInstructionsUpdatedByUserInput = {
+  id?: string
+  code: string
+  name: string
+  logoUrl?: string | null
+  status: string
+  settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionCreateNestedManyWithoutTenantInput
+  userRoles?: Prisma.UserRoleCreateNestedManyWithoutTenantInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
+  invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+}
+
+export type TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput = {
+  id?: string
+  code: string
+  name: string
+  logoUrl?: string | null
+  status: string
+  settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutTenantInput
+  roles?: Prisma.RoleUncheckedCreateNestedManyWithoutTenantInput
+  rolePermissions?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutTenantInput
+  userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutTenantInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutTenantInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutTenantInput
+  invitations?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutTenantInput
+}
+
+export type TenantCreateOrConnectWithoutAiInstructionsUpdatedByUserInput = {
+  where: Prisma.TenantWhereUniqueInput
+  create: Prisma.XOR<Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput>
+}
+
+export type TenantCreateManyAiInstructionsUpdatedByUserInputEnvelope = {
+  data: Prisma.TenantCreateManyAiInstructionsUpdatedByUserInput | Prisma.TenantCreateManyAiInstructionsUpdatedByUserInput[]
+  skipDuplicates?: boolean
+}
+
+export type TenantUpsertWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput = {
+  where: Prisma.TenantWhereUniqueInput
+  update: Prisma.XOR<Prisma.TenantUpdateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedUpdateWithoutAiInstructionsUpdatedByUserInput>
+  create: Prisma.XOR<Prisma.TenantCreateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedCreateWithoutAiInstructionsUpdatedByUserInput>
+}
+
+export type TenantUpdateWithWhereUniqueWithoutAiInstructionsUpdatedByUserInput = {
+  where: Prisma.TenantWhereUniqueInput
+  data: Prisma.XOR<Prisma.TenantUpdateWithoutAiInstructionsUpdatedByUserInput, Prisma.TenantUncheckedUpdateWithoutAiInstructionsUpdatedByUserInput>
+}
+
+export type TenantUpdateManyWithWhereWithoutAiInstructionsUpdatedByUserInput = {
+  where: Prisma.TenantScalarWhereInput
+  data: Prisma.XOR<Prisma.TenantUpdateManyMutationInput, Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserInput>
+}
+
+export type TenantScalarWhereInput = {
+  AND?: Prisma.TenantScalarWhereInput | Prisma.TenantScalarWhereInput[]
+  OR?: Prisma.TenantScalarWhereInput[]
+  NOT?: Prisma.TenantScalarWhereInput | Prisma.TenantScalarWhereInput[]
+  id?: Prisma.UuidFilter<"Tenant"> | string
+  code?: Prisma.StringFilter<"Tenant"> | string
+  name?: Prisma.StringFilter<"Tenant"> | string
+  logoUrl?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  status?: Prisma.StringFilter<"Tenant"> | string
+  settings?: Prisma.JsonFilter<"Tenant">
+  legalName?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  taxCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  phone?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  addressLine?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  ward?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  district?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  province?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  postalCode?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  aiCustomInstructions?: Prisma.StringNullableFilter<"Tenant"> | string | null
+  aiInstructionsEnabled?: Prisma.BoolFilter<"Tenant"> | boolean
+  aiInstructionsUpdatedAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.UuidNullableFilter<"Tenant"> | string | null
+  createdAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
+  updatedAt?: Prisma.DateTimeFilter<"Tenant"> | Date | string
+  version?: Prisma.BigIntFilter<"Tenant"> | bigint | number
+  deletedAt?: Prisma.DateTimeNullableFilter<"Tenant"> | Date | string | null
+}
+
 export type TenantCreateWithoutUserTenantsInput = {
   id?: string
   code: string
@@ -820,6 +1082,9 @@ export type TenantCreateWithoutUserTenantsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -830,6 +1095,7 @@ export type TenantCreateWithoutUserTenantsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutUserTenantsInput = {
@@ -847,6 +1113,10 @@ export type TenantUncheckedCreateWithoutUserTenantsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -890,6 +1160,9 @@ export type TenantUpdateWithoutUserTenantsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -900,6 +1173,7 @@ export type TenantUpdateWithoutUserTenantsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutUserTenantsInput = {
@@ -917,6 +1191,10 @@ export type TenantUncheckedUpdateWithoutUserTenantsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -944,6 +1222,9 @@ export type TenantCreateWithoutRolesInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -954,6 +1235,7 @@ export type TenantCreateWithoutRolesInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutRolesInput = {
@@ -971,6 +1253,10 @@ export type TenantUncheckedCreateWithoutRolesInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1014,6 +1300,9 @@ export type TenantUpdateWithoutRolesInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1024,6 +1313,7 @@ export type TenantUpdateWithoutRolesInput = {
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutRolesInput = {
@@ -1041,6 +1331,10 @@ export type TenantUncheckedUpdateWithoutRolesInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1068,6 +1362,9 @@ export type TenantCreateWithoutRolePermissionsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1078,6 +1375,7 @@ export type TenantCreateWithoutRolePermissionsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutRolePermissionsInput = {
@@ -1095,6 +1393,10 @@ export type TenantUncheckedCreateWithoutRolePermissionsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1138,6 +1440,9 @@ export type TenantUpdateWithoutRolePermissionsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1148,6 +1453,7 @@ export type TenantUpdateWithoutRolePermissionsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
@@ -1165,6 +1471,10 @@ export type TenantUncheckedUpdateWithoutRolePermissionsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1192,6 +1502,9 @@ export type TenantCreateWithoutUserRolesInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1202,6 +1515,7 @@ export type TenantCreateWithoutUserRolesInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutUserRolesInput = {
@@ -1219,6 +1533,10 @@ export type TenantUncheckedCreateWithoutUserRolesInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1262,6 +1580,9 @@ export type TenantUpdateWithoutUserRolesInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1272,6 +1593,7 @@ export type TenantUpdateWithoutUserRolesInput = {
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutUserRolesInput = {
@@ -1289,6 +1611,10 @@ export type TenantUncheckedUpdateWithoutUserRolesInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1316,6 +1642,9 @@ export type TenantCreateWithoutSessionsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1326,6 +1655,7 @@ export type TenantCreateWithoutSessionsInput = {
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutSessionsInput = {
@@ -1343,6 +1673,10 @@ export type TenantUncheckedCreateWithoutSessionsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1386,6 +1720,9 @@ export type TenantUpdateWithoutSessionsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1396,6 +1733,7 @@ export type TenantUpdateWithoutSessionsInput = {
   userRoles?: Prisma.UserRoleUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutSessionsInput = {
@@ -1413,6 +1751,10 @@ export type TenantUncheckedUpdateWithoutSessionsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1440,6 +1782,9 @@ export type TenantCreateWithoutPasswordResetTokensInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1450,6 +1795,7 @@ export type TenantCreateWithoutPasswordResetTokensInput = {
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutTenantInput
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   invitations?: Prisma.TenantInvitationCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -1467,6 +1813,10 @@ export type TenantUncheckedCreateWithoutPasswordResetTokensInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1510,6 +1860,9 @@ export type TenantUpdateWithoutPasswordResetTokensInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1520,6 +1873,7 @@ export type TenantUpdateWithoutPasswordResetTokensInput = {
   userRoles?: Prisma.UserRoleUpdateManyWithoutTenantNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -1537,6 +1891,10 @@ export type TenantUncheckedUpdateWithoutPasswordResetTokensInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1564,6 +1922,9 @@ export type TenantCreateWithoutInvitationsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1574,6 +1935,7 @@ export type TenantCreateWithoutInvitationsInput = {
   userRoles?: Prisma.UserRoleCreateNestedManyWithoutTenantInput
   sessions?: Prisma.SessionCreateNestedManyWithoutTenantInput
   passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutTenantInput
+  aiInstructionsUpdatedByUser?: Prisma.UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput
 }
 
 export type TenantUncheckedCreateWithoutInvitationsInput = {
@@ -1591,6 +1953,10 @@ export type TenantUncheckedCreateWithoutInvitationsInput = {
   district?: string | null
   province?: string | null
   postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  aiInstructionsUpdatedBy?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -1634,6 +2000,9 @@ export type TenantUpdateWithoutInvitationsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1644,6 +2013,7 @@ export type TenantUpdateWithoutInvitationsInput = {
   userRoles?: Prisma.UserRoleUpdateManyWithoutTenantNestedInput
   sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
+  aiInstructionsUpdatedByUser?: Prisma.UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput
 }
 
 export type TenantUncheckedUpdateWithoutInvitationsInput = {
@@ -1661,6 +2031,10 @@ export type TenantUncheckedUpdateWithoutInvitationsInput = {
   district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  aiInstructionsUpdatedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -1671,6 +2045,116 @@ export type TenantUncheckedUpdateWithoutInvitationsInput = {
   userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutTenantNestedInput
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutTenantNestedInput
   passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantCreateManyAiInstructionsUpdatedByUserInput = {
+  id?: string
+  code: string
+  name: string
+  logoUrl?: string | null
+  status: string
+  settings: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: string | null
+  taxCode?: string | null
+  phone?: string | null
+  addressLine?: string | null
+  ward?: string | null
+  district?: string | null
+  province?: string | null
+  postalCode?: string | null
+  aiCustomInstructions?: string | null
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+}
+
+export type TenantUpdateWithoutAiInstructionsUpdatedByUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionUpdateManyWithoutTenantNestedInput
+  userRoles?: Prisma.UserRoleUpdateManyWithoutTenantNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutTenantNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutTenantNestedInput
+  invitations?: Prisma.TenantInvitationUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateWithoutAiInstructionsUpdatedByUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutTenantNestedInput
+  roles?: Prisma.RoleUncheckedUpdateManyWithoutTenantNestedInput
+  rolePermissions?: Prisma.RolePermissionUncheckedUpdateManyWithoutTenantNestedInput
+  userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutTenantNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutTenantNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutTenantNestedInput
+  invitations?: Prisma.TenantInvitationUncheckedUpdateManyWithoutTenantNestedInput
+}
+
+export type TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  code?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  logoUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  settings?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  legalName?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  taxCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  phone?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  addressLine?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  ward?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  district?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  province?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  postalCode?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiCustomInstructions?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  aiInstructionsEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  aiInstructionsUpdatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
 }
 
 
@@ -1773,6 +2257,10 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   district?: boolean
   province?: boolean
   postalCode?: boolean
+  aiCustomInstructions?: boolean
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: boolean
+  aiInstructionsUpdatedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -1784,6 +2272,7 @@ export type TenantSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   sessions?: boolean | Prisma.Tenant$sessionsArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.Tenant$passwordResetTokensArgs<ExtArgs>
   invitations?: boolean | Prisma.Tenant$invitationsArgs<ExtArgs>
+  aiInstructionsUpdatedByUser?: boolean | Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
@@ -1802,10 +2291,15 @@ export type TenantSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   district?: boolean
   province?: boolean
   postalCode?: boolean
+  aiCustomInstructions?: boolean
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: boolean
+  aiInstructionsUpdatedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
+  aiInstructionsUpdatedByUser?: boolean | Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
 export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1823,10 +2317,15 @@ export type TenantSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   district?: boolean
   province?: boolean
   postalCode?: boolean
+  aiCustomInstructions?: boolean
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: boolean
+  aiInstructionsUpdatedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
+  aiInstructionsUpdatedByUser?: boolean | Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>
 }, ExtArgs["result"]["tenant"]>
 
 export type TenantSelectScalar = {
@@ -1844,13 +2343,17 @@ export type TenantSelectScalar = {
   district?: boolean
   province?: boolean
   postalCode?: boolean
+  aiCustomInstructions?: boolean
+  aiInstructionsEnabled?: boolean
+  aiInstructionsUpdatedAt?: boolean
+  aiInstructionsUpdatedBy?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
 }
 
-export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "logoUrl" | "status" | "settings" | "legalName" | "taxCode" | "phone" | "addressLine" | "ward" | "district" | "province" | "postalCode" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tenant"]>
+export type TenantOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "code" | "name" | "logoUrl" | "status" | "settings" | "legalName" | "taxCode" | "phone" | "addressLine" | "ward" | "district" | "province" | "postalCode" | "aiCustomInstructions" | "aiInstructionsEnabled" | "aiInstructionsUpdatedAt" | "aiInstructionsUpdatedBy" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["tenant"]>
 export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   userTenants?: boolean | Prisma.Tenant$userTenantsArgs<ExtArgs>
   roles?: boolean | Prisma.Tenant$rolesArgs<ExtArgs>
@@ -1859,10 +2362,15 @@ export type TenantInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   sessions?: boolean | Prisma.Tenant$sessionsArgs<ExtArgs>
   passwordResetTokens?: boolean | Prisma.Tenant$passwordResetTokensArgs<ExtArgs>
   invitations?: boolean | Prisma.Tenant$invitationsArgs<ExtArgs>
+  aiInstructionsUpdatedByUser?: boolean | Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>
   _count?: boolean | Prisma.TenantCountOutputTypeDefaultArgs<ExtArgs>
 }
-export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
-export type TenantIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
+export type TenantIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  aiInstructionsUpdatedByUser?: boolean | Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>
+}
+export type TenantIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  aiInstructionsUpdatedByUser?: boolean | Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>
+}
 
 export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Tenant"
@@ -1874,6 +2382,7 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     sessions: Prisma.$SessionPayload<ExtArgs>[]
     passwordResetTokens: Prisma.$PasswordResetTokenPayload<ExtArgs>[]
     invitations: Prisma.$TenantInvitationPayload<ExtArgs>[]
+    aiInstructionsUpdatedByUser: Prisma.$UserPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1894,6 +2403,13 @@ export type $TenantPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     district: string | null
     province: string | null
     postalCode: string | null
+    /**
+     * Optional tenant-scoped custom instructions for the LogiX Planner AI Agent.
+     */
+    aiCustomInstructions: string | null
+    aiInstructionsEnabled: boolean
+    aiInstructionsUpdatedAt: Date | null
+    aiInstructionsUpdatedBy: string | null
     createdAt: Date
     updatedAt: Date
     version: bigint
@@ -2299,6 +2815,7 @@ export interface Prisma__TenantClient<T, Null = never, ExtArgs extends runtime.T
   sessions<T extends Prisma.Tenant$sessionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   passwordResetTokens<T extends Prisma.Tenant$passwordResetTokensArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$passwordResetTokensArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PasswordResetTokenPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitations<T extends Prisma.Tenant$invitationsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$invitationsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantInvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  aiInstructionsUpdatedByUser<T extends Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2342,6 +2859,10 @@ export interface TenantFieldRefs {
   readonly district: Prisma.FieldRef<"Tenant", 'String'>
   readonly province: Prisma.FieldRef<"Tenant", 'String'>
   readonly postalCode: Prisma.FieldRef<"Tenant", 'String'>
+  readonly aiCustomInstructions: Prisma.FieldRef<"Tenant", 'String'>
+  readonly aiInstructionsEnabled: Prisma.FieldRef<"Tenant", 'Boolean'>
+  readonly aiInstructionsUpdatedAt: Prisma.FieldRef<"Tenant", 'DateTime'>
+  readonly aiInstructionsUpdatedBy: Prisma.FieldRef<"Tenant", 'String'>
   readonly createdAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Tenant", 'DateTime'>
   readonly version: Prisma.FieldRef<"Tenant", 'BigInt'>
@@ -2600,6 +3121,10 @@ export type TenantCreateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    */
   data: Prisma.TenantCreateManyInput | Prisma.TenantCreateManyInput[]
   skipDuplicates?: boolean
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantIncludeCreateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2670,6 +3195,10 @@ export type TenantUpdateManyAndReturnArgs<ExtArgs extends runtime.Types.Extensio
    * Limit how many Tenants to update.
    */
   limit?: number
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantIncludeUpdateManyAndReturn<ExtArgs> | null
 }
 
 /**
@@ -2904,6 +3433,25 @@ export type Tenant$invitationsArgs<ExtArgs extends runtime.Types.Extensions.Inte
   take?: number
   skip?: number
   distinct?: Prisma.TenantInvitationScalarFieldEnum | Prisma.TenantInvitationScalarFieldEnum[]
+}
+
+/**
+ * Tenant.aiInstructionsUpdatedByUser
+ */
+export type Tenant$aiInstructionsUpdatedByUserArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the User
+   */
+  select?: Prisma.UserSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the User
+   */
+  omit?: Prisma.UserOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.UserInclude<ExtArgs> | null
+  where?: Prisma.UserWhereInput
 }
 
 /**
