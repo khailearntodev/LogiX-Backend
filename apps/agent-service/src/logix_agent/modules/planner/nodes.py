@@ -35,7 +35,11 @@ from logix_agent.modules.executions.service import (
     ExecutionRecorder,
 )
 from logix_agent.modules.planner.memory import inject_memory_context, load_memory_context_block
-from logix_agent.modules.planner.prompts import get_planner_system_prompt
+from logix_agent.modules.planner.prompts import (
+    build_planner_system_prompt,
+    get_planner_system_prompt,
+    load_tenant_custom_instructions,
+)
 from logix_agent.modules.planner.state import PlannerState
 from logix_agent.modules.planner.trimming import trim_conversation_history
 from logix_agent.modules.registry.errors import (
@@ -170,19 +174,41 @@ def create_agent_node(
             except NotImplementedError:
                 bound_model = model
 
-        prompt_version = str(config.get("configurable", {}).get("prompt_policy_version", "v1"))
-        active_prompt = get_planner_system_prompt(prompt_version)
-        history = list(state.get("messages", []))
-        is_new_user_turn = bool(history) and isinstance(history[-1], HumanMessage)
+        configurable = config.get("configurable", {})
+        correlation_id = str(configurable.get("correlation_id", ""))
+        prompt_version = str(
+            configurable.get("prompt_policy_version", settings.prompt_policy_version)
+        )
+
+        if "tenant_custom_instructions" in configurable:
+            raw_override = configurable.get("tenant_custom_instructions")
+            tenant_instructions = str(raw_override) if raw_override is not None else ""
+        else:
+            tenant_instructions = await load_tenant_custom_instructions(
+                store,
+                actor,
+                service_client=service_client,
+                correlation_id=correlation_id,
+                max_chars=settings.planner_tenant_instructions_max_chars,
+                cache_ttl_seconds=settings.planner_tenant_instructions_cache_ttl_seconds,
+            )
+
+        active_prompt = build_planner_system_prompt(
+            prompt_version,
+            tenant_instructions=tenant_instructions,
+            max_chars=settings.planner_tenant_instructions_max_chars,
+        )
+
+        raw_history = list(state.get("messages", []))
+        is_new_user_turn = bool(raw_history) and isinstance(raw_history[-1], HumanMessage)
         current_step = 0 if is_new_user_turn else state.get("step_count", 0)
         reached_step_limit = not is_new_user_turn and current_step >= max_steps
 
-        # Ensure system prompt is present at the front of conversation
-        if not history or not isinstance(history[0], SystemMessage):
-            history = [SystemMessage(content=active_prompt), *history]
+        # Always reconstruct the leading SystemMessage server-side (prevents stale prompts & spoofing).
+        while raw_history and isinstance(raw_history[0], SystemMessage):
+            raw_history.pop(0)
+        history = [SystemMessage(content=active_prompt), *raw_history]
 
-        configurable = config.get("configurable", {})
-        correlation_id = str(configurable.get("correlation_id", ""))
         if store is not None:
             try:
                 memory_block = await load_memory_context_block(
