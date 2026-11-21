@@ -55,6 +55,18 @@ def test_model_call_fallback_cannot_cross_tenant_boundary() -> None:
     )
 
 
+def test_provider_config_allows_one_active_row_per_tenant() -> None:
+    table = Base.metadata.tables["agent.llm_provider_configs"]
+    indexes = {index.name: index for index in table.indexes}
+    index = indexes["ux_active_tenant_model_config"]
+
+    assert index.unique is True
+    assert list(index.columns.keys()) == ["tenant_id"]
+    assert "tenant_id IS NOT NULL" in str(index.dialect_options["postgresql"]["where"])
+    assert "is_active = true" in str(index.dialect_options["postgresql"]["where"])
+    assert "deleted_at IS NULL" in str(index.dialect_options["postgresql"]["where"])
+
+
 def test_all_mappers_configure_without_warnings() -> None:
     configure_mappers()
     for mapper in Base.registry.mappers:

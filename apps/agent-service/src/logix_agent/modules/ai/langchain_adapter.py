@@ -406,7 +406,7 @@ class ModelGatewayChatModel(BaseChatModel):
             model_profile=self.model_profile,
             tenant_id=tenant_id,
             correlation_id=correlation_id,
-            execution_id=kwargs.get("execution_id"),
+            execution_id=kwargs.get("execution_id") or configurable.get("execution_id"),
             messages=_to_gateway_messages(messages),
             system_policy_version=self.system_policy_version,
         )

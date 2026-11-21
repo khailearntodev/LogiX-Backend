@@ -64,6 +64,9 @@ class ExecutionRecorder(Protocol):
         prompt_policy_version: str,
         agent_type: str = AGENT_TYPE_PLANNER,
         conversation_id: UUID | None = None,
+        provider: str | None = None,
+        model: str | None = None,
+        model_version: str | None = None,
     ) -> UUID:
         """Create the execution if absent (idempotent) and return its UUID."""
         ...
@@ -111,6 +114,9 @@ class _ExecutionRow:
     user_id: UUID
     thread_id: str
     status: str
+    provider: str | None = None
+    model: str | None = None
+    model_version: str | None = None
     error_code: str | None = None
     finished_at: datetime | None = None
 
@@ -144,18 +150,27 @@ class InMemoryExecutionRecorder:
         prompt_policy_version: str,
         agent_type: str = AGENT_TYPE_PLANNER,
         conversation_id: UUID | None = None,
+        provider: str | None = None,
+        model: str | None = None,
+        model_version: str | None = None,
     ) -> UUID:
         tenant, exec_id = to_uuid(tenant_id), to_uuid(execution_id)
-        self.executions.setdefault(
-            (tenant, exec_id),
-            _ExecutionRow(
+        row = self.executions.get((tenant, exec_id))
+        if row is None:
+            self.executions[(tenant, exec_id)] = _ExecutionRow(
                 id=exec_id,
                 tenant_id=tenant,
                 user_id=to_uuid(user_id),
                 thread_id=thread_id,
                 status=EXECUTION_RUNNING,
-            ),
-        )
+                provider=provider,
+                model=model,
+                model_version=model_version,
+            )
+        else:
+            row.provider = provider or row.provider
+            row.model = model or row.model
+            row.model_version = model_version or row.model_version
         return exec_id
 
     async def set_execution_status(
@@ -239,6 +254,9 @@ class SqlAlchemyExecutionRecorder:
         prompt_policy_version: str,
         agent_type: str = AGENT_TYPE_PLANNER,
         conversation_id: UUID | None = None,
+        provider: str | None = None,
+        model: str | None = None,
+        model_version: str | None = None,
     ) -> UUID:
         exec_id = to_uuid(execution_id)
         stmt = (
@@ -251,6 +269,9 @@ class SqlAlchemyExecutionRecorder:
                 thread_id=thread_id,
                 agent_type=agent_type,
                 status=EXECUTION_RUNNING,
+                provider=provider,
+                model=model,
+                model_version=model_version,
                 prompt_policy_version=prompt_policy_version,
                 correlation_id=to_uuid(correlation_id),
                 started_at=_now(),
@@ -258,7 +279,25 @@ class SqlAlchemyExecutionRecorder:
             .on_conflict_do_nothing(index_elements=["id"])
         )
         async with self._session_factory() as session:
-            await session.execute(stmt)
+            insert_result = await session.execute(stmt)
+            if (
+                insert_result.rowcount == 0
+                and (provider is not None or model is not None or model_version is not None)
+            ):
+                metadata_update = {
+                    "provider": provider,
+                    "model": model,
+                    "model_version": model_version,
+                    "version": AgentExecution.version + 1,
+                }
+                await session.execute(
+                    update(AgentExecution)
+                    .where(
+                        AgentExecution.tenant_id == to_uuid(tenant_id),
+                        AgentExecution.id == exec_id,
+                    )
+                    .values(**metadata_update)
+                )
             await session.commit()
         return exec_id
 
