@@ -11,6 +11,13 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
+import {
+  INVENTORY_PERMISSIONS,
+  MASTER_DATA_PERMISSIONS,
+  ORDER_PERMISSIONS,
+  PermissionsGuard,
+  RequirePermissions,
+} from '@logix/auth';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
@@ -20,12 +27,13 @@ import { ProductService } from './services/product.service.js';
 import { CreateProductDto, UpdateProductDto } from './dto/product.dto.js';
 
 @Controller('products')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ProductsController {
   constructor(private readonly products: ProductService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.PRODUCT_MANAGE)
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() dto: CreateProductDto,
@@ -34,6 +42,12 @@ export class ProductsController {
   }
 
   @Get()
+  @RequirePermissions(
+    MASTER_DATA_PERMISSIONS.PRODUCT_READ,
+    MASTER_DATA_PERMISSIONS.PRODUCT_MANAGE,
+    ORDER_PERMISSIONS.SALES_ORDER_READ,
+    INVENTORY_PERMISSIONS.STOCK_READ,
+  )
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Query() query: PaginationQueryDto,
@@ -42,6 +56,12 @@ export class ProductsController {
   }
 
   @Get(':id')
+  @RequirePermissions(
+    MASTER_DATA_PERMISSIONS.PRODUCT_READ,
+    MASTER_DATA_PERMISSIONS.PRODUCT_MANAGE,
+    ORDER_PERMISSIONS.SALES_ORDER_READ,
+    INVENTORY_PERMISSIONS.STOCK_READ,
+  )
   async getById(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -50,6 +70,7 @@ export class ProductsController {
   }
 
   @Patch(':id')
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.PRODUCT_MANAGE)
   async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -60,6 +81,7 @@ export class ProductsController {
 
   @Post(':id/disable')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.PRODUCT_MANAGE)
   async disable(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
@@ -69,6 +91,7 @@ export class ProductsController {
 
   @Post(':id/enable')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.PRODUCT_MANAGE)
   async enable(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,

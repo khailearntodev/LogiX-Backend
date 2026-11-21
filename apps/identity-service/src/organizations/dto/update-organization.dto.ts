@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { MAX_TENANT_AI_INSTRUCTIONS_LENGTH } from '../domain/tenant-ai-instructions.policy.js';
 
 /**
  * Legal-profile fields accept `null` or an empty string to clear the value.
@@ -53,4 +54,15 @@ export class UpdateOrganizationDto {
   @IsString()
   @MaxLength(20)
   postalCode?: string | null;
+
+  @IsOptional()
+  @IsString({ message: 'Chỉ dẫn AI tùy chỉnh phải là chuỗi ký tự' })
+  @MaxLength(MAX_TENANT_AI_INSTRUCTIONS_LENGTH, {
+    message: `Chỉ dẫn AI tùy chỉnh không được vượt quá ${MAX_TENANT_AI_INSTRUCTIONS_LENGTH} ký tự`,
+  })
+  aiCustomInstructions?: string | null;
+
+  @IsOptional()
+  @IsBoolean({ message: 'Trạng thái kích hoạt chỉ dẫn AI phải là kiểu boolean' })
+  aiInstructionsEnabled?: boolean;
 }
