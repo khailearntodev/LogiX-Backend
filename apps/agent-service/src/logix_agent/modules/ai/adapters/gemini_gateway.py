@@ -19,10 +19,11 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import inspect
 import json
 import time
 import uuid
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from typing import Any
 
 from google import genai
@@ -34,6 +35,7 @@ from logix_agent.modules.ai.contracts import (
     ModelProfile,
     ModelRequest,
     ModelResponse,
+    ModelStreamChunk,
     ModelToolCall,
     ModelUsage,
     ToolDefinition,
@@ -164,29 +166,96 @@ class GeminiModelGateway:
         profile = self._profile_registry.require(request.model_profile)
         return await self._invoke_gemini(profile, request, tools)
 
+    async def stream(
+        self,
+        request: ModelRequest,
+        *,
+        tools: Sequence[ToolDefinition] = (),
+    ) -> AsyncIterator[ModelStreamChunk]:
+        """Stream incremental text deltas and tool calls via Gemini."""
+        profile = self._profile_registry.require(request.model_profile)
+        model_name, timeout_sec, contents, config = self._prepare_call(profile, request, tools)
+
+        start_time = time.monotonic()
+        collected_tool_calls: list[ModelToolCall] = []
+        latest_usage: ModelUsage | None = None
+        final_finish_reason = FinishReason.STOP
+
+        try:
+            client = self._get_client()
+            async with asyncio.timeout(timeout_sec):
+                stream_obj = client.aio.models.generate_content_stream(
+                    model=model_name,
+                    contents=contents,
+                    config=config,
+                )
+                if inspect.isawaitable(stream_obj):
+                    stream_obj = await stream_obj
+
+                async for raw_chunk in stream_obj:
+                    delta_text = self._extract_text(raw_chunk)
+                    chunk_tools = self._extract_tool_calls(
+                        raw_chunk, start_index=len(collected_tool_calls)
+                    )
+                    if chunk_tools:
+                        collected_tool_calls.extend(chunk_tools)
+                    chunk_usage = self._extract_usage(raw_chunk)
+                    if chunk_usage is not None:
+                        latest_usage = chunk_usage
+                    raw_finish = self._extract_finish_reason(raw_chunk)
+                    if raw_finish != FinishReason.STOP:
+                        final_finish_reason = raw_finish
+
+                    if delta_text:
+                        yield ModelStreamChunk(
+                            provider="gemini",
+                            model=model_name,
+                            model_profile=profile.profile_name,
+                            gateway_backend=GATEWAY_BACKEND,
+                            content_delta=delta_text,
+                        )
+        except TimeoutError as exc:
+            raise ModelTimeoutError(
+                f"Gemini stream timed out after {timeout_sec}s for model '{model_name}'"
+            ) from exc
+        except ModelGatewayError:
+            raise
+        except Exception as exc:
+            raise self._map_error(exc, model_name) from exc
+
+        latency_ms = int((time.monotonic() - start_time) * 1000)
+        if collected_tool_calls:
+            final_finish_reason = FinishReason.TOOL_CALL
+
+        yield ModelStreamChunk(
+            provider="gemini",
+            model=model_name,
+            model_profile=profile.profile_name,
+            gateway_backend=GATEWAY_BACKEND,
+            content_delta="",
+            tool_calls=collected_tool_calls,
+            finish_reason=final_finish_reason,
+            usage=latest_usage or ModelUsage(),
+            latency_ms=latency_ms,
+        )
+
     # ── Provider call ────────────────────────────────────────────
 
-    async def _invoke_gemini(
+    def _prepare_call(
         self,
         profile: ModelProfile,
         request: ModelRequest,
         tools: Sequence[ToolDefinition],
-    ) -> ModelResponse:
-        """Prepare payload, call Google GenAI SDK, and map the response."""
-        # Clean model name (strip any 'google/' or 'gemini/' prefix)
+    ) -> tuple[str, int, list[types.Content], types.GenerateContentConfig | None]:
+        """Normalise model name, contents, tools, and config before calling Gemini."""
         model_name = profile.model
         for prefix in ("google/", "gemini/"):
             model_name = model_name.removeprefix(prefix)
 
         timeout_sec = request.timeout_override or profile.timeout_seconds
-
-        # Build contents and system instruction
         contents, system_instruction = self._build_contents(request.messages)
-
-        # Build tools
         gemini_tools = self._build_tools(tools)
 
-        # Build config
         config_kwargs: dict[str, Any] = {}
         if system_instruction:
             config_kwargs["system_instruction"] = system_instruction
@@ -197,6 +266,16 @@ class GeminiModelGateway:
             config_kwargs["response_mime_type"] = "application/json"
 
         config = types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+        return model_name, timeout_sec, contents, config
+
+    async def _invoke_gemini(
+        self,
+        profile: ModelProfile,
+        request: ModelRequest,
+        tools: Sequence[ToolDefinition],
+    ) -> ModelResponse:
+        """Prepare payload, call Google GenAI SDK, and map the response."""
+        model_name, timeout_sec, contents, config = self._prepare_call(profile, request, tools)
 
         start_time = time.monotonic()
         try:
@@ -211,6 +290,8 @@ class GeminiModelGateway:
             raise ModelTimeoutError(
                 f"Gemini call timed out after {timeout_sec}s for model '{model_name}'"
             ) from exc
+        except ModelGatewayError:
+            raise
         except Exception as exc:
             raise self._map_error(exc, model_name) from exc
 
@@ -350,29 +431,32 @@ class GeminiModelGateway:
 
         return [types.Tool(function_declarations=declarations)]
 
-    def _normalize_response(
-        self,
-        *,
+    @staticmethod
+    def _extract_tool_calls(
         raw: types.GenerateContentResponse,
-        model_name: str,
-        profile_name: str,
-        latency_ms: int,
-    ) -> ModelResponse:
-        """Map Gemini raw response to normalized ModelResponse."""
-        # 1. Tool calls
+        *,
+        start_index: int = 0,
+    ) -> list[ModelToolCall]:
         tool_calls: list[ModelToolCall] = []
         candidate = raw.candidates[0] if (hasattr(raw, "candidates") and raw.candidates) else None
-        if candidate and candidate.content and candidate.content.parts:
-            fc_idx = 0
+        if candidate and getattr(candidate, "content", None) and getattr(candidate.content, "parts", None):
+            fc_idx = start_index
             for part in candidate.content.parts:
-                if part.function_call:
+                if getattr(part, "function_call", None):
                     fc = part.function_call
-                    call_id = getattr(fc, "id", None) or f"call_{fc.name}_{fc_idx}_{uuid.uuid4().hex[:6]}"
+                    call_id = (
+                        getattr(fc, "id", None)
+                        or f"call_{fc.name}_{fc_idx}_{uuid.uuid4().hex[:6]}"
+                    )
                     args = dict(fc.args) if fc.args else {}
                     sig = getattr(part, "thought_signature", None)
                     sig_b64: str | None = None
                     if sig:
-                        sig_b64 = base64.b64encode(sig).decode("ascii") if isinstance(sig, bytes) else str(sig)
+                        sig_b64 = (
+                            base64.b64encode(sig).decode("ascii")
+                            if isinstance(sig, bytes)
+                            else str(sig)
+                        )
                     tool_calls.append(
                         ModelToolCall(
                             id=call_id,
@@ -382,9 +466,12 @@ class GeminiModelGateway:
                         )
                     )
                     fc_idx += 1
-        elif raw.function_calls:
-            for idx, fc in enumerate(raw.function_calls):
-                call_id = getattr(fc, "id", None) or f"call_{fc.name}_{idx}_{uuid.uuid4().hex[:6]}"
+        elif getattr(raw, "function_calls", None):
+            for offset, fc in enumerate(raw.function_calls):
+                call_id = (
+                    getattr(fc, "id", None)
+                    or f"call_{fc.name}_{start_index + offset}_{uuid.uuid4().hex[:6]}"
+                )
                 args = dict(fc.args) if fc.args else {}
                 tool_calls.append(
                     ModelToolCall(
@@ -393,29 +480,61 @@ class GeminiModelGateway:
                         arguments=args,
                     )
                 )
+        return tool_calls
 
-        # 2. Finish reason
-        if tool_calls:
-            finish_reason = FinishReason.TOOL_CALL
-        else:
-            finish_reason = FinishReason.STOP
+    @staticmethod
+    def _extract_finish_reason(raw: types.GenerateContentResponse) -> FinishReason:
+        candidate = raw.candidates[0] if (hasattr(raw, "candidates") and raw.candidates) else None
+        raw_finish = getattr(candidate, "finish_reason", None) if candidate else None
+        if raw_finish is not None and str(raw_finish).endswith("MAX_TOKENS"):
+            return FinishReason.LENGTH
+        return FinishReason.STOP
 
-        # 3. Usage
-        usage = ModelUsage()
+    @staticmethod
+    def _extract_usage(raw: types.GenerateContentResponse) -> ModelUsage | None:
         if hasattr(raw, "usage_metadata") and raw.usage_metadata:
-            usage = ModelUsage(
+            return ModelUsage(
                 input_tokens=getattr(raw.usage_metadata, "prompt_token_count", None),
                 output_tokens=getattr(raw.usage_metadata, "candidates_token_count", None),
                 total_tokens=getattr(raw.usage_metadata, "total_token_count", None),
             )
+        return None
 
-        # 4. Text content
-        text_content: str | None = None
+    @staticmethod
+    def _extract_text(raw: types.GenerateContentResponse) -> str | None:
+        candidate = raw.candidates[0] if (hasattr(raw, "candidates") and raw.candidates) else None
+        content = getattr(candidate, "content", None) if candidate else None
+        raw_parts = getattr(content, "parts", None) if content else None
+        parts = list(raw_parts) if raw_parts else []
+        if parts:
+            text_parts = [
+                part.text
+                for part in parts
+                if isinstance(getattr(part, "text", None), str)
+                and not (isinstance(getattr(part, "thought", None), bool) and part.thought)
+            ]
+            return "".join(text_parts) if text_parts else None
         try:
-            text_content = raw.text
+            text_val = raw.text
         except (AttributeError, ValueError):
-            # When tool calls are generated, raw.text can raise if no text part
-            text_content = None
+            return None
+        return text_val if isinstance(text_val, str) else None
+
+    def _normalize_response(
+        self,
+        *,
+        raw: types.GenerateContentResponse,
+        model_name: str,
+        profile_name: str,
+        latency_ms: int,
+    ) -> ModelResponse:
+        """Map Gemini raw response to normalized ModelResponse."""
+        tool_calls = self._extract_tool_calls(raw)
+        finish_reason = (
+            FinishReason.TOOL_CALL if tool_calls else self._extract_finish_reason(raw)
+        )
+        usage = self._extract_usage(raw) or ModelUsage()
+        text_content = self._extract_text(raw)
 
         return ModelResponse(
             provider="gemini",

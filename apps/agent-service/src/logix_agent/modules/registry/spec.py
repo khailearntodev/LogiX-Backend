@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -37,6 +38,7 @@ class ToolContext:
     actor: Actor
     correlation_id: str
     approval: ApprovedAction | None = field(default=None)
+    store: Any = field(default=None, repr=False, compare=False)
 
 
 @dataclass(frozen=True, slots=True)

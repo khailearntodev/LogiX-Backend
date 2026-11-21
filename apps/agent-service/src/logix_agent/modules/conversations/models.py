@@ -30,6 +30,7 @@ class Conversation(TenantMutableMixin, Base):
     __tablename__ = "conversations"
     __table_args__ = (
         UniqueConstraint("tenant_id", "id", name="uq_conversations_tenant_id"),
+        UniqueConstraint("tenant_id", "thread_id", name="uq_conversations_tenant_thread"),
         Index(
             "ix_conversations_user_recent",
             "tenant_id",
@@ -41,6 +42,7 @@ class Conversation(TenantMutableMixin, Base):
     )
 
     user_id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), nullable=False)
+    thread_id: Mapped[str | None] = mapped_column(String(200), nullable=True)
     title: Mapped[str | None] = mapped_column(String(200), nullable=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, server_default=text("'ACTIVE'"))
     context_summary: Mapped[str | None] = mapped_column(Text, nullable=True)

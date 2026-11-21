@@ -20,12 +20,14 @@ Usage::
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import AsyncIterator, Callable, Sequence
+import re
 
 from logix_agent.modules.ai.contracts import (
     FinishReason,
     ModelRequest,
     ModelResponse,
+    ModelStreamChunk,
     ModelUsage,
     ToolDefinition,
 )
@@ -59,11 +61,13 @@ class FakeModelGateway:
         | None = None,
         error: ModelGatewayError | None = None,
         latency_ms: int = 0,
+        stream_chunk_size: int | None = None,
     ) -> None:
         self._responses = list(responses) if responses else []
         self._response_factory = response_factory
         self._error = error
         self._latency_ms = latency_ms
+        self._stream_chunk_size = stream_chunk_size
         self._call_index = 0
 
         # ── Recorded state for assertions ────────────────────────
@@ -71,23 +75,19 @@ class FakeModelGateway:
         self.tools_history: list[Sequence[ToolDefinition]] = []
         self.call_count: int = 0
 
-    async def generate(
+    def _resolve_response(
         self,
         request: ModelRequest,
-        *,
-        tools: Sequence[ToolDefinition] = (),
+        tools: Sequence[ToolDefinition],
     ) -> ModelResponse:
-        """Return a pre-configured response or raise a pre-configured error."""
-        # Record
+        """Record the call, evaluate configured response/error, and stamp metadata."""
         self.requests.append(request)
         self.tools_history.append(tools)
         self.call_count += 1
 
-        # Simulate error
         if self._error is not None:
             raise self._error
 
-        # Build response
         if self._response_factory is not None:
             response = self._response_factory(request, tools)
         else:
@@ -108,6 +108,55 @@ class FakeModelGateway:
             overrides["latency_ms"] = self._latency_ms
 
         return response.model_copy(update=overrides)
+
+    @staticmethod
+    def _split_text_deltas(text: str, chunk_size: int | None) -> list[str]:
+        if not text:
+            return []
+        if chunk_size is not None and chunk_size > 0:
+            return [text[i : i + chunk_size] for i in range(0, len(text), chunk_size)]
+        return re.findall(r"\S+\s*|\s+", text) or [text]
+
+    async def generate(
+        self,
+        request: ModelRequest,
+        *,
+        tools: Sequence[ToolDefinition] = (),
+    ) -> ModelResponse:
+        """Return a pre-configured response or raise a pre-configured error."""
+        return self._resolve_response(request, tools)
+
+    async def stream(
+        self,
+        request: ModelRequest,
+        *,
+        tools: Sequence[ToolDefinition] = (),
+    ) -> AsyncIterator[ModelStreamChunk]:
+        """Yield incremental text chunks followed by a terminal metadata chunk."""
+        response = self._resolve_response(request, tools)
+        for delta in self._split_text_deltas(response.content or "", self._stream_chunk_size):
+            yield ModelStreamChunk(
+                provider=response.provider,
+                model=response.model,
+                model_profile=response.model_profile,
+                gateway_backend=response.gateway_backend,
+                attempt=response.attempt,
+                content_delta=delta,
+            )
+
+        yield ModelStreamChunk(
+            provider=response.provider,
+            model=response.model,
+            model_profile=response.model_profile,
+            gateway_backend=response.gateway_backend,
+            attempt=response.attempt,
+            content_delta="",
+            tool_calls=response.tool_calls,
+            finish_reason=response.finish_reason,
+            usage=response.usage,
+            latency_ms=response.latency_ms,
+            provider_request_id=response.provider_request_id,
+        )
 
     # ── Convenience factories ────────────────────────────────────
 

@@ -4,15 +4,20 @@ These run against ``FakeModelGateway`` to prove the policy holds for *any*
 adapter, not just Gemini.
 """
 
+from collections.abc import AsyncIterator
+
 import pytest
 
 from logix_agent.config import AgentSettings
 from logix_agent.modules.ai.adapters.fake_gateway import FakeModelGateway
 from logix_agent.modules.ai.contracts import (
+    FinishReason,
     ModelCapability,
     ModelProfile,
     ModelRequest,
     ModelResponse,
+    ModelStreamChunk,
+    ModelUsage,
     ToolDefinition,
 )
 from logix_agent.modules.ai.errors import (
@@ -32,7 +37,10 @@ from logix_agent.modules.ai.policies import (
 class ScriptedGateway:
     """Raises a scripted sequence of outcomes, recording served profiles."""
 
-    def __init__(self, outcomes: list[ModelGatewayError | str]) -> None:
+    def __init__(
+        self,
+        outcomes: list[ModelGatewayError | str | tuple[list[str], ModelGatewayError]],
+    ) -> None:
         self._outcomes = list(outcomes)
         self.served_profiles: list[str] = []
 
@@ -41,7 +49,44 @@ class ScriptedGateway:
         outcome = self._outcomes.pop(0)
         if isinstance(outcome, ModelGatewayError):
             raise outcome
+        assert isinstance(outcome, str)
         return FakeModelGateway.simple_text_response(outcome, model_profile=request.model_profile)
+
+    async def stream(
+        self, request: ModelRequest, *, tools=()
+    ) -> AsyncIterator[ModelStreamChunk]:
+        self.served_profiles.append(request.model_profile)
+        outcome = self._outcomes.pop(0)
+        if isinstance(outcome, ModelGatewayError):
+            raise outcome
+        if isinstance(outcome, tuple):
+            deltas, error = outcome
+            for delta in deltas:
+                yield ModelStreamChunk(
+                    provider="fake",
+                    model="fake-model",
+                    model_profile=request.model_profile,
+                    gateway_backend="fake",
+                    content_delta=delta,
+                )
+            raise error
+        for delta in FakeModelGateway._split_text_deltas(outcome, None):
+            yield ModelStreamChunk(
+                provider="fake",
+                model="fake-model",
+                model_profile=request.model_profile,
+                gateway_backend="fake",
+                content_delta=delta,
+            )
+        yield ModelStreamChunk(
+            provider="fake",
+            model="fake-model",
+            model_profile=request.model_profile,
+            gateway_backend="fake",
+            content_delta="",
+            finish_reason=FinishReason.STOP,
+            usage=ModelUsage(input_tokens=10, output_tokens=5, total_tokens=15),
+        )
 
 
 async def _no_sleep(_seconds: float) -> None:
@@ -195,3 +240,81 @@ async def test_no_fallback_when_profile_declares_none(registry):
         await gateway.generate(_request("solo"))
 
     assert inner.served_profiles == ["solo"]
+
+
+# ── Streaming policy ──────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_stream_capability_check_rejects_tools_on_incapable_profile(registry):
+    registry.register(
+        ModelProfile(
+            profile_name="no-tools-profile",
+            model="model-a",
+            required_capabilities=[],
+        )
+    )
+    gateway = CapabilityCheckingModelGateway(
+        FakeModelGateway.with_text("never reached"), profile_registry=registry
+    )
+
+    with pytest.raises(ModelCapabilityError):
+        async for _ in gateway.stream(
+            _request("no-tools-profile"),
+            tools=[ToolDefinition(name="test", description="desc")],
+        ):
+            pass
+
+
+@pytest.mark.asyncio
+async def test_stream_retry_recovers_before_first_chunk(registry):
+    inner = ScriptedGateway([ModelRateLimitError(), "recovered stream"])
+    gateway = RetryingModelGateway(inner, profile_registry=registry, sleep=_no_sleep)
+
+    chunks = [chunk async for chunk in gateway.stream(_request())]
+
+    assert "".join(c.content_delta for c in chunks) == "recovered stream"
+    assert chunks[-1].attempt == 2
+    assert inner.served_profiles == ["planner-default", "planner-default"]
+
+
+@pytest.mark.asyncio
+async def test_stream_fallback_switches_profile_after_pre_stream_retries(registry):
+    inner = ScriptedGateway([ModelRateLimitError(), ModelRateLimitError(), "fallback stream"])
+    gateway = RetryingModelGateway(inner, profile_registry=registry, sleep=_no_sleep)
+
+    chunks = [chunk async for chunk in gateway.stream(_request())]
+
+    assert "".join(c.content_delta for c in chunks) == "fallback stream"
+    assert chunks[-1].model_profile == "planner-fallback"
+    assert inner.served_profiles == [
+        "planner-default",
+        "planner-default",
+        "planner-fallback",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_stream_does_not_retry_or_fallback_after_first_chunk_emitted(registry):
+    inner = ScriptedGateway([(["partial "], ModelRateLimitError()), "should not run"])
+    gateway = RetryingModelGateway(inner, profile_registry=registry, sleep=_no_sleep)
+
+    received: list[str] = []
+    with pytest.raises(ModelRateLimitError):
+        async for chunk in gateway.stream(_request()):
+            if chunk.content_delta:
+                received.append(chunk.content_delta)
+
+    assert received == ["partial "]
+    assert inner.served_profiles == ["planner-default"]
+
+
+@pytest.mark.asyncio
+async def test_stream_fallback_exhausted_reports_full_chain(registry):
+    inner = ScriptedGateway([ModelRateLimitError() for _ in range(3)])
+    gateway = RetryingModelGateway(inner, profile_registry=registry, sleep=_no_sleep)
+
+    with pytest.raises(FallbackExhaustedError) as exc_info:
+        async for _ in gateway.stream(_request()):
+            pass
+    assert exc_info.value.chain == ["planner-default", "planner-fallback"]

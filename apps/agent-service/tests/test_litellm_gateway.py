@@ -520,3 +520,110 @@ def test_resolve_litellm_api_key_bare_model_uses_openai():
         openai_api_key="sk-openai",
     )
     assert _resolve_litellm_api_key(settings) == "sk-openai"
+
+
+# ── Streaming ────────────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_litellm_gateway_stream_incremental_text_and_usage():
+    registry = _make_profile_registry()
+    gateway = LiteLLMModelGateway(profile_registry=registry, api_key="sk-test")
+
+    raw_chunks = [
+        SimpleNamespace(
+            id="chatcmpl-stream-1",
+            choices=[SimpleNamespace(delta=SimpleNamespace(content="Hello ", tool_calls=None), finish_reason=None)],
+            usage=None,
+        ),
+        SimpleNamespace(
+            id="chatcmpl-stream-1",
+            choices=[SimpleNamespace(delta=SimpleNamespace(content="world!", tool_calls=None), finish_reason="stop")],
+            usage=None,
+        ),
+        SimpleNamespace(
+            id="chatcmpl-stream-1",
+            choices=[],
+            usage=SimpleNamespace(prompt_tokens=30, completion_tokens=10, total_tokens=40),
+        ),
+    ]
+
+    async def _fake_stream():
+        for ch in raw_chunks:
+            yield ch
+
+    with patch("litellm.acompletion", new=AsyncMock(return_value=_fake_stream())) as mock_acomp:
+        chunks = [chunk async for chunk in gateway.stream(_request())]
+
+    assert mock_acomp.call_args.kwargs["stream"] is True
+    assert mock_acomp.call_args.kwargs["stream_options"] == {"include_usage": True}
+    assert [c.content_delta for c in chunks if c.content_delta] == ["Hello ", "world!"]
+
+    terminal = chunks[-1]
+    assert terminal.finish_reason == FinishReason.STOP
+    assert terminal.usage is not None
+    assert terminal.usage.input_tokens == 30
+    assert terminal.usage.output_tokens == 10
+    assert terminal.usage.total_tokens == 40
+    assert terminal.provider_request_id == "chatcmpl-stream-1"
+
+
+@pytest.mark.asyncio
+async def test_litellm_gateway_stream_accumulates_chunked_tool_calls():
+    registry = _make_profile_registry()
+    gateway = LiteLLMModelGateway(profile_registry=registry, api_key="sk-test")
+
+    raw_chunks = [
+        SimpleNamespace(
+            id="chatcmpl-tool-1",
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(
+                        content=None,
+                        tool_calls=[
+                            SimpleNamespace(
+                                index=0,
+                                id="call_abc",
+                                function=SimpleNamespace(name="lookup_order", arguments='{"order_'),
+                            )
+                        ],
+                    ),
+                    finish_reason=None,
+                )
+            ],
+            usage=None,
+        ),
+        SimpleNamespace(
+            id="chatcmpl-tool-1",
+            choices=[
+                SimpleNamespace(
+                    delta=SimpleNamespace(
+                        content=None,
+                        tool_calls=[
+                            SimpleNamespace(
+                                index=0,
+                                id=None,
+                                function=SimpleNamespace(name=None, arguments='id": "SO-9"}'),
+                            )
+                        ],
+                    ),
+                    finish_reason="tool_calls",
+                )
+            ],
+            usage=None,
+        ),
+    ]
+
+    async def _fake_stream():
+        for ch in raw_chunks:
+            yield ch
+
+    with patch("litellm.acompletion", new=AsyncMock(return_value=_fake_stream())):
+        chunks = [chunk async for chunk in gateway.stream(_request())]
+
+    terminal = chunks[-1]
+    assert terminal.finish_reason == FinishReason.TOOL_CALL
+    assert len(terminal.tool_calls) == 1
+    assert terminal.tool_calls[0].id == "call_abc"
+    assert terminal.tool_calls[0].name == "lookup_order"
+    assert terminal.tool_calls[0].arguments == {"order_id": "SO-9"}

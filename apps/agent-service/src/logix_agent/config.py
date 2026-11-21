@@ -57,6 +57,10 @@ class AgentSettings(BaseSettings):
     planner_max_context_tokens: int = 12000
     planner_max_history_messages: int = 30
 
+    # ── Long-term memory (LangGraph Store) ───────────────────────
+    planner_memory_max_items: int = 15
+    planner_memory_max_chars: int = 1500
+
     # ── Observability & OpenTelemetry ────────────────────────────
     otel_enabled: bool = False
     otel_service_name: str = "logix-agent-service"

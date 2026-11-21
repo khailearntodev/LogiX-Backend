@@ -182,3 +182,44 @@ class ModelResponse(BaseModel):
         description="Provider request ID (redacted of credentials).",
     )
     validation_errors: list[str] = Field(default_factory=list)
+
+
+class ModelStreamChunk(BaseModel):
+    """Normalised incremental chunk emitted by ``ModelGateway.stream()``."""
+
+    provider: str = Field(..., description="Resolved provider, e.g. 'openai'.")
+    model: str = Field(..., description="Resolved model identifier.")
+    model_profile: str = Field(
+        ...,
+        description="Logical profile the gateway actually served, after any fallback.",
+    )
+    gateway_backend: str = Field(
+        ...,
+        description="Adapter that served the call, e.g. 'gemini_sdk' or 'fake'.",
+    )
+    attempt: int = Field(
+        default=1,
+        ge=1,
+        description="1-based attempt number within the serving profile.",
+    )
+    content_delta: str = Field(
+        default="",
+        description="Incremental text fragment emitted in this chunk.",
+    )
+    tool_calls: list[ModelToolCall] = Field(
+        default_factory=list,
+        description="Normalised tool calls once complete (emitted on the terminal chunk).",
+    )
+    finish_reason: FinishReason | None = Field(
+        default=None,
+        description="Terminal finish reason when the stream completes.",
+    )
+    usage: ModelUsage | None = Field(
+        default=None,
+        description="Token usage reported by the provider.",
+    )
+    latency_ms: int | None = Field(default=None, ge=0)
+    provider_request_id: str | None = Field(
+        default=None,
+        description="Provider request ID (redacted of credentials).",
+    )

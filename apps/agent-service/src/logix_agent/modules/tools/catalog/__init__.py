@@ -8,6 +8,7 @@ from logix_agent.modules.tools.catalog import (
     fulfillment,
     inventory,
     master_data,
+    memory,
     order,
     route,
 )
@@ -22,4 +23,5 @@ def build_tool_registry(client: ServiceClient) -> ToolRegistry:
     fulfillment.register(registry, client)
     route.register(registry, client)
     forecast.register(registry, client)
+    memory.register(registry)
     return registry
