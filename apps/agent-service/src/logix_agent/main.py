@@ -34,6 +34,10 @@ from logix_agent.modules.executions.service import (
 )
 from logix_agent.modules.planner.checkpointer import open_checkpointer
 from logix_agent.modules.planner.store import open_store
+from logix_agent.modules.provider_configs.router import router as provider_config_router
+from logix_agent.modules.provider_configs.service import ProviderConfigService
+from logix_agent.modules.provider_configs.service import repository_from_session_factory
+from logix_agent.modules.provider_configs.tenant_gateway import TenantAwareModelGateway
 from logix_agent.modules.telemetry import setup_telemetry, shutdown_telemetry
 from logix_agent.modules.tools.catalog import build_tool_registry
 from logix_agent.modules.tools.http_client import create_service_client
@@ -85,12 +89,22 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     setup_telemetry(settings, app)
     session_factory = None
+    app.state.provider_config_repository = None
+    app.state.provider_config_service = None
+    app.state.model_config_resolver = None
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:
             await session.execute(text("SELECT 1"))
     except Exception as exc:
         logger.warning("Database connection warning on startup: %s", exc)
+
+    if session_factory is not None:
+        app.state.provider_config_repository = repository_from_session_factory(session_factory)
+        app.state.provider_config_service = ProviderConfigService(
+            app.state.provider_config_repository,
+            settings=settings,
+        )
 
     service_client = create_service_client(settings)
     app.state.tool_registry = build_tool_registry(service_client)
@@ -133,7 +147,16 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         thread_store = InMemoryThreadStore()
 
     try:
-        app_model_gateway = create_model_gateway(settings)
+        if app.state.provider_config_repository is not None:
+            tenant_gateway = TenantAwareModelGateway(
+                app.state.provider_config_repository,
+                settings=settings,
+            )
+            app_model_gateway = tenant_gateway
+            app.state.model_config_resolver = tenant_gateway
+            logger.info("Using tenant-aware model gateway")
+        else:
+            app_model_gateway = create_model_gateway(settings)
         app.state.agui_runtime = build_agui_runtime(
             app_model_gateway,
             registry=app.state.tool_registry,
@@ -144,6 +167,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             thread_store=thread_store,
             service_client=service_client,
             prompt_policy_version=settings.prompt_policy_version,
+            model_config_resolver=app.state.model_config_resolver,
         )
     except Exception:
         logger.exception("Model gateway / agent runtime initialization failed")
@@ -153,6 +177,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.agui_runtime = None
     app.state.tool_registry = None
     app.state.confirmation_service = None
+    app.state.provider_config_repository = None
+    app.state.provider_config_service = None
+    app.state.model_config_resolver = None
     await service_client.aclose()
     await store_stack.aclose()
     await checkpointer_stack.aclose()
@@ -171,6 +198,7 @@ app = FastAPI(
     lifespan=lifespan,
 )
 app.include_router(agui_router)
+app.include_router(provider_config_router)
 
 
 @app.exception_handler(StarletteHTTPException)
