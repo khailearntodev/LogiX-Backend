@@ -225,3 +225,44 @@ async def test_agent_node_and_tool_execution_spans(in_memory_tracer: InMemorySpa
     tool_span = next(s for s in spans if s.name == "tool.test_echo")
     assert tool_span.attributes["logix.tool.name"] == "test_echo"
     assert tool_span.attributes["logix.tenant_id"] == "tenant-99"
+
+
+@pytest.mark.asyncio
+async def test_gen_ai_chat_stream_span_attributes(in_memory_tracer: InMemorySpanExporter):
+    """Verify that model.astream() yields incremental chunks and closes a gen_ai.chat span."""
+    canned_response = ModelResponse(
+        provider="gemini",
+        model="gemini-3.5-flash-lite",
+        model_profile="planner-default",
+        gateway_backend="gemini",
+        content="Xin chào LogiX",
+        tool_calls=[],
+        finish_reason=FinishReason.STOP,
+        usage=ModelUsage(input_tokens=110, output_tokens=15, total_tokens=125),
+        latency_ms=42,
+    )
+    fake_gateway = FakeModelGateway(responses=[canned_response])
+    model = ModelGatewayChatModel(gateway=fake_gateway, model_profile="planner-default")
+
+    chunks = [
+        chunk
+        async for chunk in model.astream(
+            [HumanMessage(content="Chào")],
+            tenant_id="tenant-stream",
+            correlation_id="corr-stream",
+            execution_id="exec-stream",
+        )
+    ]
+
+    deltas = [c.content for c in chunks if c.content]
+    assert deltas == ["Xin ", "chào ", "LogiX"]
+
+    spans = in_memory_tracer.get_finished_spans()
+    gen_ai_spans = [s for s in spans if s.name == "gen_ai.chat"]
+    assert len(gen_ai_spans) == 1
+    attrs = gen_ai_spans[0].attributes
+    assert attrs is not None
+    assert attrs[GEN_AI_SYSTEM] == "gemini"
+    assert attrs[GEN_AI_REQUEST_MODEL] == "gemini-3.5-flash-lite"
+    assert attrs[GEN_AI_USAGE_TOTAL_TOKENS] == 125
+    assert attrs[GEN_AI_RESPONSE_FINISH_REASONS] == ("stop",)

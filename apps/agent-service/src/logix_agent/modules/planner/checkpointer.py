@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.memory import InMemorySaver
@@ -15,8 +16,35 @@ logger = logging.getLogger(__name__)
 
 
 def _psycopg_conninfo(database_url: str) -> str:
-    """LangGraph's Postgres saver uses psycopg, not the asyncpg driver of the ORM URL."""
+    """LangGraph's Postgres persistence uses psycopg, not the asyncpg driver of the ORM URL."""
     return database_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+
+
+@asynccontextmanager
+async def open_postgres_pool(
+    database_url: str, *, max_size: int = 10, label: str = "persistence"
+) -> AsyncIterator[Any]:
+    """Open a psycopg async connection pool compatible with LangGraph savers/stores."""
+    from psycopg.rows import dict_row
+    from psycopg_pool import AsyncConnectionPool
+
+    # autocommit for setup(), dict rows, and no prepared statements behind poolers.
+    pool = AsyncConnectionPool(
+        conninfo=_psycopg_conninfo(database_url),
+        max_size=max_size,
+        kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
+        open=False,
+    )
+    try:
+        await pool.open(wait=True, timeout=10)
+    except Exception as exc:
+        await pool.close()
+        raise RuntimeError(f"Failed to initialize Postgres {label}: {exc}") from exc
+
+    try:
+        yield pool
+    finally:
+        await pool.close()
 
 
 @asynccontextmanager
@@ -33,27 +61,14 @@ async def open_checkpointer(settings: AgentSettings) -> AsyncIterator[BaseCheckp
         return
 
     from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
-    from psycopg.rows import dict_row
-    from psycopg_pool import AsyncConnectionPool
 
-    # Settings required by AsyncPostgresSaver: autocommit for setup(), dict rows,
-    # and no prepared statements (they break behind connection poolers).
-    pool = AsyncConnectionPool(
-        conninfo=_psycopg_conninfo(settings.database_url),
-        max_size=10,
-        kwargs={"autocommit": True, "prepare_threshold": 0, "row_factory": dict_row},
-        open=False,
-    )
-    try:
-        await pool.open(wait=True, timeout=10)
+    async with open_postgres_pool(
+        settings.database_url, max_size=10, label="checkpointer"
+    ) as pool:
         saver = AsyncPostgresSaver(pool)
-        await saver.setup()  # idempotent: creates/migrates LangGraph checkpoint tables
-    except Exception as exc:
-        await pool.close()
-        raise RuntimeError(f"Failed to initialize Postgres checkpointer: {exc}") from exc
-
-    logger.info("Using AsyncPostgresSaver checkpointer.")
-    try:
+        try:
+            await saver.setup()  # idempotent: creates/migrates LangGraph checkpoint tables
+        except Exception as exc:
+            raise RuntimeError(f"Failed to initialize Postgres checkpointer: {exc}") from exc
+        logger.info("Using AsyncPostgresSaver checkpointer.")
         yield saver
-    finally:
-        await pool.close()

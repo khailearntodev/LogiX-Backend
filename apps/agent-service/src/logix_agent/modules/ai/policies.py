@@ -12,13 +12,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import AsyncIterator, Awaitable, Callable, Sequence
 
 from logix_agent.modules.ai.contracts import (
     ModelCapability,
     ModelProfile,
     ModelRequest,
     ModelResponse,
+    ModelStreamChunk,
     ToolDefinition,
 )
 from logix_agent.modules.ai.errors import (
@@ -58,6 +59,17 @@ class CapabilityCheckingModelGateway:
         profile = self._profiles.require(request.model_profile)
         self._validate(profile, request, tools)
         return await self.inner.generate(request, tools=tools)
+
+    async def stream(
+        self,
+        request: ModelRequest,
+        *,
+        tools: Sequence[ToolDefinition] = (),
+    ) -> AsyncIterator[ModelStreamChunk]:
+        profile = self._profiles.require(request.model_profile)
+        self._validate(profile, request, tools)
+        async for chunk in self.inner.stream(request, tools=tools):
+            yield chunk
 
     @staticmethod
     def _validate(
@@ -116,23 +128,96 @@ class RetryingModelGateway:
         except ModelGatewayError as primary_error:
             if not primary_error.retryable or not primary.fallback_profile:
                 raise
-            logger.warning(
-                "Model profile '%s' failed transiently (%s); falling back to '%s'",
-                primary.profile_name,
-                primary_error,
-                primary.fallback_profile,
+            fallback, fallback_request, chain = self._prepare_fallback(
+                primary, request, primary_error
             )
-
-        fallback_name = primary.fallback_profile
-        fallback = self._profiles.require(fallback_name)
-        fallback_request = request.model_copy(update={"model_profile": fallback_name})
-        chain = [primary.profile_name, fallback_name]
 
         try:
             return await self._attempt_profile(fallback, fallback_request, tools)
         except ModelGatewayError as fallback_error:
-            logger.error("Fallback profile '%s' also failed: %s", fallback_name, fallback_error)
+            logger.error(
+                "Fallback profile '%s' also failed: %s", fallback.profile_name, fallback_error
+            )
             raise FallbackExhaustedError(chain, cause=fallback_error) from fallback_error
+
+    async def stream(
+        self,
+        request: ModelRequest,
+        *,
+        tools: Sequence[ToolDefinition] = (),
+    ) -> AsyncIterator[ModelStreamChunk]:
+        """Stream chunks with bounded pre-first-chunk retry and fallback.
+
+        Once a chunk has been yielded downstream, errors surface directly so a
+        mid-stream failure cannot splice two partial responses together.
+        """
+        primary = self._profiles.require(request.model_profile)
+        emitted_any = False
+
+        try:
+            async for chunk in self._stream_with_retry_before_first_chunk(
+                primary, request, tools
+            ):
+                emitted_any = True
+                yield chunk
+            return
+        except ModelGatewayError as primary_error:
+            if emitted_any or not primary_error.retryable or not primary.fallback_profile:
+                raise
+            fallback, fallback_request, chain = self._prepare_fallback(
+                primary, request, primary_error
+            )
+
+        fallback_emitted = False
+        try:
+            async for chunk in self._stream_with_retry_before_first_chunk(
+                fallback, fallback_request, tools
+            ):
+                fallback_emitted = True
+                yield chunk
+        except ModelGatewayError as fallback_error:
+            if fallback_emitted:
+                raise
+            logger.error(
+                "Fallback profile '%s' also failed: %s", fallback.profile_name, fallback_error
+            )
+            raise FallbackExhaustedError(chain, cause=fallback_error) from fallback_error
+
+    def _prepare_fallback(
+        self,
+        primary: ModelProfile,
+        request: ModelRequest,
+        error: ModelGatewayError,
+    ) -> tuple[ModelProfile, ModelRequest, list[str]]:
+        fallback_name = primary.fallback_profile
+        assert fallback_name is not None
+        logger.warning(
+            "Model profile '%s' failed transiently (%s); falling back to '%s'",
+            primary.profile_name,
+            error,
+            fallback_name,
+        )
+        fallback = self._profiles.require(fallback_name)
+        fallback_request = request.model_copy(update={"model_profile": fallback_name})
+        return fallback, fallback_request, [primary.profile_name, fallback_name]
+
+    async def _wait_and_advance_attempt(
+        self,
+        attempt: int,
+        profile: ModelProfile,
+        error: ModelGatewayError,
+    ) -> int:
+        backoff = self._backoff_base_seconds * (2 ** (attempt - 1))
+        logger.info(
+            "Attempt %d/%d for profile '%s' failed (%s); retrying in %.1fs",
+            attempt,
+            profile.max_attempts,
+            profile.profile_name,
+            error,
+            backoff,
+        )
+        await self._sleep(backoff)
+        return attempt + 1
 
     async def _attempt_profile(
         self,
@@ -147,17 +232,26 @@ class RetryingModelGateway:
             except ModelGatewayError as error:
                 if not error.retryable or attempt >= profile.max_attempts:
                     raise
-                backoff = self._backoff_base_seconds * (2 ** (attempt - 1))
-                logger.info(
-                    "Attempt %d/%d for profile '%s' failed (%s); retrying in %.1fs",
-                    attempt,
-                    profile.max_attempts,
-                    profile.profile_name,
-                    error,
-                    backoff,
-                )
-                await self._sleep(backoff)
-                attempt += 1
+                attempt = await self._wait_and_advance_attempt(attempt, profile, error)
                 continue
 
             return response.model_copy(update={"attempt": attempt})
+
+    async def _stream_with_retry_before_first_chunk(
+        self,
+        profile: ModelProfile,
+        request: ModelRequest,
+        tools: Sequence[ToolDefinition],
+    ) -> AsyncIterator[ModelStreamChunk]:
+        attempt = 1
+        while True:
+            emitted_any = False
+            try:
+                async for chunk in self.inner.stream(request, tools=tools):
+                    emitted_any = True
+                    yield chunk.model_copy(update={"attempt": attempt})
+                return
+            except ModelGatewayError as error:
+                if emitted_any or not error.retryable or attempt >= profile.max_attempts:
+                    raise
+                attempt = await self._wait_and_advance_attempt(attempt, profile, error)

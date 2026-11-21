@@ -210,3 +210,60 @@ async def test_unexpected_failure_is_masked() -> None:
     assert error["type"] == "RUN_ERROR"
     assert error["code"] == "INTERNAL"
     assert "hunter2" not in json.dumps(events)
+
+
+async def test_run_streams_multiple_incremental_text_events() -> None:
+    gateway = FakeModelGateway.with_text("Xin chào bạn LogiX")
+    _install(gateway)
+
+    status, events, _ = await _run(_body("thread-aaaa1111", "hi"), _token())
+
+    assert status == 200
+    deltas = [e["delta"] for e in events if e["type"] == "TEXT_MESSAGE_CONTENT"]
+    assert deltas == ["Xin ", "chào ", "bạn ", "LogiX"]
+    assert "".join(deltas) == "Xin chào bạn LogiX"
+
+
+async def test_mid_stream_failure_does_not_persist_partial_assistant_message() -> None:
+    from logix_agent.modules.auth import Actor
+    from logix_agent.modules.ai.contracts import ModelStreamChunk
+
+    class MidStreamFailingGateway:
+        async def generate(self, request, *, tools=()):
+            raise AssertionError("stream() should be used")
+
+        async def stream(self, request, *, tools=()):
+            yield ModelStreamChunk(
+                provider="fake",
+                model="fake-model",
+                model_profile=request.model_profile,
+                gateway_backend="fake",
+                content_delta="Nửa câu bị ",
+            )
+            raise ModelTimeoutError("upstream dropped mid-stream")
+
+    _install(MidStreamFailingGateway())
+    token = _token()
+    thread_id = "thread-midfail1"
+
+    status, events, _ = await _run(_body(thread_id, "test mid fail"), token)
+
+    assert status == 200
+    assert any(
+        e.get("type") == "TEXT_MESSAGE_CONTENT" and e.get("delta") == "Nửa câu bị "
+        for e in events
+    )
+    assert events[-1]["type"] == "RUN_ERROR"
+    assert events[-1]["code"] == "MODEL_TIMEOUT"
+
+    # Verify the partial assistant text was NOT committed to conversation history.
+    assert app.state.agui_runtime is not None
+    actor = Actor(
+        user_id="user-1",
+        tenant_id="tenant-1",
+        role="MEMBER",
+        permissions=frozenset(),
+        access_token=token,
+    )
+    actor_msgs = await app.state.agui_runtime.threads.list_messages(thread_id, actor)
+    assert [m.role for m in actor_msgs] == ["USER"]

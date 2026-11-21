@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator, Sequence
+from dataclasses import dataclass, field
 from typing import Any
 
 from langchain_core.callbacks import (
@@ -30,7 +31,15 @@ from langchain_core.outputs import ChatGeneration, ChatGenerationChunk, ChatResu
 from opentelemetry import trace
 from pydantic import ConfigDict
 
-from logix_agent.modules.ai.contracts import ModelRequest, ModelResponse, ToolDefinition
+from logix_agent.modules.ai.contracts import (
+    FinishReason,
+    ModelRequest,
+    ModelResponse,
+    ModelStreamChunk,
+    ModelToolCall,
+    ModelUsage,
+    ToolDefinition,
+)
 from logix_agent.modules.ai.ports import ModelGateway
 from logix_agent.modules.telemetry import (
     GEN_AI_OPERATION_NAME,
@@ -47,7 +56,6 @@ from logix_agent.modules.telemetry import (
 )
 
 logger = logging.getLogger(__name__)
-tracer = get_tracer("logix_agent.ai")
 
 _ROLE_BY_TYPE = {
     "system": "system",
@@ -164,15 +172,202 @@ def _to_tool_definitions(tools: Sequence[Any]) -> list[ToolDefinition]:
     return defs
 
 
-def _usage_of(response: ModelResponse) -> UsageMetadata | None:
-    usage = response.usage
-    if usage.total_tokens is None:
+def _usage_of(usage: ModelUsage | None) -> UsageMetadata | None:
+    if usage is None or usage.total_tokens is None:
         return None
     return UsageMetadata(
         input_tokens=usage.input_tokens or 0,
         output_tokens=usage.output_tokens or 0,
         total_tokens=usage.total_tokens,
     )
+
+
+def _response_metadata(
+    provider: str, model: str, finish_reason: FinishReason
+) -> dict[str, str]:
+    return {
+        "provider": provider,
+        "model": model,
+        "finish_reason": finish_reason.value,
+    }
+
+
+def _convert_tool_calls(
+    gateway_tool_calls: Sequence[ModelToolCall],
+) -> tuple[list[dict[str, Any]], list[ToolCallChunk], dict[str, Any]]:
+    tool_calls = [
+        {
+            "name": tc.name,
+            "args": tc.arguments,
+            "id": tc.id,
+            "type": "tool_call",
+        }
+        for tc in gateway_tool_calls
+    ]
+    tool_call_chunks = [
+        ToolCallChunk(
+            name=tc.name,
+            args=json.dumps(tc.arguments, ensure_ascii=False) if tc.arguments else "{}",
+            id=tc.id,
+            index=i,
+        )
+        for i, tc in enumerate(gateway_tool_calls)
+    ]
+    thought_signatures = {
+        tc.id: tc.thought_signature
+        for tc in gateway_tool_calls
+        if tc.id and tc.thought_signature
+    }
+    additional_kwargs: dict[str, Any] = {}
+    if thought_signatures:
+        additional_kwargs["thought_signatures"] = thought_signatures
+    return tool_calls, tool_call_chunks, additional_kwargs
+
+
+class _GenAIChatSpanRecorder:
+    """Manages ``gen_ai.chat`` span attributes, errors, and completion logging."""
+
+    def __init__(
+        self,
+        request: ModelRequest,
+        *,
+        span: trace.Span,
+        owns_span_end: bool,
+    ) -> None:
+        self._request = request
+        self._span = span
+        self._owns_span_end = owns_span_end
+        self._ended = False
+        self._configure_start()
+
+    @classmethod
+    def start_detached(cls, request: ModelRequest) -> _GenAIChatSpanRecorder:
+        """Start a span without binding contextvars (safe across async generator yields)."""
+        span = get_tracer("logix_agent.ai").start_span("gen_ai.chat", kind=trace.SpanKind.CLIENT)
+        return cls(request, span=span, owns_span_end=True)
+
+    def _configure_start(self) -> None:
+        self._span.set_attribute(GEN_AI_OPERATION_NAME, "chat")
+        self._span.set_attribute(GEN_AI_REQUEST_MODEL, self._request.model_profile)
+        if self._request.tenant_id:
+            self._span.set_attribute(LOGIX_TENANT_ID, self._request.tenant_id)
+        if self._request.correlation_id:
+            self._span.set_attribute(LOGIX_CORRELATION_ID, self._request.correlation_id)
+        if self._request.execution_id:
+            self._span.set_attribute(LOGIX_EXECUTION_ID, str(self._request.execution_id))
+
+    def record_error(self, exc: Exception) -> None:
+        self._span.record_exception(exc)
+        self._span.set_status(trace.StatusCode.ERROR, str(exc))
+
+    def record_success(
+        self,
+        *,
+        provider: str,
+        model: str | None,
+        finish_reason: FinishReason,
+        usage: ModelUsage | None,
+        tool_call_names: Sequence[str],
+        latency_ms: int | None,
+    ) -> None:
+        self._span.set_attribute(GEN_AI_SYSTEM, provider or "unknown")
+        if model:
+            self._span.set_attribute(GEN_AI_REQUEST_MODEL, model)
+
+        finish_val = (
+            finish_reason.value if hasattr(finish_reason, "value") else str(finish_reason)
+        )
+        self._span.set_attribute(GEN_AI_RESPONSE_FINISH_REASONS, [finish_val])
+
+        effective_usage = usage or ModelUsage()
+        if effective_usage.input_tokens is not None:
+            self._span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, effective_usage.input_tokens)
+        if effective_usage.output_tokens is not None:
+            self._span.set_attribute(GEN_AI_USAGE_OUTPUT_TOKENS, effective_usage.output_tokens)
+        if effective_usage.total_tokens is not None:
+            self._span.set_attribute(GEN_AI_USAGE_TOTAL_TOKENS, effective_usage.total_tokens)
+
+        latency_str = f"{latency_ms}ms" if latency_ms is not None else "n/a"
+        tokens_str = (
+            f"tokens=[in={effective_usage.input_tokens}, "
+            f"out={effective_usage.output_tokens}, total={effective_usage.total_tokens}]"
+            if effective_usage.total_tokens is not None
+            else "tokens=n/a"
+        )
+        logger.info(
+            "tenant=%s correlation_id=%s ModelGateway finished in %s (%s, finish_reason=%s, %d tool calls: %s)",
+            self._request.tenant_id,
+            self._request.correlation_id,
+            latency_str,
+            tokens_str,
+            finish_val,
+            len(tool_call_names),
+            ", ".join(tool_call_names),
+        )
+
+    def end(self) -> None:
+        if self._owns_span_end and not self._ended:
+            self._span.end()
+            self._ended = True
+
+
+@dataclass
+class _StreamTerminalState:
+    """Collects provider metadata and tool calls while deltas stream downstream."""
+
+    default_model: str
+    provider: str = "unknown"
+    model: str = ""
+    finish_reason: FinishReason = FinishReason.STOP
+    usage: ModelUsage | None = None
+    latency_ms: int | None = None
+    tool_calls: list[ModelToolCall] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        if not self.model:
+            self.model = self.default_model
+
+    def observe(self, chunk: ModelStreamChunk) -> None:
+        if chunk.provider:
+            self.provider = chunk.provider
+        if chunk.model:
+            self.model = chunk.model
+        if chunk.tool_calls:
+            self.tool_calls.extend(chunk.tool_calls)
+        if chunk.usage is not None:
+            self.usage = chunk.usage
+        if chunk.finish_reason is not None:
+            self.finish_reason = chunk.finish_reason
+        if chunk.latency_ms is not None:
+            self.latency_ms = chunk.latency_ms
+
+    def to_terminal_chunks(self) -> list[ChatGenerationChunk]:
+        chunks: list[ChatGenerationChunk] = []
+        if self.tool_calls:
+            tc_dicts, tc_chunks, extra = _convert_tool_calls(self.tool_calls)
+            chunks.append(
+                ChatGenerationChunk(
+                    message=AIMessageChunk(
+                        content="",
+                        tool_calls=tc_dicts,
+                        tool_call_chunks=tc_chunks,
+                        additional_kwargs=extra,
+                    )
+                )
+            )
+        # ag-ui-langgraph ignores any chunk carrying finish_reason, so keep it off text/tool chunks.
+        chunks.append(
+            ChatGenerationChunk(
+                message=AIMessageChunk(
+                    content="",
+                    usage_metadata=_usage_of(self.usage),
+                    response_metadata=_response_metadata(
+                        self.provider, self.model, self.finish_reason
+                    ),
+                )
+            )
+        )
+        return chunks
 
 
 class ModelGatewayChatModel(BaseChatModel):
@@ -195,9 +390,9 @@ class ModelGatewayChatModel(BaseChatModel):
     ) -> Any:
         return self.bind(tools=tools, **kwargs)
 
-    async def _call_gateway(
+    def _prepare_gateway_call(
         self, messages: list[BaseMessage], kwargs: dict[str, Any]
-    ) -> ModelResponse:
+    ) -> tuple[ModelRequest, list[ToolDefinition]]:
         configurable = kwargs.get("configurable") or {}
         tenant_id = kwargs.get("tenant_id") or configurable.get("tenant_id")
         correlation_id = kwargs.get("correlation_id") or configurable.get("correlation_id")
@@ -207,7 +402,6 @@ class ModelGatewayChatModel(BaseChatModel):
         raw_tools = kwargs.get("tools") or []
         tool_defs = _to_tool_definitions(raw_tools)
 
-        gateway: ModelGateway = self.gateway
         request = ModelRequest(
             model_profile=self.model_profile,
             tenant_id=tenant_id,
@@ -225,59 +419,30 @@ class ModelGatewayChatModel(BaseChatModel):
             len(tool_defs),
             ", ".join(t.name for t in tool_defs),
         )
-        tracer = get_tracer("logix_agent.ai")
-        with tracer.start_as_current_span("gen_ai.chat", kind=trace.SpanKind.CLIENT) as span:
-            span.set_attribute(GEN_AI_OPERATION_NAME, "chat")
-            span.set_attribute(GEN_AI_REQUEST_MODEL, self.model_profile)
-            if tenant_id:
-                span.set_attribute(LOGIX_TENANT_ID, tenant_id)
-            if correlation_id:
-                span.set_attribute(LOGIX_CORRELATION_ID, correlation_id)
-            execution_id = kwargs.get("execution_id")
-            if execution_id:
-                span.set_attribute(LOGIX_EXECUTION_ID, str(execution_id))
+        return request, tool_defs
 
+    async def _call_gateway(
+        self, messages: list[BaseMessage], kwargs: dict[str, Any]
+    ) -> ModelResponse:
+        request, tool_defs = self._prepare_gateway_call(messages, kwargs)
+        gateway: ModelGateway = self.gateway
+        active_tracer = get_tracer("logix_agent.ai")
+
+        with active_tracer.start_as_current_span("gen_ai.chat", kind=trace.SpanKind.CLIENT) as span:
+            recorder = _GenAIChatSpanRecorder(request, span=span, owns_span_end=False)
             try:
                 response = await gateway.generate(request, tools=tool_defs)
             except Exception as exc:
-                span.record_exception(exc)
-                span.set_status(trace.StatusCode.ERROR, str(exc))
+                recorder.record_error(exc)
                 raise
 
-            span.set_attribute(GEN_AI_SYSTEM, response.provider or "unknown")
-            if response.model:
-                span.set_attribute(GEN_AI_REQUEST_MODEL, response.model)
-
-            finish_val = (
-                response.finish_reason.value
-                if hasattr(response.finish_reason, "value")
-                else str(response.finish_reason)
-            )
-            span.set_attribute(GEN_AI_RESPONSE_FINISH_REASONS, [finish_val])
-
-            usage = response.usage
-            if usage.input_tokens is not None:
-                span.set_attribute(GEN_AI_USAGE_INPUT_TOKENS, usage.input_tokens)
-            if usage.output_tokens is not None:
-                span.set_attribute(GEN_AI_USAGE_OUTPUT_TOKENS, usage.output_tokens)
-            if usage.total_tokens is not None:
-                span.set_attribute(GEN_AI_USAGE_TOTAL_TOKENS, usage.total_tokens)
-
-            latency_str = f"{response.latency_ms}ms" if response.latency_ms is not None else "n/a"
-            tokens_str = (
-                f"tokens=[in={usage.input_tokens}, out={usage.output_tokens}, total={usage.total_tokens}]"
-                if usage.total_tokens is not None
-                else "tokens=n/a"
-            )
-            logger.info(
-                "tenant=%s correlation_id=%s ModelGateway finished in %s (%s, finish_reason=%s, %d tool calls: %s)",
-                tenant_id,
-                correlation_id,
-                latency_str,
-                tokens_str,
-                finish_val,
-                len(response.tool_calls),
-                ", ".join(tc.name for tc in response.tool_calls),
+            recorder.record_success(
+                provider=response.provider,
+                model=response.model,
+                finish_reason=response.finish_reason,
+                usage=response.usage,
+                tool_call_names=[tc.name for tc in response.tool_calls],
+                latency_ms=response.latency_ms,
             )
             return response
 
@@ -298,34 +463,16 @@ class ModelGatewayChatModel(BaseChatModel):
         **kwargs: Any,
     ) -> ChatResult:
         response = await self._call_gateway(messages, kwargs)
-        tool_calls = [
-            {
-                "name": tc.name,
-                "args": tc.arguments,
-                "id": tc.id,
-                "type": "tool_call",
-            }
-            for tc in response.tool_calls
-        ]
-        thought_signatures = {
-            tc.id: tc.thought_signature
-            for tc in response.tool_calls
-            if tc.id and tc.thought_signature
-        }
-        additional_kwargs = {}
-        if thought_signatures:
-            additional_kwargs["thought_signatures"] = thought_signatures
+        tool_calls, _, additional_kwargs = _convert_tool_calls(response.tool_calls)
 
         message = AIMessage(
             content=response.content or "",
             tool_calls=tool_calls,
             additional_kwargs=additional_kwargs,
-            usage_metadata=_usage_of(response),
-            response_metadata={
-                "provider": response.provider,
-                "model": response.model,
-                "finish_reason": response.finish_reason.value,
-            },
+            usage_metadata=_usage_of(response.usage),
+            response_metadata=_response_metadata(
+                response.provider, response.model, response.finish_reason
+            ),
         )
         return ChatResult(generations=[ChatGeneration(message=message)])
 
@@ -336,67 +483,37 @@ class ModelGatewayChatModel(BaseChatModel):
         run_manager: AsyncCallbackManagerForLLMRun | None = None,
         **kwargs: Any,
     ) -> AsyncIterator[ChatGenerationChunk]:
-        response = await self._call_gateway(messages, kwargs)
-        text = response.content or ""
-        tool_calls = [
-            {
-                "name": tc.name,
-                "args": tc.arguments,
-                "id": tc.id,
-                "type": "tool_call",
-            }
-            for tc in response.tool_calls
-        ]
-        tool_call_chunks = [
-            ToolCallChunk(
-                name=tc.name,
-                args=json.dumps(tc.arguments, ensure_ascii=False) if tc.arguments else "{}",
-                id=tc.id,
-                index=i,
-            )
-            for i, tc in enumerate(response.tool_calls)
-        ]
-        thought_signatures = {
-            tc.id: tc.thought_signature
-            for tc in response.tool_calls
-            if tc.id and tc.thought_signature
-        }
-        additional_kwargs = {}
-        if thought_signatures:
-            additional_kwargs["thought_signatures"] = thought_signatures
+        request, tool_defs = self._prepare_gateway_call(messages, kwargs)
+        gateway: ModelGateway = self.gateway
+        span_recorder = _GenAIChatSpanRecorder.start_detached(request)
+        state = _StreamTerminalState(default_model=self.model_profile)
 
-        if text:
-            chunk = ChatGenerationChunk(
-                message=AIMessageChunk(
-                    content=text,
-                    tool_calls=tool_calls,
-                    tool_call_chunks=tool_call_chunks,
-                    additional_kwargs=additional_kwargs,
-                )
+        try:
+            async for gw_chunk in gateway.stream(request, tools=tool_defs):
+                state.observe(gw_chunk)
+                if gw_chunk.content_delta:
+                    text_chunk = ChatGenerationChunk(
+                        message=AIMessageChunk(content=gw_chunk.content_delta)
+                    )
+                    if run_manager is not None:
+                        await run_manager.on_llm_new_token(
+                            gw_chunk.content_delta, chunk=text_chunk
+                        )
+                    yield text_chunk
+        except Exception as exc:
+            span_recorder.record_error(exc)
+            raise
+        else:
+            span_recorder.record_success(
+                provider=state.provider,
+                model=state.model,
+                finish_reason=state.finish_reason,
+                usage=state.usage,
+                tool_call_names=[tc.name for tc in state.tool_calls],
+                latency_ms=state.latency_ms,
             )
-            if run_manager is not None:
-                await run_manager.on_llm_new_token(text, chunk=chunk)
-            yield chunk
-        elif tool_calls:
-            chunk = ChatGenerationChunk(
-                message=AIMessageChunk(
-                    content="",
-                    tool_calls=tool_calls,
-                    tool_call_chunks=tool_call_chunks,
-                    additional_kwargs=additional_kwargs,
-                )
-            )
-            yield chunk
+        finally:
+            span_recorder.end()
 
-        # ag-ui-langgraph ignores any chunk carrying finish_reason, so keep it off the text chunk.
-        yield ChatGenerationChunk(
-            message=AIMessageChunk(
-                content="",
-                usage_metadata=_usage_of(response),
-                response_metadata={
-                    "provider": response.provider,
-                    "model": response.model,
-                    "finish_reason": response.finish_reason.value,
-                },
-            )
-        )
+        for terminal_chunk in state.to_terminal_chunks():
+            yield terminal_chunk

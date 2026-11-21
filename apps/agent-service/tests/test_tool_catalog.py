@@ -70,10 +70,10 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 24
+    assert len(specs) == 27
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 21
+    assert len(read_tools) == 24
     assert len(sensitive_tools) == 3
     assert {s.name for s in sensitive_tools} == {
         "confirm_order",
@@ -94,7 +94,15 @@ def test_tools_are_filtered_by_permission() -> None:
     def names(*perms: str) -> set[str]:
         return {s.name for s in registry.list_for(_ctx(*perms).actor)}
 
-    assert names() == {"list_products", "get_product", "list_customers", "get_customer"}
+    assert names() == {
+        "list_products",
+        "get_product",
+        "list_customers",
+        "get_customer",
+        "save_user_memory",
+        "get_user_memories",
+        "delete_user_memory",
+    }
     assert "list_inventory_balances" in names("inventory:stock:read")
     assert "list_warehouses" not in names("inventory:stock:read")
     assert "list_warehouses" in names("inventory:warehouse:read")

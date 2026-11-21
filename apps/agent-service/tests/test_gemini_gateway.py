@@ -159,3 +159,105 @@ async def test_gemini_gateway_does_not_retry_or_fall_back(mock_genai_client, pro
         await gateway.generate(_request())
 
     assert mock_genai_client.aio.models.generate_content.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_gemini_gateway_stream_incremental_text_and_usage(
+    mock_genai_client, profile_registry
+):
+    c1 = types.GenerateContentResponse(
+        candidates=[
+            types.Candidate(
+                content=types.Content(
+                    role="model",
+                    parts=[
+                        types.Part(text="internal thinking...", thought=True),
+                        types.Part.from_text(text="Xin "),
+                    ],
+                )
+            )
+        ]
+    )
+    c2 = types.GenerateContentResponse(
+        candidates=[
+            types.Candidate(
+                content=types.Content(
+                    role="model",
+                    parts=[types.Part.from_text(text="chào bạn.")],
+                )
+            )
+        ],
+        usage_metadata=types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=40,
+            candidates_token_count=12,
+            total_token_count=52,
+        ),
+    )
+
+    async def _fake_stream():
+        yield c1
+        yield c2
+
+    mock_genai_client.aio.models.generate_content_stream = AsyncMock(return_value=_fake_stream())
+    gateway = GeminiModelGateway(profile_registry=profile_registry, client=mock_genai_client)
+
+    chunks = [chunk async for chunk in gateway.stream(_request())]
+
+    assert [c.content_delta for c in chunks if c.content_delta] == ["Xin ", "chào bạn."]
+    terminal = chunks[-1]
+    assert terminal.finish_reason == FinishReason.STOP
+    assert terminal.usage is not None
+    assert terminal.usage.input_tokens == 40
+    assert terminal.usage.output_tokens == 12
+    assert terminal.usage.total_tokens == 52
+
+
+@pytest.mark.asyncio
+async def test_gemini_gateway_stream_tool_calls_preserves_thought_signature(
+    mock_genai_client, profile_registry
+):
+    sig_bytes = b"sig-abc-123"
+    c1 = types.GenerateContentResponse(
+        candidates=[
+            types.Candidate(
+                content=types.Content(
+                    role="model",
+                    parts=[
+                        types.Part(
+                            function_call=types.FunctionCall(
+                                name="cancel_order", args={"order_id": "ORD-007"}
+                            ),
+                            thought_signature=sig_bytes,
+                        )
+                    ],
+                )
+            )
+        ]
+    )
+
+    async def _fake_stream():
+        yield c1
+
+    mock_genai_client.aio.models.generate_content_stream = AsyncMock(return_value=_fake_stream())
+    gateway = GeminiModelGateway(profile_registry=profile_registry, client=mock_genai_client)
+
+    chunks = [chunk async for chunk in gateway.stream(_request())]
+
+    terminal = chunks[-1]
+    assert terminal.finish_reason == FinishReason.TOOL_CALL
+    assert len(terminal.tool_calls) == 1
+    assert terminal.tool_calls[0].name == "cancel_order"
+    assert terminal.tool_calls[0].arguments == {"order_id": "ORD-007"}
+    assert terminal.tool_calls[0].thought_signature is not None
+
+
+@pytest.mark.asyncio
+async def test_gemini_gateway_stream_maps_api_errors(mock_genai_client, profile_registry):
+    mock_genai_client.aio.models.generate_content_stream = AsyncMock(
+        side_effect=genai_errors.APIError(code=429, response_json={"message": "quota exceeded"})
+    )
+    gateway = GeminiModelGateway(profile_registry=profile_registry, client=mock_genai_client)
+
+    with pytest.raises(ModelRateLimitError):
+        async for _ in gateway.stream(_request()):
+            pass

@@ -63,6 +63,7 @@ class ExecutionRecorder(Protocol):
         correlation_id: str,
         prompt_policy_version: str,
         agent_type: str = AGENT_TYPE_PLANNER,
+        conversation_id: UUID | None = None,
     ) -> UUID:
         """Create the execution if absent (idempotent) and return its UUID."""
         ...
@@ -142,6 +143,7 @@ class InMemoryExecutionRecorder:
         correlation_id: str,
         prompt_policy_version: str,
         agent_type: str = AGENT_TYPE_PLANNER,
+        conversation_id: UUID | None = None,
     ) -> UUID:
         tenant, exec_id = to_uuid(tenant_id), to_uuid(execution_id)
         self.executions.setdefault(
@@ -236,6 +238,7 @@ class SqlAlchemyExecutionRecorder:
         correlation_id: str,
         prompt_policy_version: str,
         agent_type: str = AGENT_TYPE_PLANNER,
+        conversation_id: UUID | None = None,
     ) -> UUID:
         exec_id = to_uuid(execution_id)
         stmt = (
@@ -244,6 +247,7 @@ class SqlAlchemyExecutionRecorder:
                 id=exec_id,
                 tenant_id=to_uuid(tenant_id),
                 user_id=to_uuid(user_id),
+                conversation_id=conversation_id,
                 thread_id=thread_id,
                 agent_type=agent_type,
                 status=EXECUTION_RUNNING,

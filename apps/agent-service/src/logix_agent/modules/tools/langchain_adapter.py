@@ -31,6 +31,7 @@ def spec_to_langchain_tool(spec: ToolSpec, registry: ToolRegistry) -> Structured
             actor=actor,
             correlation_id=str(configurable.get("correlation_id", "")),
             approval=configurable.get("approval"),
+            store=configurable.get("store"),
         )
         result = await registry.invoke(spec.name, context, kwargs)
         return result.model_dump()
