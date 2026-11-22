@@ -1,4 +1,4 @@
-"""Read-only tools backed by master-data-service (products, customers, warehouses)."""
+"""Read-only tools backed by master-data-service (products, customers, warehouses, vehicles, drivers)."""
 
 from __future__ import annotations
 
@@ -12,6 +12,8 @@ from logix_agent.modules.tools.catalog._base import Page, PageIn, View, read_too
 from logix_agent.modules.tools.http_client import ServiceClient
 
 READ_WAREHOUSE = "inventory:warehouse:read"
+READ_VEHICLE = "transport:trip:read"
+READ_DRIVER = "master-data:driver:read"
 BASE = "/api/v1"
 
 
@@ -44,6 +46,25 @@ class WarehouseOut(View):
     status: str
 
 
+class VehicleOut(View):
+    id: UUID
+    code: str
+    license_plate: str
+    capacity_weight: str | float
+    capacity_volume: str | float
+    status: str
+
+
+# License number and personal phone are deliberately not exposed to the model.
+class DriverOut(View):
+    id: UUID
+    code: str
+    user_id: UUID
+    display_name: str | None = None
+    license_expiry: str | None = None
+    status: str
+
+
 class ListIn(PageIn):
     q: str | None = Field(None, max_length=200, description="Free-text search")
     status: Literal["ACTIVE", "INACTIVE"] | None = Field(None, description="Filter by status")
@@ -59,6 +80,14 @@ class CustomerIdIn(BaseModel):
 
 class WarehouseIdIn(BaseModel):
     warehouse_id: UUID = Field(description="Warehouse id")
+
+
+class VehicleIdIn(BaseModel):
+    vehicle_id: UUID = Field(description="Vehicle id")
+
+
+class DriverIdIn(BaseModel):
+    driver_id: UUID = Field(description="Driver id")
 
 
 def register(registry: ToolRegistry, client: ServiceClient) -> None:
@@ -126,4 +155,36 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
         WarehouseIdIn,
         WarehouseOut,
         READ_WAREHOUSE,
+    )
+    add(
+        "list_vehicles",
+        "Search fleet vehicles by code or license plate (capacity weight, volume, status).",
+        f"{BASE}/vehicles",
+        ListIn,
+        Page[VehicleOut],
+        READ_VEHICLE,
+    )
+    add(
+        "get_vehicle",
+        "Get one fleet vehicle by id.",
+        f"{BASE}/vehicles/{{vehicle_id}}",
+        VehicleIdIn,
+        VehicleOut,
+        READ_VEHICLE,
+    )
+    add(
+        "list_drivers",
+        "Search driver profiles by code (display name, license expiry, status).",
+        f"{BASE}/drivers",
+        ListIn,
+        Page[DriverOut],
+        READ_DRIVER,
+    )
+    add(
+        "get_driver",
+        "Get one driver profile by id.",
+        f"{BASE}/drivers/{{driver_id}}",
+        DriverIdIn,
+        DriverOut,
+        READ_DRIVER,
     )
