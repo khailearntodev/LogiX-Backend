@@ -10,6 +10,12 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import {
+  MASTER_DATA_PERMISSIONS,
+  ORDER_PERMISSIONS,
+  PermissionsGuard,
+  RequirePermissions,
+} from '@logix/auth';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
@@ -21,11 +27,16 @@ import {
 } from './dto/customer-address.dto.js';
 
 @Controller('customers/:customerId/addresses')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class CustomerAddressesController {
   constructor(private readonly addresses: CustomerAddressService) {}
 
   @Get()
+  @RequirePermissions(
+    MASTER_DATA_PERMISSIONS.CUSTOMER_READ,
+    MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE,
+    ORDER_PERMISSIONS.SALES_ORDER_READ,
+  )
   async list(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -34,6 +45,11 @@ export class CustomerAddressesController {
   }
 
   @Get(':addressId')
+  @RequirePermissions(
+    MASTER_DATA_PERMISSIONS.CUSTOMER_READ,
+    MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE,
+    ORDER_PERMISSIONS.SALES_ORDER_READ,
+  )
   async getById(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -44,6 +60,7 @@ export class CustomerAddressesController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE)
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -53,6 +70,7 @@ export class CustomerAddressesController {
   }
 
   @Patch(':addressId')
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE)
   async update(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -64,6 +82,7 @@ export class CustomerAddressesController {
 
   @Post(':addressId/default')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE)
   async setDefault(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -74,6 +93,7 @@ export class CustomerAddressesController {
 
   @Post(':addressId/disable')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE)
   async disable(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,
@@ -89,6 +109,7 @@ export class CustomerAddressesController {
 
   @Post(':addressId/enable')
   @HttpCode(HttpStatus.OK)
+  @RequirePermissions(MASTER_DATA_PERMISSIONS.CUSTOMER_MANAGE)
   async enable(
     @CurrentUser() user: AuthenticatedUser,
     @Param('customerId', ParseUUIDPipe) customerId: string,

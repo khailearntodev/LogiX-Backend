@@ -68,6 +68,8 @@ class AgentSettings(BaseSettings):
 
     # ── Prompt policy ────────────────────────────────────────────
     prompt_policy_version: str = "v1"
+    planner_tenant_instructions_max_chars: int = 2000
+    planner_tenant_instructions_cache_ttl_seconds: int = 60
 
     model_config = SettingsConfigDict(
         env_file=(_ENV_FILE, ".env"),

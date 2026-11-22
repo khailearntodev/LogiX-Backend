@@ -300,6 +300,7 @@ export type UserWhereInput = {
   userRolesGranted?: Prisma.UserRoleListRelationFilter
   invitationsSent?: Prisma.TenantInvitationListRelationFilter
   contactLeadsHandled?: Prisma.ContactLeadListRelationFilter
+  tenantsAiInstructionsUpdated?: Prisma.TenantListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -325,6 +326,7 @@ export type UserOrderByWithRelationInput = {
   userRolesGranted?: Prisma.UserRoleOrderByRelationAggregateInput
   invitationsSent?: Prisma.TenantInvitationOrderByRelationAggregateInput
   contactLeadsHandled?: Prisma.ContactLeadOrderByRelationAggregateInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -353,6 +355,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   userRolesGranted?: Prisma.UserRoleListRelationFilter
   invitationsSent?: Prisma.TenantInvitationListRelationFilter
   contactLeadsHandled?: Prisma.ContactLeadListRelationFilter
+  tenantsAiInstructionsUpdated?: Prisma.TenantListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -420,6 +423,7 @@ export type UserCreateInput = {
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -445,6 +449,7 @@ export type UserUncheckedCreateInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUpdateInput = {
@@ -470,6 +475,7 @@ export type UserUpdateInput = {
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -495,6 +501,7 @@ export type UserUncheckedUpdateInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -546,6 +553,11 @@ export type UserUncheckedUpdateManyInput = {
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+}
+
+export type UserNullableScalarRelationFilter = {
+  is?: Prisma.UserWhereInput | null
+  isNot?: Prisma.UserWhereInput | null
 }
 
 export type UserCountOrderByAggregateInput = {
@@ -614,13 +626,20 @@ export type UserScalarRelationFilter = {
   isNot?: Prisma.UserWhereInput
 }
 
-export type UserNullableScalarRelationFilter = {
-  is?: Prisma.UserWhereInput | null
-  isNot?: Prisma.UserWhereInput | null
+export type UserCreateNestedOneWithoutTenantsAiInstructionsUpdatedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUncheckedCreateWithoutTenantsAiInstructionsUpdatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantsAiInstructionsUpdatedInput
+  connect?: Prisma.UserWhereUniqueInput
 }
 
-export type BoolFieldUpdateOperationsInput = {
-  set?: boolean
+export type UserUpdateOneWithoutTenantsAiInstructionsUpdatedNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUncheckedCreateWithoutTenantsAiInstructionsUpdatedInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutTenantsAiInstructionsUpdatedInput
+  upsert?: Prisma.UserUpsertWithoutTenantsAiInstructionsUpdatedInput
+  disconnect?: Prisma.UserWhereInput | boolean
+  delete?: Prisma.UserWhereInput | boolean
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUpdateWithoutTenantsAiInstructionsUpdatedInput>, Prisma.UserUncheckedUpdateWithoutTenantsAiInstructionsUpdatedInput>
 }
 
 export type UserCreateNestedOneWithoutUserTenantsInput = {
@@ -741,6 +760,122 @@ export type UserUpdateOneWithoutContactLeadsHandledNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutContactLeadsHandledInput, Prisma.UserUpdateWithoutContactLeadsHandledInput>, Prisma.UserUncheckedUpdateWithoutContactLeadsHandledInput>
 }
 
+export type UserCreateWithoutTenantsAiInstructionsUpdatedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
+  status: string
+  isSuperAdmin?: boolean
+  tokenVersion?: bigint | number
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantCreateNestedManyWithoutUserInput
+  userRoles?: Prisma.UserRoleCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenCreateNestedManyWithoutUserInput
+  rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
+  userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
+  contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+}
+
+export type UserUncheckedCreateWithoutTenantsAiInstructionsUpdatedInput = {
+  id?: string
+  email: string
+  passwordHash: string
+  displayName: string
+  phoneNumber?: string | null
+  avatarUrl?: string | null
+  status: string
+  isSuperAdmin?: boolean
+  tokenVersion?: bigint | number
+  lastLoginAt?: Date | string | null
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedCreateNestedManyWithoutUserInput
+  userRoles?: Prisma.UserRoleUncheckedCreateNestedManyWithoutUserInput
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedCreateNestedManyWithoutUserInput
+  rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
+  userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
+  contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+}
+
+export type UserCreateOrConnectWithoutTenantsAiInstructionsUpdatedInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUncheckedCreateWithoutTenantsAiInstructionsUpdatedInput>
+}
+
+export type UserUpsertWithoutTenantsAiInstructionsUpdatedInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUncheckedUpdateWithoutTenantsAiInstructionsUpdatedInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUncheckedCreateWithoutTenantsAiInstructionsUpdatedInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutTenantsAiInstructionsUpdatedInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutTenantsAiInstructionsUpdatedInput, Prisma.UserUncheckedUpdateWithoutTenantsAiInstructionsUpdatedInput>
+}
+
+export type UserUpdateWithoutTenantsAiInstructionsUpdatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUpdateManyWithoutUserNestedInput
+  userRoles?: Prisma.UserRoleUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUpdateManyWithoutUserNestedInput
+  rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
+  userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
+  contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutTenantsAiInstructionsUpdatedInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  email?: Prisma.StringFieldUpdateOperationsInput | string
+  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
+  displayName?: Prisma.StringFieldUpdateOperationsInput | string
+  phoneNumber?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  avatarUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  isSuperAdmin?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  tokenVersion?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  lastLoginAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  userTenants?: Prisma.UserTenantUncheckedUpdateManyWithoutUserNestedInput
+  userRoles?: Prisma.UserRoleUncheckedUpdateManyWithoutUserNestedInput
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput
+  passwordResetTokens?: Prisma.PasswordResetTokenUncheckedUpdateManyWithoutUserNestedInput
+  rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
+  invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
+  contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+}
+
 export type UserCreateWithoutUserTenantsInput = {
   id?: string
   email: string
@@ -763,6 +898,7 @@ export type UserCreateWithoutUserTenantsInput = {
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutUserTenantsInput = {
@@ -787,6 +923,7 @@ export type UserUncheckedCreateWithoutUserTenantsInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutUserTenantsInput = {
@@ -827,6 +964,7 @@ export type UserUpdateWithoutUserTenantsInput = {
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserTenantsInput = {
@@ -851,6 +989,7 @@ export type UserUncheckedUpdateWithoutUserTenantsInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateWithoutRolePermissionsGrantedInput = {
@@ -875,6 +1014,7 @@ export type UserCreateWithoutRolePermissionsGrantedInput = {
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
@@ -899,6 +1039,7 @@ export type UserUncheckedCreateWithoutRolePermissionsGrantedInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutRolePermissionsGrantedInput = {
@@ -939,6 +1080,7 @@ export type UserUpdateWithoutRolePermissionsGrantedInput = {
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
@@ -963,6 +1105,7 @@ export type UserUncheckedUpdateWithoutRolePermissionsGrantedInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateWithoutUserRolesInput = {
@@ -987,6 +1130,7 @@ export type UserCreateWithoutUserRolesInput = {
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutUserRolesInput = {
@@ -1011,6 +1155,7 @@ export type UserUncheckedCreateWithoutUserRolesInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutUserRolesInput = {
@@ -1040,6 +1185,7 @@ export type UserCreateWithoutUserRolesGrantedInput = {
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
@@ -1064,6 +1210,7 @@ export type UserUncheckedCreateWithoutUserRolesGrantedInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutUserRolesGrantedInput = {
@@ -1104,6 +1251,7 @@ export type UserUpdateWithoutUserRolesInput = {
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserRolesInput = {
@@ -1128,6 +1276,7 @@ export type UserUncheckedUpdateWithoutUserRolesInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUpsertWithoutUserRolesGrantedInput = {
@@ -1163,6 +1312,7 @@ export type UserUpdateWithoutUserRolesGrantedInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
@@ -1187,6 +1337,7 @@ export type UserUncheckedUpdateWithoutUserRolesGrantedInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateWithoutSessionsInput = {
@@ -1211,6 +1362,7 @@ export type UserCreateWithoutSessionsInput = {
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1235,6 +1387,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1275,6 +1428,7 @@ export type UserUpdateWithoutSessionsInput = {
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1299,6 +1453,7 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateWithoutPasswordResetTokensInput = {
@@ -1323,6 +1478,7 @@ export type UserCreateWithoutPasswordResetTokensInput = {
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
@@ -1347,6 +1503,7 @@ export type UserUncheckedCreateWithoutPasswordResetTokensInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutPasswordResetTokensInput = {
@@ -1387,6 +1544,7 @@ export type UserUpdateWithoutPasswordResetTokensInput = {
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
@@ -1411,6 +1569,7 @@ export type UserUncheckedUpdateWithoutPasswordResetTokensInput = {
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateWithoutInvitationsSentInput = {
@@ -1435,6 +1594,7 @@ export type UserCreateWithoutInvitationsSentInput = {
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   contactLeadsHandled?: Prisma.ContactLeadCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutInvitationsSentInput = {
@@ -1459,6 +1619,7 @@ export type UserUncheckedCreateWithoutInvitationsSentInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedCreateNestedManyWithoutContactedByUserInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutInvitationsSentInput = {
@@ -1499,6 +1660,7 @@ export type UserUpdateWithoutInvitationsSentInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutInvitationsSentInput = {
@@ -1523,6 +1685,7 @@ export type UserUncheckedUpdateWithoutInvitationsSentInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   contactLeadsHandled?: Prisma.ContactLeadUncheckedUpdateManyWithoutContactedByUserNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserCreateWithoutContactLeadsHandledInput = {
@@ -1547,6 +1710,7 @@ export type UserCreateWithoutContactLeadsHandledInput = {
   rolePermissionsGranted?: Prisma.RolePermissionCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationCreateNestedManyWithoutInviterInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserUncheckedCreateWithoutContactLeadsHandledInput = {
@@ -1571,6 +1735,7 @@ export type UserUncheckedCreateWithoutContactLeadsHandledInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedCreateNestedManyWithoutGrantedByUserInput
   userRolesGranted?: Prisma.UserRoleUncheckedCreateNestedManyWithoutGrantedByUserInput
   invitationsSent?: Prisma.TenantInvitationUncheckedCreateNestedManyWithoutInviterInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedCreateNestedManyWithoutAiInstructionsUpdatedByUserInput
 }
 
 export type UserCreateOrConnectWithoutContactLeadsHandledInput = {
@@ -1611,6 +1776,7 @@ export type UserUpdateWithoutContactLeadsHandledInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUpdateManyWithoutInviterNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutContactLeadsHandledInput = {
@@ -1635,6 +1801,7 @@ export type UserUncheckedUpdateWithoutContactLeadsHandledInput = {
   rolePermissionsGranted?: Prisma.RolePermissionUncheckedUpdateManyWithoutGrantedByUserNestedInput
   userRolesGranted?: Prisma.UserRoleUncheckedUpdateManyWithoutGrantedByUserNestedInput
   invitationsSent?: Prisma.TenantInvitationUncheckedUpdateManyWithoutInviterNestedInput
+  tenantsAiInstructionsUpdated?: Prisma.TenantUncheckedUpdateManyWithoutAiInstructionsUpdatedByUserNestedInput
 }
 
 
@@ -1651,6 +1818,7 @@ export type UserCountOutputType = {
   userRolesGranted: number
   invitationsSent: number
   contactLeadsHandled: number
+  tenantsAiInstructionsUpdated: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1662,6 +1830,7 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   userRolesGranted?: boolean | UserCountOutputTypeCountUserRolesGrantedArgs
   invitationsSent?: boolean | UserCountOutputTypeCountInvitationsSentArgs
   contactLeadsHandled?: boolean | UserCountOutputTypeCountContactLeadsHandledArgs
+  tenantsAiInstructionsUpdated?: boolean | UserCountOutputTypeCountTenantsAiInstructionsUpdatedArgs
 }
 
 /**
@@ -1730,6 +1899,13 @@ export type UserCountOutputTypeCountContactLeadsHandledArgs<ExtArgs extends runt
   where?: Prisma.ContactLeadWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountTenantsAiInstructionsUpdatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.TenantWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1754,6 +1930,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   userRolesGranted?: boolean | Prisma.User$userRolesGrantedArgs<ExtArgs>
   invitationsSent?: boolean | Prisma.User$invitationsSentArgs<ExtArgs>
   contactLeadsHandled?: boolean | Prisma.User$contactLeadsHandledArgs<ExtArgs>
+  tenantsAiInstructionsUpdated?: boolean | Prisma.User$tenantsAiInstructionsUpdatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1818,6 +1995,7 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   userRolesGranted?: boolean | Prisma.User$userRolesGrantedArgs<ExtArgs>
   invitationsSent?: boolean | Prisma.User$invitationsSentArgs<ExtArgs>
   contactLeadsHandled?: boolean | Prisma.User$contactLeadsHandledArgs<ExtArgs>
+  tenantsAiInstructionsUpdated?: boolean | Prisma.User$tenantsAiInstructionsUpdatedArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1834,6 +2012,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     userRolesGranted: Prisma.$UserRolePayload<ExtArgs>[]
     invitationsSent: Prisma.$TenantInvitationPayload<ExtArgs>[]
     contactLeadsHandled: Prisma.$ContactLeadPayload<ExtArgs>[]
+    tenantsAiInstructionsUpdated: Prisma.$TenantPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2252,6 +2431,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   userRolesGranted<T extends Prisma.User$userRolesGrantedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$userRolesGrantedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$UserRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   invitationsSent<T extends Prisma.User$invitationsSentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$invitationsSentArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantInvitationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   contactLeadsHandled<T extends Prisma.User$contactLeadsHandledArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$contactLeadsHandledArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ContactLeadPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  tenantsAiInstructionsUpdated<T extends Prisma.User$tenantsAiInstructionsUpdatedArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$tenantsAiInstructionsUpdatedArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2877,6 +3057,30 @@ export type User$contactLeadsHandledArgs<ExtArgs extends runtime.Types.Extension
   take?: number
   skip?: number
   distinct?: Prisma.ContactLeadScalarFieldEnum | Prisma.ContactLeadScalarFieldEnum[]
+}
+
+/**
+ * User.tenantsAiInstructionsUpdated
+ */
+export type User$tenantsAiInstructionsUpdatedArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Tenant
+   */
+  select?: Prisma.TenantSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Tenant
+   */
+  omit?: Prisma.TenantOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.TenantInclude<ExtArgs> | null
+  where?: Prisma.TenantWhereInput
+  orderBy?: Prisma.TenantOrderByWithRelationInput | Prisma.TenantOrderByWithRelationInput[]
+  cursor?: Prisma.TenantWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.TenantScalarFieldEnum | Prisma.TenantScalarFieldEnum[]
 }
 
 /**

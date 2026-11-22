@@ -154,11 +154,16 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             "attributes": attributes,
         }
 
+        binding: dict[str, Any] = {"version": version}
+        if "orderVersion" in raw and raw["orderVersion"] is not None:
+            binding["orderVersion"] = int(raw["orderVersion"])
+
         return PreviewResult(
             target_type="shipment",
             target_id=str(args.shipment_id),
             target_version=version,
             summary={**raw, "ui": ui},
+            execution_binding=binding,
         )
 
     async def handle_dispatch(ctx: ToolContext, args: BaseModel) -> BaseModel:
@@ -173,7 +178,18 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
                 "Cần cung cấp phiên bản vận đơn (version) để xuất chuyến.",
             )
 
-        order_version = args.order_version or 1
+        binding = (
+            ctx.approval.execution_binding
+            if ctx.approval is not None and isinstance(ctx.approval.execution_binding, dict)
+            else {}
+        )
+        order_version = (
+            args.order_version
+            if args.order_version is not None
+            else int(binding["orderVersion"])
+            if "orderVersion" in binding
+            else 1
+        )
         request_id = str(uuid.uuid4())
         raw = await client.request(
             "fulfillment",

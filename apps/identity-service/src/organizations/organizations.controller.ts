@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Put,
   Get,
   Patch,
   Delete,
@@ -14,6 +15,7 @@ import { OrganizationService } from './services/organization.service.js';
 import { CreateOrganizationDto } from './dto/create-organization.dto.js';
 import { UpdateOrganizationDto } from './dto/update-organization.dto.js';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto.js';
+import { UpdateTenantAiInstructionsDto } from './dto/update-tenant-ai-instructions.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
 import type { AuthenticatedUser } from '../auth/interfaces/jwt-payload.interface.js';
@@ -47,6 +49,39 @@ export class OrganizationsController {
     @Body() dto: UpdateOrganizationDto,
   ) {
     return this.organizationService.updateOrganization(user.id, tenantId, dto);
+  }
+
+  @Get(':tenantId/ai-instructions')
+  async getTenantAiInstructions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tenantId') tenantId: string,
+  ) {
+    return this.organizationService.getTenantAiInstructions(user.id, tenantId);
+  }
+
+  @Put(':tenantId/ai-instructions')
+  async updateTenantAiInstructions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tenantId') tenantId: string,
+    @Body() dto: UpdateTenantAiInstructionsDto,
+  ) {
+    return this.organizationService.updateTenantAiInstructions(
+      user.id,
+      tenantId,
+      dto,
+    );
+  }
+
+  @Delete(':tenantId/ai-instructions')
+  @HttpCode(HttpStatus.OK)
+  async resetTenantAiInstructions(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('tenantId') tenantId: string,
+  ) {
+    return this.organizationService.resetTenantAiInstructions(
+      user.id,
+      tenantId,
+    );
   }
 
   @Post(':tenantId/set-default')

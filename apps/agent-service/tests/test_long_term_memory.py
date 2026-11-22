@@ -234,11 +234,18 @@ async def test_multi_tenant_and_multi_user_isolation() -> None:
 
 
 async def test_profile_lazy_sync_filters_pii_and_caches() -> None:
-    calls = 0
+    profile_calls = 0
+    ai_instruction_calls = 0
 
     def handler(request: httpx.Request) -> httpx.Response:
-        nonlocal calls
-        calls += 1
+        nonlocal profile_calls, ai_instruction_calls
+        if request.url.path == "/api/v1/auth/organizations/t1/ai-instructions":
+            ai_instruction_calls += 1
+            return httpx.Response(
+                200,
+                json={"tenantId": "t1", "customInstructions": None, "enabled": True, "version": 1},
+            )
+        profile_calls += 1
         assert request.url.path == "/api/v1/auth/me"
         return httpx.Response(
             200,
@@ -283,7 +290,8 @@ async def test_profile_lazy_sync_filters_pii_and_caches() -> None:
     )
     await service_client.aclose()
 
-    assert calls == 1  # Second turn in new thread hit the store cache
+    assert profile_calls == 1  # Second turn in new thread hit the store cache
+    assert ai_instruction_calls == 1  # Tenant AI instructions also hit the store cache
     sys_prompt = str(model.recorded_inputs[-1][0].content)
     assert "Nguyễn Quốc Huy" in sys_prompt
     assert "LogiX Vietnam (LOGIX-VN)" in sys_prompt
