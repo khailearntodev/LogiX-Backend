@@ -55,6 +55,17 @@ export class InvitationsController {
     return this.invitationsService.getInvitations(tenantId);
   }
 
+  @Get(':id/link')
+  @RequirePermissions('iam:member:invite')
+  async getInvitationLink(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+    @Headers('x-tenant-id') headerTenantId?: string,
+  ) {
+    const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
+    return this.invitationsService.getInvitationLink(tenantId, id);
+  }
+
   @Post(':id/resend')
   @HttpCode(HttpStatus.OK)
   @RequirePermissions('iam:member:invite')

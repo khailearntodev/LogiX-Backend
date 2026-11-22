@@ -7,6 +7,7 @@ import {
   Inject,
   forwardRef,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import { PrismaService } from '../../database/prisma.service.js';
@@ -24,7 +25,12 @@ export class InvitationsService {
     private readonly tokenService: TokenService,
     private readonly mailService: MailService,
     private readonly rolesService: RolesService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private getFrontendUrl(): string {
+    return this.configService.getOrThrow<string>('FRONTEND_URL').replace(/\/+$/, '');
+  }
 
   /**
    * Tạo lời mời tham gia tổ chức kèm danh sách vai trò (roleIds) được chọn trước
@@ -106,7 +112,7 @@ export class InvitationsService {
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3009';
+    const frontendUrl = this.getFrontendUrl();
     const inviteLink = `${frontendUrl}/invite?token=${token}`;
 
     // 7. Gửi email mời thành viên qua Gmail SMTP
@@ -201,6 +207,38 @@ export class InvitationsService {
   }
 
   /**
+   * Lấy liên kết mời hiện tại (chỉ đọc, không xoay token, không gửi lại email)
+   */
+  async getInvitationLink(tenantId: string, invitationId: string) {
+    const invitation = await this.prisma.tenantInvitation.findFirst({
+      where: { id: invitationId, tenantId, deletedAt: null },
+      select: {
+        id: true,
+        token: true,
+        status: true,
+        expiresAt: true,
+      },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Không tìm thấy lời mời trong tổ chức này');
+    }
+
+    if (invitation.status !== 'PENDING' || invitation.expiresAt < new Date()) {
+      throw new BadRequestException(
+        'Chỉ có thể sao chép liên kết của lời mời đang ở trạng thái chờ và còn hạn',
+      );
+    }
+
+    const frontendUrl = this.getFrontendUrl();
+    return {
+      id: invitation.id,
+      inviteLink: `${frontendUrl}/invite?token=${invitation.token}`,
+      expiresAt: invitation.expiresAt,
+    };
+  }
+
+  /**
    * Gửi lại lời mời (Gia hạn thời hạn, sinh token mới và chuyển về PENDING)
    */
   async resendInvitation(tenantId: string, invitationId: string) {
@@ -238,7 +276,7 @@ export class InvitationsService {
     });
 
     const safeRoles = roles || [];
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3009';
+    const frontendUrl = this.getFrontendUrl();
     const inviteLink = `${frontendUrl}/invite?token=${newToken}`;
 
     // Gửi email cập nhật qua Gmail SMTP

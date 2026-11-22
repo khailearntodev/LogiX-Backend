@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import {
   BadRequestException,
   ConflictException,
@@ -73,6 +74,9 @@ describe('InvitationsService', () => {
         { provide: MailService, useValue: mailService },
         { provide: RolesService, useValue: {
           getEffectivePermissions: effectivePermissions,
+        } },
+        { provide: ConfigService, useValue: {
+          getOrThrow: vi.fn().mockReturnValue('https://app.logix.test'),
         } },
       ],
     }).compile();
@@ -373,6 +377,41 @@ describe('InvitationsService', () => {
         where: { id: 'inv-valid' },
         data: expect.objectContaining({ status: 'ACCEPTED' }),
       });
+    });
+  });
+
+  describe('getInvitationLink', () => {
+    it('returns existing invite link without rotating token or sending email', async () => {
+      const expiresAt = new Date(Date.now() + 60_000);
+      prisma.tenantInvitation.findFirst.mockResolvedValue({
+        id: 'inv-1',
+        token: 'existing_token_abc',
+        status: 'PENDING',
+        expiresAt,
+      });
+
+      const result = await invitationsService.getInvitationLink('tenant-1', 'inv-1');
+
+      expect(result).toEqual({
+        id: 'inv-1',
+        inviteLink: 'https://app.logix.test/invite?token=existing_token_abc',
+        expiresAt,
+      });
+      expect(mailService.sendInvitationEmail).not.toHaveBeenCalled();
+      expect(prisma.tenantInvitation.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects expired or non-pending invitations', async () => {
+      prisma.tenantInvitation.findFirst.mockResolvedValue({
+        id: 'inv-expired',
+        token: 'old_token',
+        status: 'PENDING',
+        expiresAt: new Date(Date.now() - 10_000),
+      });
+
+      await expect(
+        invitationsService.getInvitationLink('tenant-1', 'inv-expired'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

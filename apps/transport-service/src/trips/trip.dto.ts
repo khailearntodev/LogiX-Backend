@@ -144,6 +144,12 @@ export const eligibleShipmentsQuerySchema = z
   })
   .strict();
 
+export const resourceAvailabilityQuerySchema = z
+  .object({
+    excludeTripId: uuid.optional(),
+  })
+  .strict();
+
 export type CreateTripDto = z.infer<typeof createTripSchema>;
 export type UpdateTripDto = z.infer<typeof updateTripSchema>;
 export type AssignmentDto = z.infer<typeof assignmentSchema>;

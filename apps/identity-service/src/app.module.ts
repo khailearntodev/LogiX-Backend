@@ -20,6 +20,7 @@ import { z } from 'zod';
     LogixConfigModule.forRoot({
       schema: databaseConfigSchema.extend({
         INTERNAL_SERVICE_JWT_SECRET: z.string().min(32),
+        FRONTEND_URL: z.string().url(),
       }),
       envFilePath: ['apps/identity-service/.env', '.env'],
     }),
