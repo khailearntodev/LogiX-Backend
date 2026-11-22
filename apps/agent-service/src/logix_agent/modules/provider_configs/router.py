@@ -12,6 +12,12 @@ from pydantic.alias_generators import to_camel
 from logix_agent.config import settings
 from logix_agent.modules.auth import Actor, get_current_actor
 from logix_agent.modules.provider_configs.models import LlmProviderConfig
+from logix_agent.modules.provider_configs.model_catalog import (
+    ModelCatalogError,
+    ModelCatalogProviderNotConfiguredError,
+    ModelCatalogProviderUnsupportedError,
+    list_provider_models,
+)
 from logix_agent.modules.provider_configs.repository import (
     ProviderConfigVersionConflictError,
 )
@@ -73,6 +79,20 @@ class ModelConfigTestResponse(BaseModel):
     ok: bool = True
     provider: str
     model: str
+
+
+class ModelOption(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    id: str
+    display_name: str
+
+
+class ModelCatalogResponse(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    provider: str
+    models: list[ModelOption]
 
 
 def get_provider_config_service(request: Request) -> ProviderConfigService:
@@ -140,6 +160,31 @@ async def get_model_config(
     return _response(service, row)
 
 
+@router.get("/model-config/models", response_model=ModelCatalogResponse)
+async def get_model_catalog(
+    provider: str,
+    actor: Actor = Depends(get_current_actor),
+) -> ModelCatalogResponse:
+    if not has_model_config_permission(actor, "agent:model-config:read"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="MODEL_CONFIG_READ_REQUIRED",
+        )
+    try:
+        models = await list_provider_models(provider, settings=settings)
+    except ModelCatalogProviderNotConfiguredError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.code) from None
+    except ModelCatalogProviderUnsupportedError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.code) from None
+    except ModelCatalogError:
+        logger.warning("Provider model catalog request failed for provider=%s", provider)
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="MODEL_CATALOG_UNAVAILABLE") from None
+    return ModelCatalogResponse(
+        provider=provider.strip().lower(),
+        models=models,
+    )
+
+
 @router.put("/model-config", response_model=ModelConfigResponse)
 async def update_model_config(
     body: ModelConfigUpdate,
@@ -194,6 +239,8 @@ async def test_model_config(
 
 __all__ = [
     "ModelConfigInput",
+    "ModelCatalogResponse",
+    "ModelOption",
     "ModelConfigResponse",
     "ModelConfigTestResponse",
     "ModelConfigUpdate",
