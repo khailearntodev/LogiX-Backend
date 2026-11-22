@@ -310,4 +310,54 @@ describe('Transport trip queries', () => {
       { shipmentId: missingShipmentId, weight: null, volume: null },
     ]);
   });
+
+  it('returns busy drivers and vehicles from active trips only, excluding excludeTripId', async () => {
+    const tenantId = randomUUID();
+    const excludeTripId = randomUUID();
+    const busyTripId = randomUUID();
+    const driverId = randomUUID();
+    const vehicleId = randomUUID();
+    const findMany = vi.fn().mockResolvedValue([
+      {
+        id: busyTripId,
+        tripNumber: 'TR-BUSY-1',
+        status: 'IN_PROGRESS',
+        driverId,
+        vehicleId,
+      },
+    ]);
+    const service = new TripQueryService(
+      {
+        deliveryTrip: { findMany },
+      } as unknown as PrismaService,
+      {} as FulfillmentClient,
+      {} as MasterDataClient,
+    );
+
+    const result = await service.resourceAvailability(tenantId, excludeTripId);
+
+    expect(findMany).toHaveBeenCalledWith({
+      where: {
+        tenantId,
+        deletedAt: null,
+        status: { in: ['APPROVED', 'IN_PROGRESS'] },
+        id: { not: excludeTripId },
+      },
+      select: {
+        id: true,
+        tripNumber: true,
+        status: true,
+        driverId: true,
+        vehicleId: true,
+      },
+    });
+    expect(result).toEqual({
+      busyDrivers: [
+        { driverId, tripId: busyTripId, tripNumber: 'TR-BUSY-1', status: 'IN_PROGRESS' },
+      ],
+      busyVehicles: [
+        { vehicleId, tripId: busyTripId, tripNumber: 'TR-BUSY-1', status: 'IN_PROGRESS' },
+      ],
+    });
+  });
 });

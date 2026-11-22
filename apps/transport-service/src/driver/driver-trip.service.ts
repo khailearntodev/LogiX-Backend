@@ -142,6 +142,8 @@ export class DriverTripService {
           status: stop.status,
           version: toSafeVersion(stop.version),
           isNext: stop.id === next?.id,
+          latitude: stop.latitude?.toFixed(6) ?? null,
+          longitude: stop.longitude?.toFixed(6) ?? null,
           contact: {
             recipientName: address.recipientName ?? null,
             phone: address.phone ?? null,
