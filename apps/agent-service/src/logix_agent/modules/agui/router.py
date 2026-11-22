@@ -10,7 +10,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import TYPE_CHECKING, Literal
 
-from ag_ui.core import EventType, ResumeEntry, RunAgentInput, RunErrorEvent
+from ag_ui.core import (
+    EventType,
+    ResumeEntry,
+    RunAgentInput,
+    RunErrorEvent,
+    RunFinishedEvent,
+)
 from ag_ui.encoder import EventEncoder
 from ag_ui_langgraph import LangGraphAgent
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -231,20 +237,48 @@ def _stream_agent_events(
     async def event_stream() -> AsyncIterator[str]:
         logger.info(start_log)
         status_now = EXECUTION_SUCCEEDED
+        emitted_terminal = False
         assistant_buffer = runtime.conversation_recorder.new_assistant_buffer(
             fallback_message_id=execution_id
         )
         try:
             async for event in agent.run(agent_input):
-                if isinstance(event, RunErrorEvent):
-                    logger.warning("%s agent run error: %s", tag, event.message)
-                elif getattr(event, "type", None) == EventType.TEXT_MESSAGE_CONTENT:
+                event_type = getattr(event, "type", None)
+                if isinstance(event, RunErrorEvent) or event_type == EventType.RUN_ERROR:
+                    emitted_terminal = True
+                    logger.warning("%s agent run error: %s", tag, getattr(event, "message", ""))
+                elif event_type == EventType.RUN_FINISHED:
+                    emitted_terminal = True
+                elif event_type == EventType.TEXT_MESSAGE_CONTENT:
                     assistant_buffer.append_delta(
                         getattr(event, "delta", None),
                         message_id=getattr(event, "message_id", None),
                     )
                 status_now = _next_status(status_now, event)
                 yield encoder.encode(_sanitize(event))
+            if not emitted_terminal:
+                emitted_terminal = True
+                yield encoder.encode(
+                    RunFinishedEvent(
+                        type=EventType.RUN_FINISHED,
+                        thread_id=thread_id,
+                        run_id=execution_id,
+                    )
+                )
+        except Exception as exc:
+            status_now = EXECUTION_FAILED
+            logger.exception("%s unhandled error during agent stream", tag)
+            if not emitted_terminal:
+                emitted_terminal = True
+                yield encoder.encode(
+                    _sanitize(
+                        RunErrorEvent(
+                            type=EventType.RUN_ERROR,
+                            message=str(exc),
+                            code=INTERNAL,
+                        )
+                    )
+                )
         except BaseException:
             status_now = EXECUTION_FAILED
             raise

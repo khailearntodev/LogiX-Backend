@@ -1,4 +1,9 @@
-"""Driver self-service and delivery stop confirmation tools backed by transport-service."""
+"""Driver self-service and delivery stop confirmation tools backed by transport-service.
+
+Supports both:
+- Assigned Driver self-service confirmation (direct deliver/fail with Confirmation Gate).
+- SUPER_ADMIN acting on behalf of a driver (requires acting_reason and backend action-preview previewToken).
+"""
 
 from __future__ import annotations
 
@@ -78,6 +83,10 @@ class ListMyTripsIn(PageIn):
         "current",
         description="Trip scope: 'current' for active trips or 'history' for completed trips",
     )
+    driver_id: UUID | None = Field(
+        None,
+        description="Optional driver profile id filter (supported for SUPER_ADMIN inspection)",
+    )
 
 
 class DriverTripIdIn(BaseModel):
@@ -85,15 +94,24 @@ class DriverTripIdIn(BaseModel):
 
 
 class CompleteMyDeliveryStopIn(BaseModel):
-    trip_id: UUID = Field(description="Assigned delivery trip id (must be IN_PROGRESS)")
+    trip_id: UUID = Field(description="Delivery trip id (must be IN_PROGRESS)")
     stop_id: UUID | None = Field(
         None,
         description="Target stop id; if omitted, automatically selects the next PENDING stop in sequence",
     )
+    acting_reason: str | None = Field(
+        None,
+        min_length=1,
+        max_length=500,
+        description=(
+            "Mandatory ONLY when a SUPER_ADMIN confirms a stop on behalf of the assigned driver; "
+            "omit when the assigned driver confirms their own stop."
+        ),
+    )
 
 
 class FailMyDeliveryStopIn(BaseModel):
-    trip_id: UUID = Field(description="Assigned delivery trip id (must be IN_PROGRESS)")
+    trip_id: UUID = Field(description="Delivery trip id (must be IN_PROGRESS)")
     reason: str = Field(
         ...,
         min_length=1,
@@ -104,6 +122,15 @@ class FailMyDeliveryStopIn(BaseModel):
         None,
         description="Target stop id; if omitted, automatically selects the next PENDING stop in sequence",
     )
+    acting_reason: str | None = Field(
+        None,
+        min_length=1,
+        max_length=500,
+        description=(
+            "Mandatory ONLY when a SUPER_ADMIN records a failure on behalf of the assigned driver; "
+            "omit when the assigned driver records their own stop."
+        ),
+    )
 
 
 class DriverStopActionReceiptOut(View):
@@ -113,10 +140,16 @@ class DriverStopActionReceiptOut(View):
     shipment_id: UUID
     status: str
     reason: str | None = None
+    acting_reason: str | None = None
+    actor_mode: str | None = None
     attempt: int = 1
     occurred_at: datetime
     trip_version: int
     stop_version: int
+
+
+def _is_super_admin(ctx: ToolContext) -> bool:
+    return ctx.actor.is_super_admin or ctx.actor.role == "SUPER_ADMIN"
 
 
 def _format_address(contact: Mapping[str, Any] | None) -> str:
@@ -174,7 +207,7 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             name="list_my_assigned_trips",
             description=(
                 "List delivery trips assigned to the currently logged-in driver "
-                "(supports scope='current' or 'history')."
+                "(supports scope='current' or 'history', and optional driver_id filter for SUPER_ADMIN)."
             ),
             service="transport",
             path=BASE,
@@ -188,7 +221,7 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             client=client,
             name="get_my_assigned_trip",
             description=(
-                "Get full details of one delivery trip assigned to the current driver, "
+                "Get full details of one delivery trip assigned to the current driver (or inspected by SUPER_ADMIN), "
                 "including stops, next stop sequence, and recipient delivery addresses."
             ),
             service="transport",
@@ -206,7 +239,29 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
         stop_id: UUID | None,
         outcome: Literal["DELIVERED", "FAILED"],
         reason: str | None = None,
+        acting_reason: str | None = None,
     ) -> PreviewResult:
+        super_admin = _is_super_admin(ctx)
+        cleaned_acting_reason = acting_reason.strip() if isinstance(acting_reason, str) else ""
+        cleaned_reason = reason.strip() if isinstance(reason, str) else ""
+
+        if super_admin and not cleaned_acting_reason:
+            raise ToolError(
+                "ACTING_REASON_REQUIRED",
+                "Tài khoản SUPER_ADMIN bắt buộc phải cung cấp lý do thao tác thay tài xế (acting_reason) "
+                "trước khi xác nhận điểm dừng.",
+            )
+        if not super_admin and cleaned_acting_reason:
+            raise ToolError(
+                "DRIVER_CANNOT_ACT_AS_ADMIN",
+                "Tài xế tự xác nhận điểm dừng không được truyền lý do thao tác thay (acting_reason).",
+            )
+        if outcome == "FAILED" and not cleaned_reason:
+            raise ToolError(
+                "FAILURE_REASON_REQUIRED",
+                "Bắt buộc phải nhập lý do khi ghi nhận giao hàng thất bại.",
+            )
+
         raw = await client.request("transport", "GET", f"{BASE}/{trip_id}", ctx)
         if not isinstance(raw, Mapping) or "version" not in raw:
             raise ToolError(
@@ -222,6 +277,40 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
 
         trip_version = int(raw["version"])
         stop_version = int(stop["version"])
+
+        binding: dict[str, Any] = {
+            "tripId": str(trip_id),
+            "stopId": resolved_stop_id,
+            "expectedTripVersion": trip_version,
+            "expectedStopVersion": stop_version,
+        }
+
+        if super_admin:
+            preview_payload: dict[str, Any] = {
+                "action": "DELIVER" if outcome == "DELIVERED" else "FAIL",
+                "expectedTripVersion": trip_version,
+                "expectedStopVersion": stop_version,
+                "actingReason": cleaned_acting_reason,
+            }
+            if outcome == "FAILED":
+                preview_payload["reason"] = cleaned_reason
+            admin_preview = await client.request(
+                "transport",
+                "POST",
+                f"{BASE}/{trip_id}/stops/{resolved_stop_id}/action-preview",
+                ctx,
+                json=preview_payload,
+            )
+            if not isinstance(admin_preview, Mapping) or not isinstance(
+                admin_preview.get("previewToken"), str
+            ):
+                raise ToolError(
+                    TOOL_BAD_RESPONSE,
+                    "Dịch vụ vận tải không trả về mã xác nhận previewToken hợp lệ cho SUPER_ADMIN.",
+                )
+            binding["previewToken"] = admin_preview["previewToken"]
+            binding["actingReason"] = cleaned_acting_reason
+
         trip_number = str(raw.get("tripNumber") or str(trip_id)[:12])
         shipment_number = str(stop.get("shipmentNumber") or str(stop.get("shipmentId") or "")[:12])
         sequence = stop.get("approvedSequence")
@@ -236,8 +325,11 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             {"label": "Người nhận", "value": recipient_name},
             {"label": "Địa chỉ giao", "value": address_text},
         ]
-        if outcome == "FAILED" and reason:
-            attributes.append({"label": "Lý do thất bại", "value": reason.strip()})
+        if super_admin:
+            attributes.append({"label": "Chế độ thao tác", "value": "SUPER_ADMIN thay tài xế"})
+            attributes.append({"label": "Lý do thao tác thay", "value": cleaned_acting_reason})
+        if outcome == "FAILED":
+            attributes.append({"label": "Lý do thất bại", "value": cleaned_reason})
 
         if outcome == "DELIVERED":
             ui: dict[str, Any] = {
@@ -275,17 +367,13 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
                 "shipmentNumber": shipment_number,
                 "approvedSequence": sequence,
                 "outcome": outcome,
-                "reason": reason.strip() if reason else None,
+                "reason": cleaned_reason or None,
+                "actingReason": cleaned_acting_reason or None,
                 "expectedTripVersion": trip_version,
                 "expectedStopVersion": stop_version,
                 "ui": ui,
             },
-            execution_binding={
-                "tripId": str(trip_id),
-                "stopId": resolved_stop_id,
-                "expectedTripVersion": trip_version,
-                "expectedStopVersion": stop_version,
-            },
+            execution_binding=binding,
         )
 
     async def _execute_stop_action(
@@ -325,6 +413,12 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             "expectedStopVersion": expected_stop_version,
             "confirmed": True,
         }
+        if isinstance(binding.get("previewToken"), str) and isinstance(
+            binding.get("actingReason"), str
+        ):
+            payload["previewToken"] = binding["previewToken"]
+            payload["actingReason"] = binding["actingReason"]
+
         if endpoint_suffix == "fail":
             cleaned_reason = (reason or "").strip()
             if not cleaned_reason:
@@ -355,6 +449,7 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             trip_id=args.trip_id,
             stop_id=args.stop_id,
             outcome="DELIVERED",
+            acting_reason=args.acting_reason,
         )
 
     async def handle_complete(ctx: ToolContext, args: BaseModel) -> DriverStopActionReceiptOut:
@@ -373,6 +468,7 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
             stop_id=args.stop_id,
             outcome="FAILED",
             reason=args.reason,
+            acting_reason=args.acting_reason,
         )
 
     async def handle_fail(ctx: ToolContext, args: BaseModel) -> DriverStopActionReceiptOut:
@@ -388,7 +484,8 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
         ToolSpec(
             name="complete_my_delivery_stop",
             description=(
-                "Mark the driver's next pending delivery stop on an IN_PROGRESS trip as DELIVERED. "
+                "Mark the next pending delivery stop on an IN_PROGRESS trip as DELIVERED. "
+                "Supports both the assigned driver and SUPER_ADMIN acting on behalf of a driver (with acting_reason). "
                 "SENSITIVE: requires preview and explicit confirmation."
             ),
             risk_level=RiskLevel.WRITE,
@@ -404,7 +501,8 @@ def register(registry: ToolRegistry, client: ServiceClient) -> None:
         ToolSpec(
             name="fail_my_delivery_stop",
             description=(
-                "Mark the driver's next pending delivery stop on an IN_PROGRESS trip as FAILED with a mandatory reason. "
+                "Mark the next pending delivery stop on an IN_PROGRESS trip as FAILED with a mandatory reason. "
+                "Supports both the assigned driver and SUPER_ADMIN acting on behalf of a driver (with acting_reason). "
                 "SENSITIVE: requires preview and explicit confirmation."
             ),
             risk_level=RiskLevel.WRITE,

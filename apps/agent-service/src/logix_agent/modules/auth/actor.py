@@ -22,6 +22,7 @@ class Actor:
     user_id: str
     tenant_id: str
     role: str | None = None
+    is_super_admin: bool = False
     permissions: frozenset[str] = frozenset()
     # Forwarded to downstream services; kept out of repr so it never reaches logs.
     access_token: str | None = field(default=None, repr=False)
@@ -65,6 +66,7 @@ def get_current_actor(
 
     # Optional claims: identity-service does not issue them yet; downstream services stay authoritative.
     role = payload.get("role")
+    is_super_admin = payload.get("isSuperAdmin") is True
     raw_permissions = payload.get("permissions")
     permissions = (
         frozenset(p for p in raw_permissions if isinstance(p, str))
@@ -75,6 +77,7 @@ def get_current_actor(
         user_id=user_id,
         tenant_id=tenant_id,
         role=role if isinstance(role, str) else None,
+        is_super_admin=is_super_admin,
         permissions=permissions,
         access_token=credentials.credentials,
     )

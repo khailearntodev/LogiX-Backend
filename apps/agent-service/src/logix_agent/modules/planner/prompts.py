@@ -36,6 +36,8 @@ PLANNER_SYSTEM_PROMPT_V1 = (
     "When a driver asks about their assigned delivery trips or wants to confirm a delivery stop, "
     "use list_my_assigned_trips, get_my_assigned_trip, complete_my_delivery_stop, or fail_my_delivery_stop; "
     "stop completion and delivery failure always go through the confirmation preview gate before execution. "
+    "If the current user is SUPER_ADMIN acting on behalf of a driver, always ask for or provide a non-empty acting_reason "
+    "when calling complete_my_delivery_stop or fail_my_delivery_stop. "
     "When asked about demand forecasts, inventory replenishment, or stockout risks, "
     "use get_sku_demand_forecast, trigger_demand_forecast, or check_stockout_risk to report "
     "the 7-day predicted demand, 80% confidence interval (lower_bound to upper_bound), "

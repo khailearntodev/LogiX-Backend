@@ -788,3 +788,130 @@ async def test_driver_delivery_stop_complete_and_fail_confirmation_gate() -> Non
     fail_body = json.loads(fail_req.content)
     assert fail_body["reason"] == "Khách không có mặt tại kho"
     assert fail_body["confirmed"] is True
+
+
+async def test_super_admin_can_confirm_driver_stop_with_acting_reason_and_preview_token() -> None:
+    import json
+
+    trip_id = str(uuid.uuid4())
+    stop1_id = str(uuid.uuid4())
+    ship1_id = str(uuid.uuid4())
+    approval_uuid = str(uuid.uuid4())
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "GET" and request.url.path == f"/api/v1/driver/trips/{trip_id}":
+            return httpx.Response(
+                200,
+                json={
+                    "tripId": trip_id,
+                    "tripNumber": "TR-SA-001",
+                    "status": "IN_PROGRESS",
+                    "warehouseId": WH,
+                    "version": 3,
+                    "nextStopId": stop1_id,
+                    "stops": [
+                        {
+                            "stopId": stop1_id,
+                            "shipmentId": ship1_id,
+                            "shipmentNumber": "SH-201",
+                            "approvedSequence": 1,
+                            "status": "PENDING",
+                            "version": 1,
+                            "isNext": True,
+                            "contact": {"recipientName": "Kho Hoàng Anh"},
+                        }
+                    ],
+                },
+            )
+        if request.method == "POST" and request.url.path.endswith("/action-preview"):
+            return httpx.Response(
+                200,
+                json={
+                    "tripId": trip_id,
+                    "stopId": stop1_id,
+                    "action": "DELIVER",
+                    "previewToken": "signed-admin-preview-token",
+                },
+            )
+        if request.method == "POST" and request.url.path.endswith("/deliver"):
+            return httpx.Response(
+                200,
+                json={
+                    "requestId": approval_uuid,
+                    "tripId": trip_id,
+                    "tripStopId": stop1_id,
+                    "shipmentId": ship1_id,
+                    "status": "DELIVERED",
+                    "reason": None,
+                    "actingReason": "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ",
+                    "actorMode": "SUPER_ADMIN",
+                    "attempt": 1,
+                    "occurredAt": "2026-11-22T05:00:00.000Z",
+                    "tripVersion": 4,
+                    "stopVersion": 2,
+                },
+            )
+        return httpx.Response(404)
+
+    registry = _registry(handler)
+    sa_actor = Actor(
+        user_id="sa-1",
+        tenant_id="t1",
+        role="SUPER_ADMIN",
+        is_super_admin=True,
+        permissions=frozenset({"*"}),
+        access_token="sa-tok",
+    )
+    sa_ctx = ToolContext(actor=sa_actor, correlation_id="c-sa")
+
+    # 1. Negative proof: SUPER_ADMIN without acting_reason is blocked immediately in preview
+    with pytest.raises(ToolError) as err_missing:
+        await registry.preview("complete_my_delivery_stop", sa_ctx, {"trip_id": trip_id})
+    assert err_missing.value.code == "ACTING_REASON_REQUIRED"
+
+    # 2. Positive proof: SUPER_ADMIN with acting_reason calls action-preview and binds previewToken
+    preview = await registry.preview(
+        "complete_my_delivery_stop",
+        sa_ctx,
+        {
+            "trip_id": trip_id,
+            "acting_reason": "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ",
+        },
+    )
+    assert preview.execution_binding is not None
+    assert preview.execution_binding["previewToken"] == "signed-admin-preview-token"
+    assert (
+        preview.execution_binding["actingReason"]
+        == "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ"
+    )
+    assert "previewToken" not in preview.summary
+
+    # 3. Execute forwards previewToken and actingReason to transport-service
+    approval = ApprovedAction(
+        approval_id=approval_uuid,
+        target_type="driver_delivery_stop",
+        target_id=f"{trip_id}:{stop1_id}",
+        target_version=3,
+        execution_binding=preview.execution_binding,
+    )
+    approved_ctx = ToolContext(actor=sa_actor, correlation_id="c-sa-2", approval=approval)
+    receipt = (
+        await registry.invoke(
+            "complete_my_delivery_stop",
+            approved_ctx,
+            {
+                "trip_id": trip_id,
+                "acting_reason": "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ",
+            },
+        )
+    ).model_dump(mode="json")
+    assert receipt["status"] == "DELIVERED"
+    assert receipt["actor_mode"] == "SUPER_ADMIN"
+
+    deliver_req = [r for r in seen if r.method == "POST" and r.url.path.endswith("/deliver")][0]
+    deliver_body = json.loads(deliver_req.content)
+    assert deliver_body["previewToken"] == "signed-admin-preview-token"
+    assert deliver_body["actingReason"] == "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ"
+    assert deliver_body["confirmed"] is True
