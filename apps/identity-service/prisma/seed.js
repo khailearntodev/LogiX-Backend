@@ -344,6 +344,22 @@ export const SYSTEM_PERMISSIONS = [
     name: 'Xuất dữ liệu báo cáo',
     description: 'Cho phép xuất dữ liệu ra file Excel/CSV/PDF',
   },
+  {
+    code: 'agent:model-config:read',
+    module: 'AGENT',
+    resource: 'model_config',
+    action: 'read',
+    name: 'Xem cấu hình mô hình AI',
+    description: 'Cho phép xem provider và model AI đang được tenant sử dụng',
+  },
+  {
+    code: 'agent:model-config:manage',
+    module: 'AGENT',
+    resource: 'model_config',
+    action: 'manage',
+    name: 'Quản lý cấu hình mô hình AI',
+    description: 'Cho phép thay đổi provider và model AI của tenant',
+  },
 ];
 
 async function main() {

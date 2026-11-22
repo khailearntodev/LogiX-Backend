@@ -62,6 +62,10 @@ from logix_agent.modules.registry.registry import ToolRegistry
 
 if TYPE_CHECKING:
     from logix_agent.modules.tools.http_client import ServiceClient
+    from logix_agent.modules.provider_configs.tenant_gateway import (
+        ResolvedTenantModel,
+        TenantModelResolver,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +110,7 @@ class AguiRuntime:
     execution_recorder: ExecutionRecorder
     store: BaseStore | None = None
     prompt_policy_version: str = "v1"
+    model_config_resolver: TenantModelResolver | None = None
 
 
 def build_agui_runtime(
@@ -119,6 +124,7 @@ def build_agui_runtime(
     thread_store: ThreadStore | None = None,
     service_client: ServiceClient | None = None,
     prompt_policy_version: str = "v1",
+    model_config_resolver: TenantModelResolver | None = None,
 ) -> AguiRuntime:
     """Build the unified planner runtime supporting ToolRegistry and Confirmation Gate."""
     if registry is None:
@@ -172,7 +178,32 @@ def build_agui_runtime(
         execution_recorder=execution_recorder,
         store=store,
         prompt_policy_version=prompt_policy_version,
+        model_config_resolver=model_config_resolver,
     )
+
+
+async def _begin_model_execution(
+    runtime: AguiRuntime, actor: Actor, execution_id: str
+) -> ResolvedTenantModel | None:
+    resolver = runtime.model_config_resolver
+    if resolver is None:
+        return None
+    try:
+        return await resolver.begin_execution(actor.tenant_id, execution_id)
+    except Exception as exc:
+        from logix_agent.modules.provider_configs.tenant_gateway import (
+            TenantModelConfigurationError,
+        )
+
+        if isinstance(exc, TenantModelConfigurationError):
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=exc.code,
+            ) from None
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="MODEL_CONFIG_UNAVAILABLE",
+        ) from None
 
 
 def get_agui_runtime(request: Request) -> AguiRuntime:
@@ -219,6 +250,8 @@ async def _record_final_status(
         )
     except Exception:
         logger.exception("%s failed to record execution status %s", tag, status_now)
+    if runtime.model_config_resolver is not None:
+        runtime.model_config_resolver.release_execution(actor.tenant_id, execution_id)
 
 
 def _stream_agent_events(
@@ -391,6 +424,8 @@ async def run_agent(
 ) -> StreamingResponse:
     conversation_id = await _claim_thread_or_404(runtime, input_data.thread_id, actor)
 
+    resolved_model = await _begin_model_execution(runtime, actor, input_data.run_id)
+
     tag = f"run={input_data.run_id[:8]} tenant={actor.tenant_id}"
     correlation_id = request.headers.get("x-correlation-id") or input_data.run_id
     # Created before streaming starts so a persistence failure is a clean error response.
@@ -402,6 +437,9 @@ async def run_agent(
         correlation_id=correlation_id,
         prompt_policy_version=runtime.prompt_policy_version,
         conversation_id=conversation_id,
+        provider=resolved_model.provider if resolved_model else None,
+        model=resolved_model.model if resolved_model else None,
+        model_version=str(resolved_model.version) if resolved_model else None,
     )
     await runtime.conversation_recorder.record_user_message(
         tenant_id=actor.tenant_id,
@@ -462,6 +500,8 @@ async def submit_decision(
             detail="approval_id is required in decision payload",
         )
 
+    resolved_model = await _begin_model_execution(runtime, actor, execution_id)
+
     try:
         await runtime.confirmation_service.record_decision(
             tenant_id=actor.tenant_id,
@@ -510,6 +550,9 @@ async def submit_decision(
         correlation_id=correlation_id,
         prompt_policy_version=runtime.prompt_policy_version,
         conversation_id=conversation_id,
+        provider=resolved_model.provider if resolved_model else None,
+        model=resolved_model.model if resolved_model else None,
+        model_version=str(resolved_model.version) if resolved_model else None,
     )
     await runtime.execution_recorder.set_execution_status(
         actor.tenant_id, execution_id, EXECUTION_RUNNING

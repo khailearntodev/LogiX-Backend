@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AGENT_MODEL_CONFIG_PERMISSIONS,
   FORECAST_PERMISSIONS,
   FULFILLMENT_PERMISSIONS,
   IAM_PERMISSIONS,
@@ -85,6 +86,11 @@ describe('shared permission codes (@logix/auth)', () => {
     expect(REPORT_PERMISSIONS).toEqual({
       ANALYTICS_READ: 'report:analytics:read',
       EXPORT_EXECUTE: 'report:export:execute',
+    });
+
+    expect(AGENT_MODEL_CONFIG_PERMISSIONS).toEqual({
+      READ: 'agent:model-config:read',
+      MANAGE: 'agent:model-config:manage',
     });
 
     expect(MEMBER_RESTRICTED_PERMISSIONS).toEqual([

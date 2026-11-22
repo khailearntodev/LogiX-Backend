@@ -31,9 +31,8 @@ class LlmProviderConfig(Base):
             postgresql_where=text("tenant_id IS NULL AND is_active = true AND deleted_at IS NULL"),
         ),
         Index(
-            "ux_active_tenant_provider_config",
+            "ux_active_tenant_model_config",
             "tenant_id",
-            "provider",
             unique=True,
             postgresql_where=text(
                 "tenant_id IS NOT NULL AND is_active = true AND deleted_at IS NULL"
