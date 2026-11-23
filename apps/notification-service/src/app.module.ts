@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { LogixConfigModule, databaseConfigSchema } from '@logix/config';
+import { LogixConfigModule } from '@logix/config';
 import { LogixLoggerModule } from '@logix/logger';
 import { GlobalExceptionFilter } from '@logix/errors';
+import { EventsModule } from './events/events.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
+import { notificationConfigSchema } from './config/notification-config.schema.js';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { DatabaseModule } from './database/database.module.js';
@@ -11,7 +14,7 @@ import { DatabaseModule } from './database/database.module.js';
   imports: [
     // Configuration with Zod validation — fails fast if env vars missing
     LogixConfigModule.forRoot({
-      schema: databaseConfigSchema,
+      schema: notificationConfigSchema,
     }),
 
     // Structured Pino logging with correlation ID propagation
@@ -21,6 +24,8 @@ import { DatabaseModule } from './database/database.module.js';
 
     // Service-owned database
     DatabaseModule,
+    EventsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
