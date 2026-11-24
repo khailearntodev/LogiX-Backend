@@ -6,7 +6,10 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { isUUID } from 'class-validator';
-import { MEMBER_RESTRICTED_PERMISSIONS } from '@logix/auth';
+import {
+  MEMBER_RESTRICTED_PERMISSIONS,
+  OWNER_ONLY_DEFAULT_PERMISSIONS,
+} from '@logix/auth';
 import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateRoleDto } from '../dto/create-role.dto.js';
@@ -16,6 +19,9 @@ export const SYSTEM_ROLE_CODES = ['OWNER', 'ADMIN', 'MEMBER'];
 export const BLACKLIST_ROLE_CODES = [...SYSTEM_ROLE_CODES, 'SUPER_ADMIN'];
 const RESTRICTED_MEMBER_PERMISSION_CODES = new Set<string>(
   MEMBER_RESTRICTED_PERMISSIONS,
+);
+const OWNER_ONLY_DEFAULT_PERMISSION_CODES = new Set<string>(
+  OWNER_ONLY_DEFAULT_PERMISSIONS,
 );
 
 @Injectable()
@@ -98,12 +104,14 @@ export class RolesService {
         permissionId: p.id,
       }));
 
-      // 2. ADMIN: Quyền vận hành và quản lý
-      const adminPerms = allPermissions.map((p) => ({
-        tenantId,
-        roleId: createdRoles['ADMIN'].id,
-        permissionId: p.id,
-      }));
+      // 2. ADMIN: Quyền vận hành và quản lý (không tự động cấp các quyền mặc định riêng của OWNER)
+      const adminPerms = allPermissions
+        .filter((p) => !OWNER_ONLY_DEFAULT_PERMISSION_CODES.has(p.code))
+        .map((p) => ({
+          tenantId,
+          roleId: createdRoles['ADMIN'].id,
+          permissionId: p.id,
+        }));
 
       // 3. MEMBER: Chỉ các quyền xem (action === 'read')
       const memberPerms = allPermissions

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  AGENT_CONVERSATION_PERMISSIONS,
   AGENT_MODEL_CONFIG_PERMISSIONS,
   FORECAST_PERMISSIONS,
   FULFILLMENT_PERMISSIONS,
@@ -9,6 +10,7 @@ import {
   MASTER_DATA_PERMISSIONS,
   MEMBER_RESTRICTED_PERMISSIONS,
   ORDER_PERMISSIONS,
+  OWNER_ONLY_DEFAULT_PERMISSIONS,
   REPORT_PERMISSIONS,
   TRANSPORT_PERMISSIONS,
 } from './permission-codes.js';
@@ -93,9 +95,20 @@ describe('shared permission codes (@logix/auth)', () => {
       MANAGE: 'agent:model-config:manage',
     });
 
+    expect(AGENT_CONVERSATION_PERMISSIONS).toEqual({
+      READ: 'agent:conversation:read',
+      MANAGE: 'agent:conversation:manage',
+    });
+
+    expect(OWNER_ONLY_DEFAULT_PERMISSIONS).toEqual([
+      'agent:conversation:read',
+      'agent:conversation:manage',
+    ]);
+
     expect(MEMBER_RESTRICTED_PERMISSIONS).toEqual([
       'master-data:driver:read',
       'transport:driver:read',
+      'agent:conversation:read',
     ]);
   });
 });

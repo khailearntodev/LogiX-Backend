@@ -76,7 +76,18 @@ export const AGENT_MODEL_CONFIG_PERMISSIONS = {
   MANAGE: 'agent:model-config:manage',
 } as const;
 
+export const AGENT_CONVERSATION_PERMISSIONS = {
+  READ: 'agent:conversation:read',
+  MANAGE: 'agent:conversation:manage',
+} as const;
+
+export const OWNER_ONLY_DEFAULT_PERMISSIONS = [
+  AGENT_CONVERSATION_PERMISSIONS.READ,
+  AGENT_CONVERSATION_PERMISSIONS.MANAGE,
+] as const;
+
 export const MEMBER_RESTRICTED_PERMISSIONS = [
   MASTER_DATA_DRIVER_PERMISSIONS.READ,
   TRANSPORT_PERMISSIONS.DRIVER_READ,
+  AGENT_CONVERSATION_PERMISSIONS.READ,
 ] as const;
