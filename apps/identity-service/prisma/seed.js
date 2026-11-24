@@ -360,6 +360,22 @@ export const SYSTEM_PERMISSIONS = [
     name: 'Quản lý cấu hình mô hình AI',
     description: 'Cho phép thay đổi provider và model AI của tenant',
   },
+  {
+    code: 'agent:conversation:read',
+    module: 'AGENT',
+    resource: 'conversation',
+    action: 'read',
+    name: 'Xem hội thoại AI của tổ chức',
+    description: 'Cho phép xem, lọc và đọc chi tiết các cuộc hội thoại AI thuộc tổ chức ở chế độ chỉ đọc',
+  },
+  {
+    code: 'agent:conversation:manage',
+    module: 'AGENT',
+    resource: 'conversation',
+    action: 'manage',
+    name: 'Quản lý hội thoại AI của tổ chức',
+    description: 'Cho phép đổi tiêu đề, lưu trữ và xóa mềm các cuộc hội thoại AI thuộc tổ chức',
+  },
 ];
 
 async function main() {

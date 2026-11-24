@@ -22,6 +22,11 @@ from logix_agent.modules.confirmations.service import (
     InMemoryConfirmationStore,
     SqlAlchemyConfirmationStore,
 )
+from logix_agent.modules.conversations.admin_service import (
+    InMemoryConversationAdminService,
+    SqlAlchemyConversationAdminService,
+)
+from logix_agent.modules.conversations.router import router as conversations_router
 from logix_agent.modules.conversations.service import (
     InMemoryThreadStore,
     SqlAlchemyThreadStore,
@@ -92,6 +97,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.provider_config_repository = None
     app.state.provider_config_service = None
     app.state.model_config_resolver = None
+    app.state.conversation_admin_service = None
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:
@@ -142,9 +148,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     thread_store: ThreadStore
     if use_database:
         thread_store = SqlAlchemyThreadStore(session_factory)
+        app.state.conversation_admin_service = SqlAlchemyConversationAdminService(session_factory)
         logger.info("Using SqlAlchemyThreadStore with PostgreSQL persistence.")
     else:
-        thread_store = InMemoryThreadStore()
+        mem_thread_store = InMemoryThreadStore()
+        thread_store = mem_thread_store
+        app.state.conversation_admin_service = InMemoryConversationAdminService(mem_thread_store)
 
     try:
         if app.state.provider_config_repository is not None:
@@ -180,6 +189,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.provider_config_repository = None
     app.state.provider_config_service = None
     app.state.model_config_resolver = None
+    app.state.conversation_admin_service = None
     await service_client.aclose()
     await store_stack.aclose()
     await checkpointer_stack.aclose()
@@ -199,6 +209,7 @@ app = FastAPI(
 )
 app.include_router(agui_router)
 app.include_router(provider_config_router)
+app.include_router(conversations_router)
 
 
 @app.exception_handler(StarletteHTTPException)
