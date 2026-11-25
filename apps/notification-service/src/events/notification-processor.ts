@@ -1,0 +1,371 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
+import { ZodError } from 'zod';
+import { Prisma } from '../generated/prisma/client.js';
+import { PrismaService } from '../database/prisma.service.js';
+import { NotificationCoreService } from '../notifications/notification-core.service.js';
+import {
+  NOTIFICATION_CONSUMER_NAME,
+  NOTIFICATION_DELIVERY_STATUSES,
+  NOTIFICATION_INBOX_OUTCOMES,
+  NOTIFICATION_RECIPIENT_TYPES,
+  type NotificationInboxOutcome,
+} from '../notifications/notification.constants.js';
+import { NOTIFICATION_CHANNELS } from '../notifications/notification.types.js';
+import { IdentityRecipientClient } from '../integrations/identity-recipient.client.js';
+import type { DomainEventEnvelope } from '@logix/messaging';
+import type { NotificationDraft } from './notification-draft.js';
+import {
+  InvalidNotificationEventError,
+  buildNotificationDraft,
+} from './event-builders.js';
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export type NotificationProcessOutcome = NotificationInboxOutcome | 'IGNORED';
+
+export interface NotificationProcessResult {
+  outcome: NotificationProcessOutcome;
+  notificationId?: string;
+  recipientUserIds?: string[];
+}
+
+type PersistResult =
+  | { outcome: 'DUPLICATE' | 'NO_RECIPIENTS' }
+  | { outcome: 'APPLIED'; notificationId: string; createdAt: Date };
+
+@Injectable()
+export class NotificationProcessor {
+  private readonly logger = new Logger(NotificationProcessor.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly recipients: IdentityRecipientClient,
+    private readonly core: NotificationCoreService,
+  ) {}
+
+  async handle(event: DomainEventEnvelope): Promise<NotificationProcessResult> {
+    let draft: NotificationDraft | null;
+    try {
+      draft = buildNotificationDraft(event);
+    } catch (error) {
+      if (
+        !(error instanceof ZodError) &&
+        !(error instanceof InvalidNotificationEventError)
+      ) {
+        throw error;
+      }
+      if (this.canRecordInbox(event)) {
+        await this.recordInbox(
+          event,
+          NOTIFICATION_INBOX_OUTCOMES.REJECTED_INVALID,
+          'INVALID_EVENT',
+        );
+      } else {
+        this.logger.warn({
+          eventId: event.eventId,
+          eventType: event.eventType,
+          message: 'Invalid notification event could not be persisted to inbox',
+        });
+      }
+      return { outcome: NOTIFICATION_INBOX_OUTCOMES.REJECTED_INVALID };
+    }
+
+    if (!draft) {
+      return { outcome: 'IGNORED' };
+    }
+
+    const existing = await this.prisma.inboxEvent.findUnique({
+      where: {
+        consumerName_eventId: {
+          consumerName: NOTIFICATION_CONSUMER_NAME,
+          eventId: event.eventId,
+        },
+      },
+    });
+    if (existing) {
+      return { outcome: NOTIFICATION_INBOX_OUTCOMES.DUPLICATE };
+    }
+
+    const recipientUserIds = await this.recipients.resolve(
+      event.tenantId,
+      draft.audience,
+    );
+    const result = await this.persist(event, draft, recipientUserIds);
+
+    if (result.outcome !== NOTIFICATION_INBOX_OUTCOMES.APPLIED) {
+      return { outcome: result.outcome, recipientUserIds };
+    }
+
+    const unreadCounts = await this.loadUnreadCounts(
+      event.tenantId,
+      recipientUserIds,
+    );
+    const createdAtIso = result.createdAt.toISOString();
+
+    for (const recipientUserId of recipientUserIds) {
+      try {
+        await this.core.dispatchInApp({
+          notificationId: result.notificationId,
+          tenantId: event.tenantId,
+          recipientUserId,
+          unreadCount: unreadCounts.get(recipientUserId),
+          payload: {
+            id: result.notificationId,
+            tenantId: event.tenantId,
+            type: draft.type,
+            title: draft.title,
+            body: draft.body,
+            link: draft.link,
+            severity: draft.severity,
+            entityType: draft.entityType,
+            entityId: draft.entityId,
+            data: draft.data,
+            createdAt: createdAtIso,
+            readAt: null,
+            archivedAt: null,
+          },
+        });
+      } catch (error) {
+        this.logger.warn({
+          notificationId: result.notificationId,
+          recipientUserId,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'In-app realtime delivery failed',
+        });
+      }
+    }
+
+    return {
+      outcome: result.outcome,
+      notificationId: result.notificationId,
+      recipientUserIds,
+    };
+  }
+
+  private async persist(
+    event: DomainEventEnvelope,
+    draft: NotificationDraft,
+    recipientUserIds: string[],
+  ): Promise<PersistResult> {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const existing = await tx.inboxEvent.findUnique({
+          where: {
+            consumerName_eventId: {
+              consumerName: NOTIFICATION_CONSUMER_NAME,
+              eventId: event.eventId,
+            },
+          },
+        });
+        if (existing) {
+          return { outcome: NOTIFICATION_INBOX_OUTCOMES.DUPLICATE };
+        }
+
+        if (recipientUserIds.length === 0) {
+          await tx.inboxEvent.create({
+            data: this.inboxData(event, NOTIFICATION_INBOX_OUTCOMES.NO_RECIPIENTS),
+          });
+          return { outcome: NOTIFICATION_INBOX_OUTCOMES.NO_RECIPIENTS };
+        }
+
+        const notificationId = randomUUID();
+        const created = await tx.notification.create({
+          data: {
+            id: notificationId,
+            tenantId: event.tenantId,
+            type: draft.type,
+            title: draft.title,
+            body: draft.body,
+            severity: draft.severity,
+            entityType: draft.entityType,
+            entityId: draft.entityId,
+            sourceEventId: event.eventId,
+            deduplicationKey: draft.deduplicationKey,
+            data: {
+              ...draft.data,
+              ...(draft.link ? { link: draft.link } : {}),
+            } as Prisma.InputJsonValue,
+          },
+          select: { id: true, createdAt: true },
+        });
+
+        const recipients = recipientUserIds.map((recipientId) => ({
+          id: randomUUID(),
+          tenantId: event.tenantId,
+          notificationId: created.id,
+          recipientType: NOTIFICATION_RECIPIENT_TYPES.USER,
+          recipientId,
+        }));
+        await tx.notificationRecipient.createMany({ data: recipients });
+        await tx.notificationDelivery.createMany({
+          data: recipients.map((recipient) => ({
+            id: randomUUID(),
+            notificationRecipientId: recipient.id,
+            channel: NOTIFICATION_CHANNELS.IN_APP,
+            status: NOTIFICATION_DELIVERY_STATUSES.SENT,
+            attemptCount: 1,
+            sentAt: created.createdAt,
+          })),
+        });
+        await tx.inboxEvent.create({
+          data: this.inboxData(event, NOTIFICATION_INBOX_OUTCOMES.APPLIED),
+        });
+
+        return {
+          outcome: NOTIFICATION_INBOX_OUTCOMES.APPLIED,
+          notificationId: created.id,
+          createdAt: created.createdAt,
+        };
+      });
+    } catch (error) {
+      if (!this.isDuplicateConstraintViolation(error)) throw error;
+      await this.recordInbox(
+        event,
+        NOTIFICATION_INBOX_OUTCOMES.DUPLICATE,
+        'DUPLICATE_EVENT',
+      );
+      return { outcome: NOTIFICATION_INBOX_OUTCOMES.DUPLICATE };
+    }
+  }
+
+  private async loadUnreadCounts(
+    tenantId: string,
+    recipientUserIds: string[],
+  ): Promise<Map<string, number>> {
+    const counts = new Map<string, number>();
+    if (recipientUserIds.length === 0) return counts;
+
+    try {
+      const grouped = await this.prisma.notificationRecipient.groupBy({
+        by: ['recipientId'],
+        where: {
+          tenantId,
+          recipientType: NOTIFICATION_RECIPIENT_TYPES.USER,
+          recipientId: { in: recipientUserIds },
+          readAt: null,
+          archivedAt: null,
+          deletedAt: null,
+        },
+        _count: { _all: true },
+      });
+
+      for (const row of grouped) {
+        counts.set(row.recipientId, row._count._all);
+      }
+    } catch (error) {
+      this.logger.warn({
+        tenantId,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to load unread notification counts',
+      });
+    }
+
+    return counts;
+  }
+
+  private async recordInbox(
+    event: DomainEventEnvelope,
+    outcome: 'REJECTED_INVALID' | 'DUPLICATE',
+    errorCode: string,
+  ): Promise<void> {
+    await this.prisma.inboxEvent.upsert({
+      where: {
+        consumerName_eventId: {
+          consumerName: NOTIFICATION_CONSUMER_NAME,
+          eventId: event.eventId,
+        },
+      },
+      create: this.inboxData(event, outcome, errorCode),
+      update: {},
+    });
+  }
+
+  private canRecordInbox(event: DomainEventEnvelope): boolean {
+    return (
+      [event.eventId, event.tenantId, event.aggregateId].every(
+        (value) => typeof value === 'string' && UUID_PATTERN.test(value),
+      ) && Number.isSafeInteger(event.aggregateVersion)
+    );
+  }
+
+  private inboxData(
+    event: DomainEventEnvelope,
+    outcome: NotificationInboxOutcome,
+    errorCode?: string,
+  ) {
+    return {
+      id: randomUUID(),
+      tenantId: event.tenantId,
+      eventId: event.eventId,
+      consumerName: NOTIFICATION_CONSUMER_NAME,
+      eventType: event.eventType,
+      aggregateId: event.aggregateId,
+      aggregateVersion: BigInt(event.aggregateVersion),
+      outcome,
+      errorCode,
+    };
+  }
+
+  private isDuplicateConstraintViolation(error: unknown): boolean {
+    if (
+      !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+      error.code !== 'P2002'
+    ) {
+      return false;
+    }
+
+    const meta = error.meta as Record<string, unknown> | undefined;
+    if (!meta) return false;
+
+    const target = meta.target;
+    if (typeof target === 'string' && DUPLICATE_INDEX_NAMES.has(target)) {
+      return true;
+    }
+
+    const driverError = meta.driverAdapterError as Record<string, unknown> | undefined;
+    const cause = driverError?.cause as Record<string, unknown> | undefined;
+    const constraint = cause?.constraint as Record<string, unknown> | undefined;
+    const indexName = constraint?.index;
+    if (typeof indexName === 'string' && DUPLICATE_INDEX_NAMES.has(indexName)) {
+      return true;
+    }
+
+    const rawFields = Array.isArray(target)
+      ? target
+      : Array.isArray(constraint?.fields)
+        ? constraint.fields
+        : [];
+    const fields = new Set(
+      rawFields.filter((value): value is string => typeof value === 'string'),
+    );
+
+    return (
+      hasAllFields(fields, [
+        ['consumer_name', 'consumerName'],
+        ['event_id', 'eventId'],
+      ]) ||
+      hasAllFields(fields, [
+        ['tenant_id', 'tenantId'],
+        ['deduplication_key', 'deduplicationKey'],
+      ])
+    );
+  }
+}
+
+const DUPLICATE_INDEX_NAMES = new Set([
+  'ux_inbox_consumer_event',
+  'ux_notification_event_recipient_scope',
+]);
+
+function hasAllFields(
+  fields: ReadonlySet<string>,
+  pairs: readonly [string, string][],
+): boolean {
+  return pairs.every(([snake, camel]) => fields.has(snake) || fields.has(camel));
+}
