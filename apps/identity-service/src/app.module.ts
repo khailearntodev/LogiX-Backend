@@ -13,6 +13,7 @@ import { MailModule } from './mail/mail.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { DriverUsersModule } from './driver-users/driver-users.module.js';
 import { z } from 'zod';
+import { NotificationRecipientsModule } from './notification-recipients/notification-recipients.module.js';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { z } from 'zod';
     IamModule,
     AdminModule,
     DriverUsersModule,
+    NotificationRecipientsModule,
   ],
   controllers: [AppController],
   providers: [

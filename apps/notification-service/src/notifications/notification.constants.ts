@@ -1,0 +1,58 @@
+import { TRANSPORT_PERMISSIONS } from '@logix/auth';
+
+export const NOTIFICATION_CONSUMER_NAME = 'notification-service';
+
+export const NOTIFICATION_TYPES = {
+  ORDER_PENDING_STOCK: 'ORDER_PENDING_STOCK',
+  TRIP_DISPATCHED: 'TRIP_DISPATCHED',
+  DELIVERY_FAILED: 'DELIVERY_FAILED',
+  DELIVERY_COMPLETED: 'DELIVERY_COMPLETED',
+} as const;
+export type NotificationType =
+  (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+
+export const NOTIFICATION_SEVERITIES = {
+  INFO: 'INFO',
+  WARNING: 'WARNING',
+  CRITICAL: 'CRITICAL',
+} as const;
+export type NotificationSeverity =
+  (typeof NOTIFICATION_SEVERITIES)[keyof typeof NOTIFICATION_SEVERITIES];
+
+export const NOTIFICATION_ENTITY_TYPES = {
+  SALES_ORDER: 'SalesOrder',
+  DELIVERY_TRIP: 'DeliveryTrip',
+} as const;
+export type NotificationEntityType =
+  (typeof NOTIFICATION_ENTITY_TYPES)[keyof typeof NOTIFICATION_ENTITY_TYPES];
+
+export const NOTIFICATION_RECIPIENT_TYPES = {
+  USER: 'USER',
+  ROLE: 'ROLE',
+} as const;
+export type NotificationRecipientType =
+  (typeof NOTIFICATION_RECIPIENT_TYPES)[keyof typeof NOTIFICATION_RECIPIENT_TYPES];
+
+export const NOTIFICATION_DELIVERY_STATUSES = {
+  PENDING: 'PENDING',
+  RETRY: 'RETRY',
+  SENT: 'SENT',
+  FAILED: 'FAILED',
+} as const;
+export type NotificationDeliveryStatus =
+  (typeof NOTIFICATION_DELIVERY_STATUSES)[keyof typeof NOTIFICATION_DELIVERY_STATUSES];
+
+export const NOTIFICATION_INBOX_OUTCOMES = {
+  APPLIED: 'APPLIED',
+  DUPLICATE: 'DUPLICATE',
+  NO_RECIPIENTS: 'NO_RECIPIENTS',
+  REJECTED_INVALID: 'REJECTED_INVALID',
+} as const;
+export type NotificationInboxOutcome =
+  (typeof NOTIFICATION_INBOX_OUTCOMES)[keyof typeof NOTIFICATION_INBOX_OUTCOMES];
+
+export const NOTIFICATION_AUDIENCE_PERMISSIONS = {
+  ORDER_PENDING_STOCK: 'order:sales-order:read',
+  DELIVERY_FAILED: TRANSPORT_PERMISSIONS.TRIP_DISPATCH,
+  DELIVERY_COMPLETED: TRANSPORT_PERMISSIONS.TRIP_DISPATCH,
+} as const;

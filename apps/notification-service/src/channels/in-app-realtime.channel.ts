@@ -21,6 +21,13 @@ export class InAppRealtimeChannel implements NotificationChannel {
       context.recipientUserId,
       context.payload,
     );
+    if (typeof context.unreadCount === 'number') {
+      this.gateway.emitUnreadCount(
+        context.tenantId,
+        context.recipientUserId,
+        context.unreadCount,
+      );
+    }
     return { status: 'EMITTED' };
   }
 }

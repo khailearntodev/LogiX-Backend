@@ -8,6 +8,9 @@ const validConfig = {
   KAFKA_ORDER_TOPIC: 'logix.order.events.v1',
   KAFKA_TRANSPORT_TOPIC: 'logix.transport.events.v1',
   JWT_SECRET: 'a'.repeat(32),
+  INTERNAL_SERVICE_JWT_SECRET: 'b'.repeat(32),
+  IDENTITY_SERVICE_URL: 'http://identity.example.test',
+  IDENTITY_REQUEST_TIMEOUT_MS: 5000,
 };
 
 describe('notificationConfigSchema', () => {

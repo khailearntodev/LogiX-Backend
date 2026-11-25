@@ -13,6 +13,7 @@ export interface NotificationDeliveryContext {
   recipientUserId: string;
   channel: NotificationChannelName;
   payload: Record<string, unknown>;
+  unreadCount?: number;
 }
 
 export interface NotificationDeliveryResult {
