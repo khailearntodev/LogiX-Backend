@@ -2,6 +2,9 @@ import { TRANSPORT_PERMISSIONS } from '@logix/auth';
 
 export const NOTIFICATION_CONSUMER_NAME = 'notification-service';
 
+export const DEFAULT_NOTIFICATION_PAGE_SIZE = 20;
+export const MAX_NOTIFICATION_PAGE_SIZE = 100;
+
 export const NOTIFICATION_TYPES = {
   ORDER_PENDING_STOCK: 'ORDER_PENDING_STOCK',
   TRIP_DISPATCHED: 'TRIP_DISPATCHED',
