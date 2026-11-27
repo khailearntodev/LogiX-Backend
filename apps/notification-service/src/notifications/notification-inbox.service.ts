@@ -6,9 +6,12 @@ import { PrismaService } from '../database/prisma.service.js';
 import { NotificationsGateway } from '../realtime/notifications.gateway.js';
 import {
   DEFAULT_NOTIFICATION_PAGE_SIZE,
-  NOTIFICATION_ENTITY_TYPES,
   NOTIFICATION_RECIPIENT_TYPES,
 } from './notification.constants.js';
+import {
+  resolveNotificationLink,
+  toJsonRecord,
+} from './notification-link.js';
 import type { NotificationItemDto } from './notification.types.js';
 import type { ListNotificationsQueryDto } from './dto/list-notifications.dto.js';
 
@@ -195,7 +198,7 @@ export class NotificationInboxService {
     },
     recipient: { readAt: Date | null; archivedAt: Date | null },
   ): NotificationItemDto {
-    const data = toRecord(notification.data);
+    const data = toJsonRecord(notification.data);
     return {
       id: notification.id,
       type: notification.type,
@@ -204,7 +207,11 @@ export class NotificationInboxService {
       body: notification.body,
       entityType: notification.entityType,
       entityId: notification.entityId,
-      link: notificationLink(notification.entityType, notification.entityId, data),
+      link: resolveNotificationLink(
+        notification.entityType,
+        notification.entityId,
+        data,
+      ),
       data,
       createdAt: notification.createdAt.toISOString(),
       readAt: recipient.readAt?.toISOString() ?? null,
@@ -256,26 +263,6 @@ function decodeCursor(value: string): NotificationCursor {
   } catch {
     throw new ValidationError('Cursor phân trang không hợp lệ');
   }
-}
-
-function toRecord(value: Prisma.JsonValue): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
-}
-
-function notificationLink(
-  entityType: string | null,
-  entityId: string | null,
-  data: Record<string, unknown>,
-): string | null {
-  if (typeof data.link === 'string') return data.link;
-  if (!entityId) return null;
-  if (entityType === NOTIFICATION_ENTITY_TYPES.SALES_ORDER) {
-    return `/orders/${entityId}`;
-  }
-  if (entityType === NOTIFICATION_ENTITY_TYPES.DELIVERY_TRIP) return '/transport';
-  return null;
 }
 
 function isUuid(value: string): boolean {

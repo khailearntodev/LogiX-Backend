@@ -121,6 +121,8 @@ export const NotificationDeliveryScalarFieldEnum = {
   nextAttemptAt: 'nextAttemptAt',
   sentAt: 'sentAt',
   lastError: 'lastError',
+  lockedBy: 'lockedBy',
+  lockedUntil: 'lockedUntil',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   version: 'version',

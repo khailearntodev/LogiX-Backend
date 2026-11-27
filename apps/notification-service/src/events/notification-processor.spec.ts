@@ -4,7 +4,7 @@ import { Prisma } from '../generated/prisma/client.js';
 import { NotificationProcessor } from './notification-processor.js';
 import * as eventBuilders from './event-builders.js';
 import { IdentityRecipientClient } from '../integrations/identity-recipient.client.js';
-import { NotificationCoreService } from '../notifications/notification-core.service.js';
+import { InAppDeliveryWorker } from '../deliveries/in-app-delivery.worker.js';
 
 const id = () => randomUUID();
 
@@ -46,8 +46,8 @@ describe('NotificationProcessor', () => {
   it('returns IGNORED for unsupported events without calling DB or identity service', async () => {
     const prisma = { inboxEvent: { findUnique: vi.fn() } } as never;
     const recipients = { resolve: vi.fn() } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = { wakeUp: vi.fn() } as unknown as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     const event: DomainEventEnvelope = {
       ...validOrderPendingEvent(),
@@ -56,15 +56,15 @@ describe('NotificationProcessor', () => {
 
     await expect(processor.handle(event)).resolves.toEqual({ outcome: 'IGNORED' });
     expect(recipients.resolve).not.toHaveBeenCalled();
-    expect(core.dispatchInApp).not.toHaveBeenCalled();
+    expect(deliveryWorker.wakeUp).not.toHaveBeenCalled();
   });
 
   it('records invalid supported events without retrying them', async () => {
     const inboxEvent = { upsert: vi.fn().mockResolvedValue({}) };
     const prisma = { inboxEvent } as never;
     const recipients = {} as IdentityRecipientClient;
-    const core = {} as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = { wakeUp: vi.fn() } as unknown as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     const invalidEvent: DomainEventEnvelope = {
       ...validOrderPendingEvent(),
@@ -75,6 +75,7 @@ describe('NotificationProcessor', () => {
       outcome: 'REJECTED_INVALID',
     });
     expect(inboxEvent.upsert).toHaveBeenCalledOnce();
+    expect(deliveryWorker.wakeUp).not.toHaveBeenCalled();
   });
 
   it('rethrows unexpected non-validation errors from buildNotificationDraft instead of recording REJECTED_INVALID', async () => {
@@ -84,8 +85,8 @@ describe('NotificationProcessor', () => {
     const inboxEvent = { upsert: vi.fn() };
     const prisma = { inboxEvent } as never;
     const recipients = {} as IdentityRecipientClient;
-    const core = {} as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = {} as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).rejects.toThrow(
       'Unexpected runtime bug',
@@ -100,8 +101,8 @@ describe('NotificationProcessor', () => {
     const inboxEvent = { upsert: vi.fn().mockResolvedValue({}) };
     const prisma = { inboxEvent } as never;
     const recipients = {} as IdentityRecipientClient;
-    const core = {} as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = {} as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).resolves.toEqual({
       outcome: 'REJECTED_INVALID',
@@ -113,8 +114,8 @@ describe('NotificationProcessor', () => {
     const inboxEvent = { upsert: vi.fn() };
     const prisma = { inboxEvent } as never;
     const recipients = {} as IdentityRecipientClient;
-    const core = {} as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = {} as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     const invalidEvent = {
       ...validOrderPendingEvent(),
@@ -132,17 +133,17 @@ describe('NotificationProcessor', () => {
     const inboxEvent = { findUnique: vi.fn().mockResolvedValue({ id: id() }) };
     const prisma = { inboxEvent, $transaction: vi.fn() } as never;
     const recipients = { resolve: vi.fn() } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = { wakeUp: vi.fn() } as unknown as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).resolves.toEqual({
       outcome: 'DUPLICATE',
     });
     expect(recipients.resolve).not.toHaveBeenCalled();
-    expect(core.dispatchInApp).not.toHaveBeenCalled();
+    expect(deliveryWorker.wakeUp).not.toHaveBeenCalled();
   });
 
-  it('records NO_RECIPIENTS and does not emit realtime notifications', async () => {
+  it('records NO_RECIPIENTS and does not wake delivery worker', async () => {
     const txInboxCreate = vi.fn().mockResolvedValue({});
     const prisma = {
       inboxEvent: { findUnique: vi.fn().mockResolvedValue(null) },
@@ -158,8 +159,8 @@ describe('NotificationProcessor', () => {
     const recipients = {
       resolve: vi.fn().mockResolvedValue([]),
     } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = { wakeUp: vi.fn() } as unknown as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).resolves.toEqual({
       outcome: 'NO_RECIPIENTS',
@@ -170,10 +171,10 @@ describe('NotificationProcessor', () => {
         data: expect.objectContaining({ outcome: 'NO_RECIPIENTS' }),
       }),
     );
-    expect(core.dispatchInApp).not.toHaveBeenCalled();
+    expect(deliveryWorker.wakeUp).not.toHaveBeenCalled();
   });
 
-  it('persists notification, queries unread counts, and dispatches WS after commit even if one WS emit fails', async () => {
+  it('persists notification with PENDING deliveries (no sentAt) and wakes delivery worker after commit', async () => {
     const createdAt = new Date('2026-11-25T09:00:00.000Z');
     const userA = id();
     const userB = id();
@@ -196,25 +197,15 @@ describe('NotificationProcessor', () => {
 
     const prisma = {
       inboxEvent: { findUnique: vi.fn().mockResolvedValue(null) },
-      notificationRecipient: {
-        groupBy: vi.fn().mockResolvedValue([
-          { recipientId: userA, _count: { _all: 4 } },
-          { recipientId: userB, _count: { _all: 1 } },
-        ]),
-      },
       $transaction: vi.fn(async (cb: (client: unknown) => Promise<unknown>) => cb(tx)),
     } as never;
 
     const recipients = {
       resolve: vi.fn().mockResolvedValue([userA, userB]),
     } as unknown as IdentityRecipientClient;
-    const dispatchInApp = vi
-      .fn()
-      .mockRejectedValueOnce(new Error('socket down'))
-      .mockResolvedValueOnce({ status: 'EMITTED' });
-    const core = { dispatchInApp } as unknown as NotificationCoreService;
+    const deliveryWorker = { wakeUp: vi.fn() } as unknown as InAppDeliveryWorker;
 
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
     const result = await processor.handle(event);
 
     expect(result).toMatchObject({
@@ -222,27 +213,27 @@ describe('NotificationProcessor', () => {
       recipientUserIds: [userA, userB],
     });
     expect(result.notificationId).toBeTruthy();
-    expect(dispatchInApp).toHaveBeenCalledTimes(2);
-    expect(dispatchInApp).toHaveBeenNthCalledWith(1, {
-      notificationId: result.notificationId,
-      tenantId: event.tenantId,
-      recipientUserId: userA,
-      unreadCount: 4,
-      payload: expect.objectContaining({
-        id: result.notificationId,
-        createdAt: createdAt.toISOString(),
-        link: `/orders/${event.aggregateId}`,
-        readAt: null,
-        archivedAt: null,
-      }),
+    expect(tx.notificationDelivery.createMany).toHaveBeenCalledWith({
+      data: [
+        expect.objectContaining({
+          channel: 'IN_APP',
+          status: 'PENDING',
+          attemptCount: 0,
+          nextAttemptAt: createdAt,
+        }),
+        expect.objectContaining({
+          channel: 'IN_APP',
+          status: 'PENDING',
+          attemptCount: 0,
+          nextAttemptAt: createdAt,
+        }),
+      ],
     });
-    expect(dispatchInApp).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        recipientUserId: userB,
-        unreadCount: 1,
-      }),
-    );
+    const insertedDeliveries = tx.notificationDelivery.createMany.mock.calls[0][0].data;
+    expect(
+      insertedDeliveries.every((row: Record<string, unknown>) => !('sentAt' in row)),
+    ).toBe(true);
+    expect(deliveryWorker.wakeUp).toHaveBeenCalledOnce();
   });
 
   it('records DUPLICATE when transaction hits P2002 on deduplication or inbox constraint', async () => {
@@ -262,8 +253,8 @@ describe('NotificationProcessor', () => {
     const recipients = {
       resolve: vi.fn().mockResolvedValue([id()]),
     } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = { wakeUp: vi.fn() } as unknown as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).resolves.toEqual({
       outcome: 'DUPLICATE',
@@ -277,7 +268,7 @@ describe('NotificationProcessor', () => {
         }),
       }),
     );
-    expect(core.dispatchInApp).not.toHaveBeenCalled();
+    expect(deliveryWorker.wakeUp).not.toHaveBeenCalled();
   });
 
   it('records DUPLICATE when P2002 targets inbox consumer_name and event_id fields', async () => {
@@ -297,8 +288,8 @@ describe('NotificationProcessor', () => {
     const recipients = {
       resolve: vi.fn().mockResolvedValue([id()]),
     } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = {} as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).resolves.toEqual({
       outcome: 'DUPLICATE',
@@ -324,8 +315,8 @@ describe('NotificationProcessor', () => {
     const recipients = {
       resolve: vi.fn().mockResolvedValue([id()]),
     } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = {} as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).rejects.toThrow(
       'Unique violation',
@@ -340,8 +331,8 @@ describe('NotificationProcessor', () => {
     const recipients = {
       resolve: vi.fn().mockRejectedValue(new Error('Identity service 503')),
     } as unknown as IdentityRecipientClient;
-    const core = { dispatchInApp: vi.fn() } as unknown as NotificationCoreService;
-    const processor = new NotificationProcessor(prisma, recipients, core);
+    const deliveryWorker = {} as InAppDeliveryWorker;
+    const processor = new NotificationProcessor(prisma, recipients, deliveryWorker);
 
     await expect(processor.handle(validOrderPendingEvent())).rejects.toThrow(
       'Identity service 503',

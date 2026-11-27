@@ -38,6 +38,7 @@ export type NotificationRecipientType =
 
 export const NOTIFICATION_DELIVERY_STATUSES = {
   PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
   RETRY: 'RETRY',
   SENT: 'SENT',
   FAILED: 'FAILED',

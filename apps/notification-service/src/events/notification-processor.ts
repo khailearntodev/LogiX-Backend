@@ -1,9 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { NotificationCoreService } from '../notifications/notification-core.service.js';
+import { InAppDeliveryWorker } from '../deliveries/in-app-delivery.worker.js';
 import {
   NOTIFICATION_CONSUMER_NAME,
   NOTIFICATION_DELIVERY_STATUSES,
@@ -42,7 +42,7 @@ export class NotificationProcessor {
   constructor(
     private readonly prisma: PrismaService,
     private readonly recipients: IdentityRecipientClient,
-    private readonly core: NotificationCoreService,
+    @Optional() private readonly deliveryWorker?: InAppDeliveryWorker,
   ) {}
 
   async handle(event: DomainEventEnvelope): Promise<NotificationProcessResult> {
@@ -98,46 +98,7 @@ export class NotificationProcessor {
       return { outcome: result.outcome, recipientUserIds };
     }
 
-    const unreadCounts = await this.loadUnreadCounts(
-      event.tenantId,
-      recipientUserIds,
-    );
-    const createdAtIso = result.createdAt.toISOString();
-
-    for (const recipientUserId of recipientUserIds) {
-      try {
-        await this.core.dispatchInApp({
-          notificationId: result.notificationId,
-          tenantId: event.tenantId,
-          recipientUserId,
-          unreadCount: unreadCounts.get(recipientUserId),
-          payload: {
-            id: result.notificationId,
-            tenantId: event.tenantId,
-            type: draft.type,
-            title: draft.title,
-            body: draft.body,
-            link: draft.link,
-            severity: draft.severity,
-            entityType: draft.entityType,
-            entityId: draft.entityId,
-            data: draft.data,
-            createdAt: createdAtIso,
-            readAt: null,
-            archivedAt: null,
-          },
-        });
-      } catch (error) {
-        this.logger.warn({
-          notificationId: result.notificationId,
-          recipientUserId,
-          message:
-            error instanceof Error
-              ? error.message
-              : 'In-app realtime delivery failed',
-        });
-      }
-    }
+    this.deliveryWorker?.wakeUp();
 
     return {
       outcome: result.outcome,
@@ -206,9 +167,9 @@ export class NotificationProcessor {
             id: randomUUID(),
             notificationRecipientId: recipient.id,
             channel: NOTIFICATION_CHANNELS.IN_APP,
-            status: NOTIFICATION_DELIVERY_STATUSES.SENT,
-            attemptCount: 1,
-            sentAt: created.createdAt,
+            status: NOTIFICATION_DELIVERY_STATUSES.PENDING,
+            attemptCount: 0,
+            nextAttemptAt: created.createdAt,
           })),
         });
         await tx.inboxEvent.create({
@@ -230,43 +191,6 @@ export class NotificationProcessor {
       );
       return { outcome: NOTIFICATION_INBOX_OUTCOMES.DUPLICATE };
     }
-  }
-
-  private async loadUnreadCounts(
-    tenantId: string,
-    recipientUserIds: string[],
-  ): Promise<Map<string, number>> {
-    const counts = new Map<string, number>();
-    if (recipientUserIds.length === 0) return counts;
-
-    try {
-      const grouped = await this.prisma.notificationRecipient.groupBy({
-        by: ['recipientId'],
-        where: {
-          tenantId,
-          recipientType: NOTIFICATION_RECIPIENT_TYPES.USER,
-          recipientId: { in: recipientUserIds },
-          readAt: null,
-          archivedAt: null,
-          deletedAt: null,
-        },
-        _count: { _all: true },
-      });
-
-      for (const row of grouped) {
-        counts.set(row.recipientId, row._count._all);
-      }
-    } catch (error) {
-      this.logger.warn({
-        tenantId,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to load unread notification counts',
-      });
-    }
-
-    return counts;
   }
 
   private async recordInbox(

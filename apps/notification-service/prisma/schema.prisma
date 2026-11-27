@@ -60,9 +60,11 @@ model NotificationDelivery {
   channel                 String                @db.VarChar(20)
   status                  String                @db.VarChar(20)
   attemptCount            Int                   @default(0) @map("attempt_count")
-  nextAttemptAt           DateTime?             @map("next_attempt_at") @db.Timestamptz(6)
+  nextAttemptAt           DateTime              @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
   sentAt                  DateTime?             @map("sent_at") @db.Timestamptz(6)
   lastError               String?               @map("last_error") @db.Text
+  lockedBy                String?               @map("locked_by") @db.VarChar(100)
+  lockedUntil             DateTime?             @map("locked_until") @db.Timestamptz(6)
   createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   version                 BigInt                @default(1)
