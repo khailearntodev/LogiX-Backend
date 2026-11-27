@@ -1,5 +1,6 @@
 export {
   type DomainEventEnvelope,
+  type CommandEventEnvelope,
   type CreateDomainEvent,
 } from "./event-envelope.js";
 
@@ -43,6 +44,14 @@ export type {
   OutboxRelayTransaction,
 } from "./outbox-relay.js";
 export { PrismaOutboxStore } from "./prisma-outbox.store.js";
+export { ClaimLeaseOutboxRelay } from "./claim-lease-outbox-relay.js";
+export type {
+  ClaimLeaseOutboxRelayOptions,
+  ClaimLeaseOutboxStore,
+  ClaimedOutboxRecord,
+} from "./claim-lease-outbox-relay.js";
+export { PrismaClaimLeaseOutboxStore } from "./prisma-claim-lease-outbox.store.js";
+export type { ClaimLeaseOutboxSchema } from "./prisma-claim-lease-outbox.store.js";
 export type {
   ReservationLine,
   ReserveRequest,
