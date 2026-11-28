@@ -332,6 +332,7 @@ services:
       PORT: "3007"
       SERVICE_NAME: notification-service
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_notification?schema=notification${POSTGRES_SSL_PARAM:-}
+      IDENTITY_REQUEST_TIMEOUT_MS: "5000"
       KAFKA_CLIENT_ID: notification-service
       KAFKA_GROUP_ID: logix-notification-service
     networks: [logix]

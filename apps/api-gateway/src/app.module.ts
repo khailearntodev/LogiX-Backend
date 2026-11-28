@@ -21,6 +21,7 @@ import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware
 import { TransportProxyMiddleware } from './proxy/transport-proxy.middleware.js';
 import { ForecastProxyMiddleware } from './proxy/forecast-proxy.middleware.js';
 import { AuditProxyMiddleware } from './proxy/audit-proxy.middleware.js';
+import { NotificationProxyMiddleware } from './proxy/notification-proxy.middleware.js';
 
 @Module({
   imports: [
@@ -127,6 +128,12 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: 'api/v1/audit-logs', method: RequestMethod.GET },
         { path: 'api/v1/audit-logs/*', method: RequestMethod.GET },
+      );
+    consumer
+      .apply(NotificationProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/notifications', method: RequestMethod.ALL },
+        { path: 'api/v1/notifications/*', method: RequestMethod.ALL },
       );
   }
 }

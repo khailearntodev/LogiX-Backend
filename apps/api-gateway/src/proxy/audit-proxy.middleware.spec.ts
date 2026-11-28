@@ -35,6 +35,7 @@ describe('AuditProxyMiddleware (Read-Only Gateway Boundary)', () => {
       ORDER_SERVICE_URL: 'https://order.example.test',
       FULFILLMENT_SERVICE_URL: 'https://fulfillment.example.test',
       TRANSPORT_SERVICE_URL: 'https://transport.example.test',
+      NOTIFICATION_SERVICE_URL: 'https://notification.example.test',
     };
     expect(gatewayConfigSchema.safeParse(base).success).toBe(false);
     expect(

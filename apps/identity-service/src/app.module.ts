@@ -14,6 +14,7 @@ import { AdminModule } from './admin/admin.module.js';
 import { DriverUsersModule } from './driver-users/driver-users.module.js';
 import { IdentityMessagingModule } from './messaging/identity-messaging.module.js';
 import { identityConfigSchema } from './config/identity-config.schema.js';
+import { NotificationRecipientsModule } from './notification-recipients/notification-recipients.module.js';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { identityConfigSchema } from './config/identity-config.schema.js';
     IamModule,
     AdminModule,
     DriverUsersModule,
+    NotificationRecipientsModule,
   ],
   controllers: [AppController],
   providers: [

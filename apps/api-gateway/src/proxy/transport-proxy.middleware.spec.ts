@@ -49,6 +49,7 @@ describe('Trip Gateway boundary', () => {
       ORDER_SERVICE_URL: 'https://order.example.test',
       FULFILLMENT_SERVICE_URL: 'https://fulfillment.example.test',
       AUDIT_SERVICE_URL: 'https://audit.example.test',
+      NOTIFICATION_SERVICE_URL: 'https://notification.example.test',
     };
     expect(gatewayConfigSchema.safeParse(targets).success).toBe(false);
     expect(
