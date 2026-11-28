@@ -27,6 +27,7 @@ model Notification {
   deletedAt        DateTime?               @map("deleted_at") @db.Timestamptz(6)
   expiresAt        DateTime?               @map("expires_at") @db.Timestamptz(6)
   recipients       NotificationRecipient[]
+  broadcast        NotificationBroadcast?
 
   @@index([tenantId, entityType, entityId, createdAt(sort: Desc)], map: "ix_notifications_entity")
   @@index([tenantId, createdAt(sort: Desc)], map: "ix_notifications_created")
@@ -60,9 +61,11 @@ model NotificationDelivery {
   channel                 String                @db.VarChar(20)
   status                  String                @db.VarChar(20)
   attemptCount            Int                   @default(0) @map("attempt_count")
-  nextAttemptAt           DateTime?             @map("next_attempt_at") @db.Timestamptz(6)
+  nextAttemptAt           DateTime              @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
   sentAt                  DateTime?             @map("sent_at") @db.Timestamptz(6)
   lastError               String?               @map("last_error") @db.Text
+  lockedBy                String?               @map("locked_by") @db.VarChar(100)
+  lockedUntil             DateTime?             @map("locked_until") @db.Timestamptz(6)
   createdAt               DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   version                 BigInt                @default(1)
@@ -94,5 +97,60 @@ model InboxEvent {
   @@index([tenantId, eventId], map: "ix_inbox_tenant_event")
   @@index([tenantId, aggregateId, aggregateVersion], map: "ix_inbox_aggregate")
   @@map("inbox_events")
+  @@schema("notification")
+}
+
+model NotificationBroadcast {
+  id             String       @id @default(uuid()) @db.Uuid
+  tenantId       String       @map("tenant_id") @db.Uuid
+  notificationId String       @unique(map: "ux_notification_broadcasts_notification") @map("notification_id") @db.Uuid
+  createdBy      String       @map("created_by") @db.Uuid
+  idempotencyKey String       @map("idempotency_key") @db.Uuid
+  payloadHash    String       @map("payload_hash") @db.VarChar(64)
+  audience       Json
+  status         String       @db.VarChar(30)
+  requestedCount Int?         @map("requested_count")
+  resolvedCount  Int          @default(0) @map("resolved_count")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  completedAt    DateTime?    @map("completed_at") @db.Timestamptz(6)
+  lastError      String?      @map("last_error") @db.Text
+  version        BigInt       @default(1)
+  deletedAt      DateTime?    @map("deleted_at") @db.Timestamptz(6)
+  notification   Notification @relation(fields: [notificationId], references: [id])
+
+  @@unique([tenantId, idempotencyKey], map: "ux_notification_broadcasts_idempotency")
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Desc)], map: "ix_notification_broadcasts_tenant_created")
+  @@index([status, updatedAt], map: "ix_notification_broadcasts_status")
+  @@map("notification_broadcasts")
+  @@schema("notification")
+}
+
+model OutboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String?   @map("tenant_id") @db.Uuid
+  topic            String    @db.VarChar(150)
+  aggregateType    String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId      String    @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt    @default(1) @map("aggregate_version")
+  eventType        String    @map("event_type") @db.VarChar(150)
+  eventVersion     Int       @map("event_version")
+  correlationId    String    @map("correlation_id") @db.Uuid
+  causationId      String?   @map("causation_id") @db.Uuid
+  payload          Json
+  occurredAt       DateTime  @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz(6)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lockedBy         String?   @map("locked_by") @db.VarChar(100)
+  lockedUntil      DateTime? @map("locked_until") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([tenantId, aggregateType, aggregateId, aggregateVersion], map: "ix_notification_outbox_aggregate")
+  @@map("outbox_events")
   @@schema("notification")
 }

@@ -1,7 +1,11 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { generateId } from '@logix/common';
 import { Kafka, Producer, type ProducerRecord } from 'kafkajs';
-import type { CreateDomainEvent, DomainEventEnvelope } from './event-envelope.js';
+import type {
+  CommandEventEnvelope,
+  CreateDomainEvent,
+  DomainEventEnvelope,
+} from './event-envelope.js';
 import type { DomainEventMap, DomainEventType } from './interfaces/domain-event.interface.js';
 
 /**
@@ -143,24 +147,28 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Publish a raw domain event envelope (for advanced use cases).
+   * Publish a raw domain or command event envelope (for outbox relay and advanced use cases).
    */
   async publishRaw(
     topic: string,
-    envelope: DomainEventEnvelope,
+    envelope: DomainEventEnvelope | CommandEventEnvelope,
   ): Promise<void> {
+    const headers: Record<string, string> = {
+      'event-type': envelope.eventType,
+      'event-version': String(envelope.eventVersion),
+      'correlation-id': envelope.correlationId,
+    };
+    if (envelope.tenantId !== null) {
+      headers['tenant-id'] = envelope.tenantId;
+    }
+
     const record: ProducerRecord = {
       topic,
       messages: [
         {
           key: envelope.aggregateId,
           value: JSON.stringify(envelope),
-          headers: {
-            'event-type': envelope.eventType,
-            'event-version': String(envelope.eventVersion),
-            'tenant-id': envelope.tenantId,
-            'correlation-id': envelope.correlationId,
-          },
+          headers,
         },
       ],
     };

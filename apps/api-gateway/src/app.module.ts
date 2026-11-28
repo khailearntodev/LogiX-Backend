@@ -44,6 +44,7 @@ import { NotificationProxyMiddleware } from './proxy/notification-proxy.middlewa
   controllers: [AppController],
   providers: [
     AppService,
+    NotificationProxyMiddleware,
     {
       provide: APP_FILTER,
       useClass: GlobalExceptionFilter,
@@ -134,6 +135,8 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: 'api/v1/notifications', method: RequestMethod.ALL },
         { path: 'api/v1/notifications/*', method: RequestMethod.ALL },
+        { path: 'ws/notifications', method: RequestMethod.ALL },
+        { path: 'ws/notifications/*', method: RequestMethod.ALL },
       );
   }
 }

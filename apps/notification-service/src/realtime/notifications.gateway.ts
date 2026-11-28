@@ -5,12 +5,13 @@ import {
   ConnectedSocket,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
 import { ConfigService } from '@nestjs/config';
 import { accessTokenUser, type AuthenticatedUser, type JwtPayload } from '@logix/auth';
-import { verify } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import type { Server, Socket } from 'socket.io';
 
 const NOTIFICATIONS_NAMESPACE = '/notifications';
@@ -21,7 +22,7 @@ const NOTIFICATIONS_PATH = '/ws/notifications';
   path: NOTIFICATIONS_PATH,
 })
 export class NotificationsGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   private readonly logger = new Logger(NotificationsGateway.name);
 
@@ -30,9 +31,27 @@ export class NotificationsGateway
 
   constructor(private readonly config: ConfigService) {}
 
+  afterInit(server: Server): void {
+    server.use((client, next) => {
+      try {
+        const user = this.authenticate(client);
+        client.data.user = user;
+        next();
+      } catch (error) {
+        this.logger.warn({
+          message:
+            error instanceof Error ? error.message : 'WebSocket authentication failed',
+        });
+        next(new Error('UNAUTHORIZED'));
+      }
+    });
+  }
+
   handleConnection(@ConnectedSocket() client: Socket): void {
     try {
-      const user = this.authenticate(client);
+      const user =
+        (client.data.user as AuthenticatedUser | undefined) ??
+        this.authenticate(client);
       client.data.user = user;
       void client.join(this.room(user.tenantId, user.id));
     } catch (error) {
@@ -64,7 +83,7 @@ export class NotificationsGateway
 
   private authenticate(client: Socket): AuthenticatedUser {
     const token = this.tokenFrom(client);
-    const payload = verify(
+    const payload = jwt.verify(
       token,
       this.config.getOrThrow<string>('JWT_SECRET'),
       { algorithms: ['HS256'] },

@@ -8,6 +8,7 @@ import {
   IAM_PERMISSIONS,
   INVENTORY_PERMISSIONS,
   MASTER_DATA_DRIVER_PERMISSIONS,
+  NOTIFICATION_BROADCAST_PERMISSIONS,
   MASTER_DATA_PERMISSIONS,
   MEMBER_RESTRICTED_PERMISSIONS,
   ORDER_PERMISSIONS,
@@ -94,6 +95,10 @@ describe('shared permission codes (@logix/auth)', () => {
     expect(AGENT_MODEL_CONFIG_PERMISSIONS).toEqual({
       READ: 'agent:model-config:read',
       MANAGE: 'agent:model-config:manage',
+    });
+    expect(NOTIFICATION_BROADCAST_PERMISSIONS).toEqual({
+      SEND: 'notification:broadcast:send',
+      READ: 'notification:broadcast:read',
     });
 
     expect(AGENT_CONVERSATION_PERMISSIONS).toEqual({
