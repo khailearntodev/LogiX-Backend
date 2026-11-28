@@ -76,6 +76,11 @@ export const AGENT_MODEL_CONFIG_PERMISSIONS = {
   MANAGE: 'agent:model-config:manage',
 } as const;
 
+export const NOTIFICATION_BROADCAST_PERMISSIONS = {
+  SEND: 'notification:broadcast:send',
+  READ: 'notification:broadcast:read',
+} as const;
+
 export const AGENT_CONVERSATION_PERMISSIONS = {
   READ: 'agent:conversation:read',
   MANAGE: 'agent:conversation:manage',

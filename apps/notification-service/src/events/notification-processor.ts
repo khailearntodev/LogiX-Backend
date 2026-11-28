@@ -1,17 +1,15 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
 import { Prisma } from '../generated/prisma/client.js';
 import { PrismaService } from '../database/prisma.service.js';
-import { NotificationCoreService } from '../notifications/notification-core.service.js';
+import { InAppDeliveryWorker } from '../deliveries/in-app-delivery.worker.js';
 import {
   NOTIFICATION_CONSUMER_NAME,
-  NOTIFICATION_DELIVERY_STATUSES,
   NOTIFICATION_INBOX_OUTCOMES,
-  NOTIFICATION_RECIPIENT_TYPES,
   type NotificationInboxOutcome,
 } from '../notifications/notification.constants.js';
-import { NOTIFICATION_CHANNELS } from '../notifications/notification.types.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import { IdentityRecipientClient } from '../integrations/identity-recipient.client.js';
 import type { DomainEventEnvelope } from '@logix/messaging';
 import type { NotificationDraft } from './notification-draft.js';
@@ -39,11 +37,16 @@ type PersistResult =
 export class NotificationProcessor {
   private readonly logger = new Logger(NotificationProcessor.name);
 
+  private readonly writer: NotificationWriterService;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly recipients: IdentityRecipientClient,
-    private readonly core: NotificationCoreService,
-  ) {}
+    @Optional() private readonly deliveryWorker?: InAppDeliveryWorker,
+    @Optional() writer?: NotificationWriterService,
+  ) {
+    this.writer = writer ?? new NotificationWriterService();
+  }
 
   async handle(event: DomainEventEnvelope): Promise<NotificationProcessResult> {
     let draft: NotificationDraft | null;
@@ -98,46 +101,7 @@ export class NotificationProcessor {
       return { outcome: result.outcome, recipientUserIds };
     }
 
-    const unreadCounts = await this.loadUnreadCounts(
-      event.tenantId,
-      recipientUserIds,
-    );
-    const createdAtIso = result.createdAt.toISOString();
-
-    for (const recipientUserId of recipientUserIds) {
-      try {
-        await this.core.dispatchInApp({
-          notificationId: result.notificationId,
-          tenantId: event.tenantId,
-          recipientUserId,
-          unreadCount: unreadCounts.get(recipientUserId),
-          payload: {
-            id: result.notificationId,
-            tenantId: event.tenantId,
-            type: draft.type,
-            title: draft.title,
-            body: draft.body,
-            link: draft.link,
-            severity: draft.severity,
-            entityType: draft.entityType,
-            entityId: draft.entityId,
-            data: draft.data,
-            createdAt: createdAtIso,
-            readAt: null,
-            archivedAt: null,
-          },
-        });
-      } catch (error) {
-        this.logger.warn({
-          notificationId: result.notificationId,
-          recipientUserId,
-          message:
-            error instanceof Error
-              ? error.message
-              : 'In-app realtime delivery failed',
-        });
-      }
-    }
+    this.deliveryWorker?.wakeUp();
 
     return {
       outcome: result.outcome,
@@ -172,44 +136,25 @@ export class NotificationProcessor {
           return { outcome: NOTIFICATION_INBOX_OUTCOMES.NO_RECIPIENTS };
         }
 
-        const notificationId = randomUUID();
-        const created = await tx.notification.create({
-          data: {
-            id: notificationId,
-            tenantId: event.tenantId,
-            type: draft.type,
-            title: draft.title,
-            body: draft.body,
-            severity: draft.severity,
-            entityType: draft.entityType,
-            entityId: draft.entityId,
-            sourceEventId: event.eventId,
-            deduplicationKey: draft.deduplicationKey,
-            data: {
-              ...draft.data,
-              ...(draft.link ? { link: draft.link } : {}),
-            } as Prisma.InputJsonValue,
-          },
-          select: { id: true, createdAt: true },
+        const created = await this.writer.createNotification(tx, {
+          tenantId: event.tenantId,
+          type: draft.type,
+          title: draft.title,
+          body: draft.body,
+          severity: draft.severity,
+          entityType: draft.entityType,
+          entityId: draft.entityId,
+          sourceEventId: event.eventId,
+          deduplicationKey: draft.deduplicationKey,
+          link: draft.link,
+          data: draft.data,
         });
 
-        const recipients = recipientUserIds.map((recipientId) => ({
-          id: randomUUID(),
+        await this.writer.attachInAppRecipientsBatch(tx, {
           tenantId: event.tenantId,
           notificationId: created.id,
-          recipientType: NOTIFICATION_RECIPIENT_TYPES.USER,
-          recipientId,
-        }));
-        await tx.notificationRecipient.createMany({ data: recipients });
-        await tx.notificationDelivery.createMany({
-          data: recipients.map((recipient) => ({
-            id: randomUUID(),
-            notificationRecipientId: recipient.id,
-            channel: NOTIFICATION_CHANNELS.IN_APP,
-            status: NOTIFICATION_DELIVERY_STATUSES.SENT,
-            attemptCount: 1,
-            sentAt: created.createdAt,
-          })),
+          recipientUserIds,
+          availableAt: created.createdAt,
         });
         await tx.inboxEvent.create({
           data: this.inboxData(event, NOTIFICATION_INBOX_OUTCOMES.APPLIED),
@@ -230,43 +175,6 @@ export class NotificationProcessor {
       );
       return { outcome: NOTIFICATION_INBOX_OUTCOMES.DUPLICATE };
     }
-  }
-
-  private async loadUnreadCounts(
-    tenantId: string,
-    recipientUserIds: string[],
-  ): Promise<Map<string, number>> {
-    const counts = new Map<string, number>();
-    if (recipientUserIds.length === 0) return counts;
-
-    try {
-      const grouped = await this.prisma.notificationRecipient.groupBy({
-        by: ['recipientId'],
-        where: {
-          tenantId,
-          recipientType: NOTIFICATION_RECIPIENT_TYPES.USER,
-          recipientId: { in: recipientUserIds },
-          readAt: null,
-          archivedAt: null,
-          deletedAt: null,
-        },
-        _count: { _all: true },
-      });
-
-      for (const row of grouped) {
-        counts.set(row.recipientId, row._count._all);
-      }
-    } catch (error) {
-      this.logger.warn({
-        tenantId,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to load unread notification counts',
-      });
-    }
-
-    return counts;
   }
 
   private async recordInbox(

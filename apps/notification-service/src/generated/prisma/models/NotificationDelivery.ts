@@ -45,6 +45,8 @@ export type NotificationDeliveryMinAggregateOutputType = {
   nextAttemptAt: Date | null
   sentAt: Date | null
   lastError: string | null
+  lockedBy: string | null
+  lockedUntil: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -60,6 +62,8 @@ export type NotificationDeliveryMaxAggregateOutputType = {
   nextAttemptAt: Date | null
   sentAt: Date | null
   lastError: string | null
+  lockedBy: string | null
+  lockedUntil: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   version: bigint | null
@@ -75,6 +79,8 @@ export type NotificationDeliveryCountAggregateOutputType = {
   nextAttemptAt: number
   sentAt: number
   lastError: number
+  lockedBy: number
+  lockedUntil: number
   createdAt: number
   updatedAt: number
   version: number
@@ -102,6 +108,8 @@ export type NotificationDeliveryMinAggregateInputType = {
   nextAttemptAt?: true
   sentAt?: true
   lastError?: true
+  lockedBy?: true
+  lockedUntil?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -117,6 +125,8 @@ export type NotificationDeliveryMaxAggregateInputType = {
   nextAttemptAt?: true
   sentAt?: true
   lastError?: true
+  lockedBy?: true
+  lockedUntil?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -132,6 +142,8 @@ export type NotificationDeliveryCountAggregateInputType = {
   nextAttemptAt?: true
   sentAt?: true
   lastError?: true
+  lockedBy?: true
+  lockedUntil?: true
   createdAt?: true
   updatedAt?: true
   version?: true
@@ -231,9 +243,11 @@ export type NotificationDeliveryGroupByOutputType = {
   channel: string
   status: string
   attemptCount: number
-  nextAttemptAt: Date | null
+  nextAttemptAt: Date
   sentAt: Date | null
   lastError: string | null
+  lockedBy: string | null
+  lockedUntil: Date | null
   createdAt: Date
   updatedAt: Date
   version: bigint
@@ -269,9 +283,11 @@ export type NotificationDeliveryWhereInput = {
   channel?: Prisma.StringFilter<"NotificationDelivery"> | string
   status?: Prisma.StringFilter<"NotificationDelivery"> | string
   attemptCount?: Prisma.IntFilter<"NotificationDelivery"> | number
-  nextAttemptAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
+  lockedBy?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
+  lockedUntil?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   version?: Prisma.BigIntFilter<"NotificationDelivery"> | bigint | number
@@ -285,9 +301,11 @@ export type NotificationDeliveryOrderByWithRelationInput = {
   channel?: Prisma.SortOrder
   status?: Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
-  nextAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastError?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -305,9 +323,11 @@ export type NotificationDeliveryWhereUniqueInput = Prisma.AtLeast<{
   channel?: Prisma.StringFilter<"NotificationDelivery"> | string
   status?: Prisma.StringFilter<"NotificationDelivery"> | string
   attemptCount?: Prisma.IntFilter<"NotificationDelivery"> | number
-  nextAttemptAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
+  lockedBy?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
+  lockedUntil?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   version?: Prisma.BigIntFilter<"NotificationDelivery"> | bigint | number
@@ -321,9 +341,11 @@ export type NotificationDeliveryOrderByWithAggregationInput = {
   channel?: Prisma.SortOrder
   status?: Prisma.SortOrder
   attemptCount?: Prisma.SortOrder
-  nextAttemptAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  nextAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrderInput | Prisma.SortOrder
   lastError?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedBy?: Prisma.SortOrderInput | Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -344,9 +366,11 @@ export type NotificationDeliveryScalarWhereWithAggregatesInput = {
   channel?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
   status?: Prisma.StringWithAggregatesFilter<"NotificationDelivery"> | string
   attemptCount?: Prisma.IntWithAggregatesFilter<"NotificationDelivery"> | number
-  nextAttemptAt?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationDelivery"> | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationDelivery"> | Date | string
   sentAt?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationDelivery"> | Date | string | null
   lastError?: Prisma.StringNullableWithAggregatesFilter<"NotificationDelivery"> | string | null
+  lockedBy?: Prisma.StringNullableWithAggregatesFilter<"NotificationDelivery"> | string | null
+  lockedUntil?: Prisma.DateTimeNullableWithAggregatesFilter<"NotificationDelivery"> | Date | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationDelivery"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"NotificationDelivery"> | Date | string
   version?: Prisma.BigIntWithAggregatesFilter<"NotificationDelivery"> | bigint | number
@@ -358,9 +382,11 @@ export type NotificationDeliveryCreateInput = {
   channel: string
   status: string
   attemptCount?: number
-  nextAttemptAt?: Date | string | null
+  nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   lastError?: string | null
+  lockedBy?: string | null
+  lockedUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -374,9 +400,11 @@ export type NotificationDeliveryUncheckedCreateInput = {
   channel: string
   status: string
   attemptCount?: number
-  nextAttemptAt?: Date | string | null
+  nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   lastError?: string | null
+  lockedBy?: string | null
+  lockedUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -388,9 +416,11 @@ export type NotificationDeliveryUpdateInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -404,9 +434,11 @@ export type NotificationDeliveryUncheckedUpdateInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -419,9 +451,11 @@ export type NotificationDeliveryCreateManyInput = {
   channel: string
   status: string
   attemptCount?: number
-  nextAttemptAt?: Date | string | null
+  nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   lastError?: string | null
+  lockedBy?: string | null
+  lockedUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -433,9 +467,11 @@ export type NotificationDeliveryUpdateManyMutationInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -448,9 +484,11 @@ export type NotificationDeliveryUncheckedUpdateManyInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -481,6 +519,8 @@ export type NotificationDeliveryCountOrderByAggregateInput = {
   nextAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
+  lockedBy?: Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -501,6 +541,8 @@ export type NotificationDeliveryMaxOrderByAggregateInput = {
   nextAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
+  lockedBy?: Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -516,6 +558,8 @@ export type NotificationDeliveryMinOrderByAggregateInput = {
   nextAttemptAt?: Prisma.SortOrder
   sentAt?: Prisma.SortOrder
   lastError?: Prisma.SortOrder
+  lockedBy?: Prisma.SortOrder
+  lockedUntil?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   version?: Prisma.SortOrder
@@ -582,9 +626,11 @@ export type NotificationDeliveryCreateWithoutNotificationRecipientInput = {
   channel: string
   status: string
   attemptCount?: number
-  nextAttemptAt?: Date | string | null
+  nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   lastError?: string | null
+  lockedBy?: string | null
+  lockedUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -596,9 +642,11 @@ export type NotificationDeliveryUncheckedCreateWithoutNotificationRecipientInput
   channel: string
   status: string
   attemptCount?: number
-  nextAttemptAt?: Date | string | null
+  nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   lastError?: string | null
+  lockedBy?: string | null
+  lockedUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -640,9 +688,11 @@ export type NotificationDeliveryScalarWhereInput = {
   channel?: Prisma.StringFilter<"NotificationDelivery"> | string
   status?: Prisma.StringFilter<"NotificationDelivery"> | string
   attemptCount?: Prisma.IntFilter<"NotificationDelivery"> | number
-  nextAttemptAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   sentAt?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   lastError?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
+  lockedBy?: Prisma.StringNullableFilter<"NotificationDelivery"> | string | null
+  lockedUntil?: Prisma.DateTimeNullableFilter<"NotificationDelivery"> | Date | string | null
   createdAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"NotificationDelivery"> | Date | string
   version?: Prisma.BigIntFilter<"NotificationDelivery"> | bigint | number
@@ -654,9 +704,11 @@ export type NotificationDeliveryCreateManyNotificationRecipientInput = {
   channel: string
   status: string
   attemptCount?: number
-  nextAttemptAt?: Date | string | null
+  nextAttemptAt?: Date | string
   sentAt?: Date | string | null
   lastError?: string | null
+  lockedBy?: string | null
+  lockedUntil?: Date | string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   version?: bigint | number
@@ -668,9 +720,11 @@ export type NotificationDeliveryUpdateWithoutNotificationRecipientInput = {
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -682,9 +736,11 @@ export type NotificationDeliveryUncheckedUpdateWithoutNotificationRecipientInput
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -696,9 +752,11 @@ export type NotificationDeliveryUncheckedUpdateManyWithoutNotificationRecipientI
   channel?: Prisma.StringFieldUpdateOperationsInput | string
   status?: Prisma.StringFieldUpdateOperationsInput | string
   attemptCount?: Prisma.IntFieldUpdateOperationsInput | number
-  nextAttemptAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  nextAttemptAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   sentAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   lastError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedBy?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  lockedUntil?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
@@ -716,6 +774,8 @@ export type NotificationDeliverySelect<ExtArgs extends runtime.Types.Extensions.
   nextAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  lockedBy?: boolean
+  lockedUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -732,6 +792,8 @@ export type NotificationDeliverySelectCreateManyAndReturn<ExtArgs extends runtim
   nextAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  lockedBy?: boolean
+  lockedUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -748,6 +810,8 @@ export type NotificationDeliverySelectUpdateManyAndReturn<ExtArgs extends runtim
   nextAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  lockedBy?: boolean
+  lockedUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
@@ -764,13 +828,15 @@ export type NotificationDeliverySelectScalar = {
   nextAttemptAt?: boolean
   sentAt?: boolean
   lastError?: boolean
+  lockedBy?: boolean
+  lockedUntil?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   version?: boolean
   deletedAt?: boolean
 }
 
-export type NotificationDeliveryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notificationRecipientId" | "channel" | "status" | "attemptCount" | "nextAttemptAt" | "sentAt" | "lastError" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["notificationDelivery"]>
+export type NotificationDeliveryOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "notificationRecipientId" | "channel" | "status" | "attemptCount" | "nextAttemptAt" | "sentAt" | "lastError" | "lockedBy" | "lockedUntil" | "createdAt" | "updatedAt" | "version" | "deletedAt", ExtArgs["result"]["notificationDelivery"]>
 export type NotificationDeliveryInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   notificationRecipient?: boolean | Prisma.NotificationRecipientDefaultArgs<ExtArgs>
 }
@@ -792,9 +858,11 @@ export type $NotificationDeliveryPayload<ExtArgs extends runtime.Types.Extension
     channel: string
     status: string
     attemptCount: number
-    nextAttemptAt: Date | null
+    nextAttemptAt: Date
     sentAt: Date | null
     lastError: string | null
+    lockedBy: string | null
+    lockedUntil: Date | null
     createdAt: Date
     updatedAt: Date
     version: bigint
@@ -1231,6 +1299,8 @@ export interface NotificationDeliveryFieldRefs {
   readonly nextAttemptAt: Prisma.FieldRef<"NotificationDelivery", 'DateTime'>
   readonly sentAt: Prisma.FieldRef<"NotificationDelivery", 'DateTime'>
   readonly lastError: Prisma.FieldRef<"NotificationDelivery", 'String'>
+  readonly lockedBy: Prisma.FieldRef<"NotificationDelivery", 'String'>
+  readonly lockedUntil: Prisma.FieldRef<"NotificationDelivery", 'DateTime'>
   readonly createdAt: Prisma.FieldRef<"NotificationDelivery", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"NotificationDelivery", 'DateTime'>
   readonly version: Prisma.FieldRef<"NotificationDelivery", 'BigInt'>

@@ -26,3 +26,18 @@ export interface NotificationChannel {
     context: NotificationDeliveryContext,
   ): Promise<NotificationDeliveryResult>;
 }
+
+export interface NotificationItemDto {
+  id: string;
+  type: string;
+  severity: string;
+  title: string;
+  body: string;
+  entityType: string | null;
+  entityId: string | null;
+  link: string | null;
+  data: Record<string, unknown>;
+  createdAt: string;
+  readAt: string | null;
+  archivedAt: string | null;
+}

@@ -360,6 +360,23 @@ export const SYSTEM_PERMISSIONS = [
     name: 'Quản lý cấu hình mô hình AI',
     description: 'Cho phép thay đổi provider và model AI của tenant',
   },
+
+  // --- Phân hệ Thông báo (NOTIFICATION) ---
+  {
+    code: 'notification:broadcast:send',
+    module: 'NOTIFICATION',
+    resource: 'broadcast',
+    action: 'send',
+    name: 'Gửi thông báo toàn tổ chức',
+    description: 'Cho phép quản trị viên gửi thông báo chủ động tới thành viên trong tổ chức',
+  },
+  {
+    code: 'notification:broadcast:read',
+    module: 'NOTIFICATION',
+    resource: 'broadcast',
+    action: 'read',
+    name: 'Xem lịch sử gửi thông báo',
+    description: 'Cho phép xem danh sách, trạng thái và thống kê các đợt gửi thông báo của tổ chức',
   {
     code: 'agent:conversation:read',
     module: 'AGENT',

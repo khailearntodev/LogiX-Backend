@@ -2,7 +2,7 @@
 
 ## 1. Trạng thái & căn cứ
 
-**Trạng thái:** Proposed — chờ duyệt (tài liệu thiết kế trước khi viết plan triển khai; chưa sửa mã nguồn, schema hay migration).
+**Trạng thái:** Đã triển khai phần ingest Kafka, in-app realtime và REST Inbox. Admin Broadcast, các kênh Email/Push và scheduled delivery vẫn ở phạm vi mở rộng.
 
 Các nguồn thẩm quyền mà thiết kế này bám theo:
 

@@ -3,6 +3,7 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 import cookieParser from 'cookie-parser';
 import { Logger } from '@logix/logger';
 import { AppModule } from './app.module.js';
+import { NotificationProxyMiddleware } from './proxy/notification-proxy.middleware.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
@@ -38,6 +39,9 @@ async function bootstrap() {
 
   // Enable graceful shutdown hooks (important for K8s SIGTERM)
   app.enableShutdownHooks();
+
+  const notificationProxy = app.get(NotificationProxyMiddleware);
+  app.getHttpServer().on('upgrade', notificationProxy.upgrade.bind(notificationProxy));
 
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
