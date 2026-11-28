@@ -15,19 +15,26 @@ const NOTIFICATION_WS_PATH = '/ws/notifications';
 @Injectable()
 export class NotificationProxyMiddleware implements NestMiddleware {
   private readonly logger = new Logger(NotificationProxyMiddleware.name);
-  private readonly proxy: ReturnType<
+  private readonly httpProxy: ReturnType<
+    typeof createProxyMiddleware<Request, Response>
+  >;
+  private readonly wsProxy: ReturnType<
     typeof createProxyMiddleware<Request, Response>
   >;
 
   constructor(config: ConfigService) {
     const target = config.getOrThrow<string>('NOTIFICATION_SERVICE_URL');
-    this.proxy = createProxyMiddleware<Request, Response>({
+
+    // Keep ws: false on the HTTP middleware proxy so NestJS's separate
+    // middleware instance never registers a duplicate server.on('upgrade')
+    // listener alongside main.ts calling notificationProxy.upgrade.
+    this.httpProxy = createProxyMiddleware<Request, Response>({
       target,
       agent: resolveProxyAgent(target),
       timeout: DEFAULT_PROXY_TIMEOUT_MS,
       proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
-      ws: true,
+      ws: false,
       pathFilter: (path: string) => this.isNotificationPath(path),
       on: {
         proxyReq: (proxyReq, req) => {
@@ -49,14 +56,38 @@ export class NotificationProxyMiddleware implements NestMiddleware {
         },
       },
     });
+
+    // Dedicated upgrade proxy without HTTP keep-alive agent or 15s HTTP timeout,
+    // manually invoked from main.ts server.on('upgrade').
+    this.wsProxy = createProxyMiddleware<Request, Response>({
+      target,
+      changeOrigin: true,
+      ws: false,
+      pathFilter: (path: string) => this.isNotificationWsPath(path),
+      on: {
+        error: (error, _req, res) => {
+          this.logger.error(
+            { message: error.message },
+            'Notification WebSocket proxy failed',
+          );
+          if ('destroy' in res && typeof res.destroy === 'function') {
+            res.destroy();
+          }
+        },
+      },
+    });
   }
 
   use(req: Request, res: Response, next: NextFunction) {
-    this.proxy(req, res, next);
+    this.httpProxy(req, res, next);
   }
 
   upgrade(req: IncomingMessage, socket: Socket, head: Buffer): void {
-    const upgrade = this.proxy.upgrade as unknown as (
+    if (!this.isNotificationWsPath(req.url ?? '')) {
+      return;
+    }
+
+    const upgrade = this.wsProxy.upgrade as unknown as (
       request: IncomingMessage,
       clientSocket: Socket,
       headBuffer: Buffer,
@@ -69,6 +100,13 @@ export class NotificationProxyMiddleware implements NestMiddleware {
     return (
       pathname === NOTIFICATION_PREFIX ||
       pathname.startsWith(`${NOTIFICATION_PREFIX}/`) ||
+      this.isNotificationWsPath(pathname)
+    );
+  }
+
+  private isNotificationWsPath(path: string): boolean {
+    const pathname = path.split('?')[0];
+    return (
       pathname === NOTIFICATION_WS_PATH ||
       pathname.startsWith(`${NOTIFICATION_WS_PATH}/`)
     );
