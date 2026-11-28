@@ -14,7 +14,8 @@
         "lint": "turbo lint",
         "typecheck": "turbo typecheck",
         "db:migrate": "node scripts/migrate-all.mjs",
-        "seed:master-data": "node scripts/seed-master-data.mjs"
+        "seed:master-data": "node scripts/seed-master-data.mjs",
+        "seed:all": "node scripts/seed-demo-all.mjs"
     },
     "devDependencies": {
         "@nestjs/cli": "^12.0.0",
