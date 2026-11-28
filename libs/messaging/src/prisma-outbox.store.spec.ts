@@ -119,6 +119,57 @@ describe("PrismaOutboxStore", () => {
       );
     },
   );
+  it("accepts the Identity schema and lifts actorId into envelope metadata cleanly", async () => {
+    const payload = {
+      roleId: "role-1",
+      roleCode: "MANAGER",
+      roleName: "Manager",
+      changeType: "PERMISSIONS_UPDATED",
+      beforePermissions: ["order:sales-order:read"],
+      afterPermissions: ["order:sales-order:read", "audit:log:read"],
+      actorId: "owner-user-1",
+    };
+    const tx = {
+      $queryRawUnsafe: vi.fn().mockResolvedValue([
+        {
+          id: "event-id-1",
+          tenantId: "tenant-1",
+          eventType: "IdentityRolePermissionsUpdated",
+          eventVersion: 1,
+          aggregateType: "Role",
+          aggregateId: "role-1",
+          aggregateVersion: 1n,
+          correlationId: "corr-1",
+          causationId: "corr-1",
+          payload,
+          occurredAt: new Date("2026-11-24T09:00:00Z"),
+          attemptCount: 0,
+        },
+      ]),
+      $executeRawUnsafe: vi.fn(),
+    };
+    const database: OutboxDatabase = {
+      $transaction: async (callback) => callback(tx),
+    };
+    const store = new PrismaOutboxStore(
+      database,
+      "identity",
+      ServiceId.IDENTITY_SERVICE,
+      1000,
+    );
+    await store.withLockedBatch(1, async (records) => {
+      expect(records[0].envelope.producer).toBe(ServiceId.IDENTITY_SERVICE);
+      expect(records[0].envelope.actorId).toBe("owner-user-1");
+      expect(records[0].envelope.payload).toEqual({
+        roleId: "role-1",
+        roleCode: "MANAGER",
+        roleName: "Manager",
+        changeType: "PERMISSIONS_UPDATED",
+        beforePermissions: ["order:sales-order:read"],
+        afterPermissions: ["order:sales-order:read", "audit:log:read"],
+      });
+    });
+  });
   it("accepts the Fulfillment schema without widening the schema whitelist", () => {
     const database: OutboxDatabase = { $transaction: vi.fn() };
     expect(

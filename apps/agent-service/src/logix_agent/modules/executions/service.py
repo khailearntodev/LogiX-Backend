@@ -23,6 +23,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from logix_agent.modules.executions.ids import to_uuid
 from logix_agent.modules.executions.models import AgentExecution
+from logix_agent.modules.messaging.models import OutboxEvent
+from logix_agent.modules.messaging.redactor import redact_audit_value
 from logix_agent.modules.tools.models import ToolCall
 
 AGENT_TYPE_PLANNER = "planner"
@@ -39,6 +41,9 @@ TOOL_FAILED = "FAILED"
 TOOL_REJECTED = "REJECTED"
 TOOL_STALE = "STALE"
 
+EVENT_AGENT_TOOL_CALLED = "AgentToolCalled"
+EVENT_AGENT_EXECUTION_COMPLETED = "AgentExecutionCompleted"
+
 # ``tool_calls.required_permission`` is NOT NULL; this marks "authenticated user only".
 NO_PERMISSION = "authenticated"
 
@@ -48,8 +53,23 @@ def _now() -> datetime:
 
 
 def _json_safe(data: dict[str, Any]) -> dict[str, Any]:
-    """Round-trip through JSON so the JSONB column never receives non-serialisable values."""
-    return json.loads(json.dumps(data, default=str))
+    """Round-trip through JSON after redacting sensitive fields/tokens."""
+    redacted = redact_audit_value(data)
+    return json.loads(json.dumps(redacted, default=str))
+
+
+def _tool_status_to_outcome(status: str) -> str:
+    if status == TOOL_SUCCEEDED:
+        return "SUCCESS"
+    if status == TOOL_REJECTED:
+        return "DENIED"
+    return "FAILED"
+
+
+def _execution_status_to_outcome(status: str) -> str:
+    if status == EXECUTION_SUCCEEDED:
+        return "SUCCESS"
+    return "FAILED"
 
 
 class ExecutionRecorder(Protocol):
@@ -309,23 +329,75 @@ class SqlAlchemyExecutionRecorder:
         *,
         error_code: str | None = None,
     ) -> None:
+        tenant = to_uuid(tenant_id)
+        exec_id = to_uuid(execution_id)
+        finished_at = _now() if status in _TERMINAL_EXECUTION_STATUSES else None
         values: dict[str, Any] = {
             "status": status,
             "error_code": error_code,
             "version": AgentExecution.version + 1,
         }
-        if status in _TERMINAL_EXECUTION_STATUSES:
-            values["finished_at"] = _now()
+        if finished_at is not None:
+            values["finished_at"] = finished_at
         stmt = (
             update(AgentExecution)
             .where(
-                AgentExecution.tenant_id == to_uuid(tenant_id),
-                AgentExecution.id == to_uuid(execution_id),
+                AgentExecution.tenant_id == tenant,
+                AgentExecution.id == exec_id,
             )
             .values(**values)
+            .returning(AgentExecution)
         )
         async with self._session_factory() as session:
-            await session.execute(stmt)
+            execution = (await session.scalars(stmt)).first()
+            if execution is not None and status in _TERMINAL_EXECUTION_STATUSES:
+                tool_names = list(
+                    (
+                        await session.scalars(
+                            select(ToolCall.tool_name)
+                            .where(
+                                ToolCall.tenant_id == tenant,
+                                ToolCall.agent_execution_id == exec_id,
+                            )
+                            .order_by(ToolCall.sequence.asc())
+                        )
+                    ).all()
+                )
+                occurred_at = finished_at or _now()
+                started_at = execution.started_at
+                duration_ms = 0
+                if started_at is not None:
+                    start_utc = started_at if started_at.tzinfo else started_at.replace(tzinfo=UTC)
+                    duration_ms = max(0, int((occurred_at - start_utc).total_seconds() * 1000))
+                session.add(
+                    OutboxEvent(
+                        id=uuid4(),
+                        tenant_id=tenant,
+                        event_type=EVENT_AGENT_EXECUTION_COMPLETED,
+                        event_version=1,
+                        aggregate_type="AgentExecution",
+                        aggregate_id=exec_id,
+                        aggregate_version=int(execution.version),
+                        correlation_id=execution.correlation_id,
+                        causation_id=execution.correlation_id,
+                        payload={
+                            "agentExecutionId": str(exec_id),
+                            "conversationId": str(execution.conversation_id)
+                            if execution.conversation_id
+                            else None,
+                            "toolsUsed": tool_names,
+                            "success": status == EXECUTION_SUCCEEDED,
+                            "durationMs": duration_ms,
+                            "status": status,
+                            "outcome": _execution_status_to_outcome(status),
+                            "errorCode": error_code,
+                            "provider": execution.provider,
+                            "model": execution.model,
+                            "actorId": str(execution.user_id),
+                        },
+                        occurred_at=occurred_at,
+                    )
+                )
             await session.commit()
 
     async def start_tool_call(
@@ -375,21 +447,66 @@ class SqlAlchemyExecutionRecorder:
         error_code: str | None = None,
         latency_ms: int | None = None,
     ) -> None:
+        tenant = to_uuid(tenant_id)
+        tc_id = to_uuid(tool_call_id)
+        finished_at = _now()
         stmt = (
             update(ToolCall)
             .where(
-                ToolCall.tenant_id == to_uuid(tenant_id),
-                ToolCall.id == to_uuid(tool_call_id),
+                ToolCall.tenant_id == tenant,
+                ToolCall.id == tc_id,
             )
             .values(
                 status=status,
                 error_code=error_code,
                 latency_ms=latency_ms,
-                finished_at=_now(),
+                finished_at=finished_at,
                 version=ToolCall.version + 1,
             )
+            .returning(ToolCall)
         )
         async with self._session_factory() as session:
-            await session.execute(stmt)
+            tool_call = (await session.scalars(stmt)).first()
+            if tool_call is not None:
+                execution = await session.scalar(
+                    select(AgentExecution).where(
+                        AgentExecution.tenant_id == tenant,
+                        AgentExecution.id == tool_call.agent_execution_id,
+                    )
+                )
+                if execution is not None:
+                    session.add(
+                        OutboxEvent(
+                            id=uuid4(),
+                            tenant_id=tenant,
+                            event_type=EVENT_AGENT_TOOL_CALLED,
+                            event_version=1,
+                            aggregate_type="ToolCall",
+                            aggregate_id=tool_call.id,
+                            aggregate_version=int(tool_call.version),
+                            correlation_id=execution.correlation_id,
+                            causation_id=execution.id,
+                            payload={
+                                "toolCallId": str(tool_call.id),
+                                "agentExecutionId": str(tool_call.agent_execution_id),
+                                "conversationId": str(execution.conversation_id)
+                                if execution.conversation_id
+                                else None,
+                                "toolName": tool_call.tool_name,
+                                "toolVersion": tool_call.tool_version,
+                                "requiredPermission": tool_call.required_permission,
+                                "riskLevel": tool_call.risk_level,
+                                "targetService": tool_call.target_service,
+                                "status": status,
+                                "outcome": _tool_status_to_outcome(status),
+                                "sanitizedInput": _json_safe(dict(tool_call.input_sanitized or {})),
+                                "sanitizedOutputSummary": None,
+                                "errorCode": error_code,
+                                "latencyMs": latency_ms,
+                                "actorId": str(execution.user_id),
+                            },
+                            occurred_at=finished_at,
+                        )
+                    )
             await session.commit()
 

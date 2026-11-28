@@ -72,3 +72,8 @@ export type TenantInvitation = Prisma.TenantInvitationModel
  * 
  */
 export type ContactLead = Prisma.ContactLeadModel
+/**
+ * Model OutboxEvent
+ * 
+ */
+export type OutboxEvent = Prisma.OutboxEventModel

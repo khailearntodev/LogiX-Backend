@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Optional,
   UnauthorizedException,
   ConflictException,
   NotFoundException,
@@ -18,6 +19,7 @@ import { UpdateProfileDto } from '../dto/update-profile.dto.js';
 import { ChangePasswordDto } from '../dto/change-password.dto.js';
 import { RolesService } from '../../iam/services/roles.service.js';
 import { MailService } from '../../mail/services/mail.service.js';
+import { IdentityAuditOutboxWriter } from '../../messaging/identity-audit-outbox.writer.js';
 import { SUPER_ADMIN_CONTEXT_ROLE } from '../auth.constants.js';
 
 @Injectable()
@@ -27,7 +29,8 @@ export class AuthService {
     private readonly tokenService: TokenService,
     private readonly rolesService: RolesService,
     private readonly mailService: MailService,
-  ) { }
+    @Optional() private readonly auditOutbox?: IdentityAuditOutboxWriter,
+  ) {}
 
   async login(dto: LoginDto, meta?: { userAgent?: string; ipAddress?: string }) {
     const user = await this.prisma.user.findFirst({
@@ -58,6 +61,24 @@ export class AuthService {
 
     const isPasswordMatch = await bcrypt.compare(dto.password, user.passwordHash);
     if (!isPasswordMatch) {
+      const failedTenantId =
+        dto.tenantId ??
+        user.userTenants?.find((ut) => ut.isDefault)?.tenantId ??
+        user.userTenants?.[0]?.tenantId;
+      if (failedTenantId) {
+        await this.auditOutbox?.writeSensitiveLogin(this.prisma, {
+          tenantId: failedTenantId,
+          actorId: user.id,
+          targetUserId: user.id,
+          email: user.email,
+          eventKind: 'LOGIN_FAILED',
+          outcome: 'FAILED',
+          failureReason: 'INVALID_CREDENTIALS',
+          ipAddress: meta?.ipAddress,
+          userAgent: meta?.userAgent,
+          aggregateVersion: (user.version ?? 0n) + 1n,
+        });
+      }
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác');
     }
 
@@ -182,6 +203,18 @@ export class AuthService {
       refreshToken,
       userAgent: meta?.userAgent,
       ipAddress: meta?.ipAddress,
+    });
+
+    await this.auditOutbox?.writeSensitiveLogin(this.prisma, {
+      tenantId: selectedUserTenant.tenantId,
+      actorId: user.id,
+      targetUserId: user.id,
+      email: user.email,
+      eventKind: 'LOGIN_SUCCEEDED',
+      outcome: 'SUCCESS',
+      ipAddress: meta?.ipAddress,
+      userAgent: meta?.userAgent,
+      aggregateVersion: (user.version ?? 0n) + 1n,
     });
 
     const tenantsList = user.userTenants.map((ut) => ({
@@ -407,6 +440,18 @@ export class AuthService {
       ipAddress: meta?.ipAddress,
     });
 
+    await this.auditOutbox?.writeSensitiveLogin(this.prisma, {
+      tenantId: tenant.id,
+      actorId: user.id,
+      targetUserId: user.id,
+      email: user.email,
+      eventKind: 'TENANT_SWITCHED',
+      outcome: 'SUCCESS',
+      ipAddress: meta?.ipAddress,
+      userAgent: meta?.userAgent,
+      aggregateVersion: (user.version ?? 0n) + 1n,
+    });
+
     return {
       accessToken,
       refreshToken,
@@ -539,6 +584,22 @@ export class AuthService {
         tokenVersion: { increment: 1 },
       },
     });
+
+    const primaryMembership = await this.prisma.userTenant.findFirst?.({
+      where: { userId, status: 'ACTIVE', deletedAt: null },
+      select: { tenantId: true },
+    });
+    if (primaryMembership?.tenantId) {
+      await this.auditOutbox?.writeSensitiveLogin(this.prisma, {
+        tenantId: primaryMembership.tenantId,
+        actorId: userId,
+        targetUserId: userId,
+        email: user.email,
+        eventKind: 'PASSWORD_CHANGED',
+        outcome: 'SUCCESS',
+        aggregateVersion: (user.version ?? 0n) + 1n,
+      });
+    }
 
     let revokedOthersCount = 0;
     if (dto.revokeOtherSessions !== false && currentRefreshToken) {
