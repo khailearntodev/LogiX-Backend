@@ -35,6 +35,7 @@ x-node-env: &node-env
   FULFILLMENT_SERVICE_URL: http://fulfillment-service:3005
   TRANSPORT_SERVICE_URL: http://transport-service:3006
   NOTIFICATION_SERVICE_URL: http://notification-service:3007
+  AUDIT_SERVICE_URL: http://audit-service:3008
   FORECAST_SERVICE_URL: ${FORECAST_SERVICE_URL:-http://forecast-service:8002}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379}
 
@@ -44,6 +45,8 @@ x-kafka-env: &kafka-env
   KAFKA_INVENTORY_TOPIC: ${KAFKA_INVENTORY_TOPIC:?Set KAFKA_INVENTORY_TOPIC}
   KAFKA_FULFILLMENT_TOPIC: ${KAFKA_FULFILLMENT_TOPIC:?Set KAFKA_FULFILLMENT_TOPIC}
   KAFKA_TRANSPORT_TOPIC: ${KAFKA_TRANSPORT_TOPIC:?Set KAFKA_TRANSPORT_TOPIC}
+  KAFKA_IDENTITY_TOPIC: ${KAFKA_IDENTITY_TOPIC:-logix.identity.events.v1}
+  KAFKA_AGENT_TOPIC: ${KAFKA_AGENT_TOPIC:-logix.agent.events.v1}
   OUTBOX_INTERVAL_MS: "1000"
   OUTBOX_BATCH_SIZE: "50"
   OUTBOX_RETRY_BASE_MS: "1000"
@@ -74,6 +77,10 @@ services:
     image: postgres:17-bookworm
     restart: unless-stopped
     profiles: [local-db]
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=${POSTGRES_MAX_CONNECTIONS:-300}"
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
@@ -155,6 +162,8 @@ services:
         ${KAFKA_INVENTORY_TOPIC:?Set KAFKA_INVENTORY_TOPIC}
         ${KAFKA_FULFILLMENT_TOPIC:?Set KAFKA_FULFILLMENT_TOPIC}
         ${KAFKA_TRANSPORT_TOPIC:?Set KAFKA_TRANSPORT_TOPIC}
+        ${KAFKA_IDENTITY_TOPIC:-logix.identity.events.v1}
+        ${KAFKA_AGENT_TOPIC:-logix.agent.events.v1}
         ${KAFKA_NOTIFICATION_BROADCAST_TOPIC:-notification.broadcast.requested.v1}
       PARTITIONS: ${KAFKA_TOPIC_PARTITIONS:-6}
       REPLICATION: ${KAFKA_TOPIC_REPLICATION_FACTOR:-1}
@@ -228,12 +237,13 @@ services:
       args: { SERVICE: identity-service, PORT: "3001" }
     image: logix/identity-service:latest
     restart: unless-stopped
-    depends_on: *after-migrate
+    depends_on: *after-migrate-kafka
     environment:
-      <<: *node-env
+      <<: [*node-env, *kafka-env]
       PORT: "3001"
       SERVICE_NAME: identity-service
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_identity?schema=identity${POSTGRES_SSL_PARAM:-}
+      KAFKA_CLIENT_ID: identity-service
     networks: [logix]
 
   master-data-service:
@@ -346,12 +356,14 @@ services:
       args: { SERVICE: audit-service, PORT: "3008" }
     image: logix/audit-service:latest
     restart: unless-stopped
-    depends_on: *after-migrate
+    depends_on: *after-migrate-kafka
     environment:
-      NODE_ENV: production
+      <<: [*node-env, *kafka-env]
       PORT: "3008"
       SERVICE_NAME: audit-service
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-postgres}:${POSTGRES_PORT:-5432}/logix_audit?schema=audit${POSTGRES_SSL_PARAM:-}
+      KAFKA_CLIENT_ID: audit-service
+      KAFKA_GROUP_ID: logix-audit-service
     networks: [logix]
 
   # ============================================================== FastAPI
@@ -388,6 +400,9 @@ services:
       LLM_MAX_ATTEMPTS: "2"
       LLM_FALLBACK_ENABLED: "false"
       PROMPT_POLICY_VERSION: v1
+      KAFKA_BROKERS: kafka:29092
+      KAFKA_CLIENT_ID: agent-service
+      KAFKA_AGENT_TOPIC: ${KAFKA_AGENT_TOPIC:-logix.agent.events.v1}
 
   forecast-service:
     <<: *python-common

@@ -50,6 +50,7 @@ describe('KafkaProducerService', () => {
 
     expect(send).toHaveBeenCalledWith({
       topic: 'notification.email.requested.v1',
+      timeout: 3000,
       messages: [
         expect.objectContaining({
           key: 'lead-1',
