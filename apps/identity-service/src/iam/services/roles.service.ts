@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Optional,
   NotFoundException,
   BadRequestException,
   ConflictException,
@@ -12,6 +13,7 @@ import {
 } from '@logix/auth';
 import type { AuthenticatedUser } from '../../auth/interfaces/jwt-payload.interface.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import { IdentityAuditOutboxWriter } from '../../messaging/identity-audit-outbox.writer.js';
 import { CreateRoleDto } from '../dto/create-role.dto.js';
 import { UpdateRoleDto } from '../dto/update-role.dto.js';
 
@@ -26,7 +28,10 @@ const OWNER_ONLY_DEFAULT_PERMISSION_CODES = new Set<string>(
 
 @Injectable()
 export class RolesService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() private readonly auditOutbox?: IdentityAuditOutboxWriter,
+  ) {}
 
   async resolveTenantId(user: AuthenticatedUser, headerTenantId?: string) {
     const tenantId = user.isSuperAdmin === true && headerTenantId ? headerTenantId : user.tenantId;
@@ -303,14 +308,18 @@ export class RolesService {
         },
       });
 
+      let grantedPermissionCodes: string[] = [];
       if (dto.permissionIds && dto.permissionIds.length > 0) {
         // Kiểm tra danh sách permissions tồn tại
         const validPerms = await tx.permission.findMany({
           where: { id: { in: dto.permissionIds }, deletedAt: null },
-          select: { id: true },
+          select: { id: true, code: true },
         });
 
         if (validPerms.length > 0) {
+          grantedPermissionCodes = validPerms
+            .map((p) => p.code)
+            .filter((code): code is string => Boolean(code));
           await tx.rolePermission.createMany({
             data: validPerms.map((p) => ({
               tenantId,
@@ -321,6 +330,18 @@ export class RolesService {
           });
         }
       }
+
+      await this.auditOutbox?.writeRolePermissionsUpdated(tx, {
+        tenantId,
+        actorId: creatorId ?? null,
+        roleId: role.id,
+        roleCode: role.code,
+        roleName: role.name,
+        changeType: 'CREATED',
+        beforePermissions: [],
+        afterPermissions: grantedPermissionCodes,
+        aggregateVersion: role.version ?? 1n,
+      });
 
       return {
         id: role.id,
@@ -336,7 +357,12 @@ export class RolesService {
   /**
    * Cập nhật thông tin vai trò (Không cho phép đổi code của System Roles)
    */
-  async updateRole(tenantId: string, roleId: string, dto: UpdateRoleDto) {
+  async updateRole(
+    tenantId: string,
+    roleId: string,
+    dto: UpdateRoleDto,
+    updaterId?: string,
+  ) {
     const role = await this.prisma.role.findFirst({
       where: { id: roleId, tenantId, deletedAt: null },
     });
@@ -345,12 +371,36 @@ export class RolesService {
       throw new NotFoundException('Không tìm thấy vai trò cần cập nhật');
     }
 
-    const updated = await this.prisma.role.update({
-      where: { id: roleId },
-      data: {
-        ...(dto.name && { name: dto.name.trim() }),
-        ...(dto.description !== undefined && { description: dto.description?.trim() || null }),
-      },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const nextRole = await tx.role.update({
+        where: { id: roleId },
+        data: {
+          ...(dto.name && { name: dto.name.trim() }),
+          ...(dto.description !== undefined && { description: dto.description?.trim() || null }),
+        },
+      });
+
+      const currentPerms = await tx.rolePermission.findMany?.({
+        where: { tenantId, roleId, deletedAt: null },
+        include: { permission: { select: { code: true } } },
+      });
+      const currentCodes = (currentPerms ?? [])
+        .map((rp) => rp.permission?.code)
+        .filter((code): code is string => Boolean(code));
+
+      await this.auditOutbox?.writeRolePermissionsUpdated(tx, {
+        tenantId,
+        actorId: updaterId ?? null,
+        roleId: nextRole.id,
+        roleCode: nextRole.code,
+        roleName: nextRole.name,
+        changeType: 'UPDATED',
+        beforePermissions: currentCodes,
+        afterPermissions: currentCodes,
+        aggregateVersion: nextRole.version ?? 1n,
+      });
+
+      return nextRole;
     });
 
     return {
@@ -366,7 +416,7 @@ export class RolesService {
   /**
    * Xóa vai trò tùy biến (Chặn xóa 3 System Roles và vai trò đang có thành viên)
    */
-  async deleteRole(tenantId: string, roleId: string) {
+  async deleteRole(tenantId: string, roleId: string, deleterId?: string) {
     const role = await this.prisma.role.findFirst({
       where: { id: roleId, tenantId, deletedAt: null },
       include: {
@@ -392,9 +442,31 @@ export class RolesService {
       );
     }
 
-    await this.prisma.role.update({
-      where: { id: roleId },
-      data: { deletedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      const currentPerms = await tx.rolePermission.findMany?.({
+        where: { tenantId, roleId, deletedAt: null },
+        include: { permission: { select: { code: true } } },
+      });
+      const beforePermissions = (currentPerms ?? [])
+        .map((rp) => rp.permission?.code)
+        .filter((code): code is string => Boolean(code));
+
+      const deletedRole = await tx.role.update({
+        where: { id: roleId },
+        data: { deletedAt: new Date() },
+      });
+
+      await this.auditOutbox?.writeRolePermissionsUpdated(tx, {
+        tenantId,
+        actorId: deleterId ?? null,
+        roleId: role.id,
+        roleCode: role.code,
+        roleName: role.name,
+        changeType: 'DELETED',
+        beforePermissions,
+        afterPermissions: [],
+        aggregateVersion: deletedRole?.version ?? role.version ?? 1n,
+      });
     });
 
     return { message: `Đã xóa vai trò "${role.name}" thành công` };
@@ -424,10 +496,18 @@ export class RolesService {
     // Kiểm tra danh sách permissions hợp lệ
     const validPerms = await this.prisma.permission.findMany({
       where: { id: { in: permissionIds }, deletedAt: null },
-      select: { id: true },
+      select: { id: true, code: true },
     });
 
     await this.prisma.$transaction(async (tx) => {
+      const existingPerms = await tx.rolePermission.findMany?.({
+        where: { tenantId, roleId, deletedAt: null },
+        include: { permission: { select: { code: true } } },
+      });
+      const beforePermissions = (existingPerms ?? [])
+        .map((rp) => rp.permission?.code)
+        .filter((code): code is string => Boolean(code));
+
       // Xóa toàn bộ RolePermission hiện tại của vai trò này
       await tx.rolePermission.deleteMany({
         where: { tenantId, roleId },
@@ -444,6 +524,22 @@ export class RolesService {
           })),
         });
       }
+
+      const afterPermissions = validPerms
+        .map((p) => p.code)
+        .filter((code): code is string => Boolean(code));
+
+      await this.auditOutbox?.writeRolePermissionsUpdated(tx, {
+        tenantId,
+        actorId: updaterId ?? null,
+        roleId: role.id,
+        roleCode: role.code,
+        roleName: role.name,
+        changeType: 'PERMISSIONS_UPDATED',
+        beforePermissions,
+        afterPermissions,
+        aggregateVersion: (role.version ?? 0n) + 1n,
+      });
     });
 
     return {
@@ -495,6 +591,14 @@ export class RolesService {
 
     // 3. Thực hiện thay thế các roles của thành viên
     await this.prisma.$transaction(async (tx) => {
+      const existingUserRoles = await tx.userRole.findMany?.({
+        where: { tenantId, userId: targetUserId, deletedAt: null },
+        include: { role: { select: { code: true } } },
+      });
+      const beforeRoleCodes = (existingUserRoles ?? [])
+        .map((ur) => ur.role?.code)
+        .filter((code): code is string => Boolean(code));
+
       await tx.userRole.deleteMany({
         where: { tenantId, userId: targetUserId },
       });
@@ -524,6 +628,17 @@ export class RolesService {
           data: { role: primaryRole },
         });
       }
+
+      await this.auditOutbox?.writeMemberRoleChanged(tx, {
+        tenantId,
+        actorId: assignerId ?? null,
+        aggregateId: membership.id ?? targetUserId,
+        targetUserId,
+        changeType: validRoles.length > 0 ? 'ROLE_ASSIGNED' : 'ROLE_REVOKED',
+        beforeRoleCodes: beforeRoleCodes.length > 0 ? beforeRoleCodes : [membership.role],
+        afterRoleCodes: validRoles.map((r) => r.code),
+        aggregateVersion: BigInt(Date.now()),
+      });
     });
 
     return {

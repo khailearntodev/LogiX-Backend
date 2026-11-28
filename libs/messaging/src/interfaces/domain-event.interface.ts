@@ -11,6 +11,13 @@
 
 import type { ShipmentLifecyclePayload } from "./shipment.contract.js";
 import type { DeliveryResultPayload } from "./transport.contract.js";
+import type {
+  AuditOutcome,
+  IdentityMemberRoleChangedPayload,
+  IdentityRolePermissionsUpdatedPayload,
+  IdentitySensitiveLoginPayload,
+} from "./identity-audit.contract.js";
+import type { AgentToolCalledPayload } from "./agent-audit.contract.js";
 
 // ─── Shared Snapshots ───────────────────────────────────────────────────────
 // Immutable copies of Master Data / Identity records carried inside events so
@@ -269,10 +276,16 @@ export interface ForecastCompletedPayload {
 
 export interface AgentExecutionCompletedPayload {
   agentExecutionId: string;
-  conversationId: string;
+  conversationId: string | null;
   toolsUsed: string[];
   success: boolean;
   durationMs: number;
+  /** Additive audit/metrics metadata */
+  status?: string;
+  outcome?: AuditOutcome;
+  errorCode?: string | null;
+  provider?: string | null;
+  model?: string | null;
 }
 
 // ─── Event Type Registry ────────────────────────────────────────────────────
@@ -282,6 +295,9 @@ export interface AgentExecutionCompletedPayload {
  * Used for type-safe event publishing and consumption.
  */
 export interface DomainEventMap {
+  IdentityRolePermissionsUpdated: IdentityRolePermissionsUpdatedPayload;
+  IdentityMemberRoleChanged: IdentityMemberRoleChangedPayload;
+  IdentitySensitiveLogin: IdentitySensitiveLoginPayload;
   OrderCreated: OrderCreatedPayload;
   OrderUpdated: OrderUpdatedPayload;
   OrderCanceled: OrderCanceledPayload;
@@ -309,6 +325,7 @@ export interface DomainEventMap {
   DeliveryCompleted: DeliveryCompletedPayload;
   DeliveryFailed: DeliveryFailedPayload;
   ForecastCompleted: ForecastCompletedPayload;
+  AgentToolCalled: AgentToolCalledPayload;
   AgentExecutionCompleted: AgentExecutionCompletedPayload;
 }
 

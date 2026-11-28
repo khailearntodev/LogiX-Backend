@@ -33,12 +33,18 @@ export class PrismaOutboxStore implements OutboxRelayStore {
   constructor(
     private readonly database: OutboxDatabase,
     private readonly schema:
-      "orders" | "inventory" | "fulfillment" | "transport",
+      | "identity"
+      | "orders"
+      | "inventory"
+      | "fulfillment"
+      | "transport",
     private readonly producer: ServiceId,
     private readonly transactionTimeoutMs: number,
   ) {
     if (
-      !["orders", "inventory", "fulfillment", "transport"].includes(schema) ||
+      !["identity", "orders", "inventory", "fulfillment", "transport"].includes(
+        schema,
+      ) ||
       !Number.isSafeInteger(transactionTimeoutMs) ||
       transactionTimeoutMs <= 0
     ) {
@@ -110,6 +116,7 @@ export class PrismaOutboxStore implements OutboxRelayStore {
             );
           }
           const actorIsEnvelopeMetadata =
+            this.schema === "identity" ||
             (row.eventType === "TripDispatched" && row.eventVersion === 2) ||
             isDeliveryResult;
           return {

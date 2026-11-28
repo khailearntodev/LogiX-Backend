@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AGENT_CONVERSATION_PERMISSIONS,
   AGENT_MODEL_CONFIG_PERMISSIONS,
+  AUDIT_PERMISSIONS,
   FORECAST_PERMISSIONS,
   FULFILLMENT_PERMISSIONS,
   IAM_PERMISSIONS,
@@ -100,15 +101,21 @@ describe('shared permission codes (@logix/auth)', () => {
       MANAGE: 'agent:conversation:manage',
     });
 
+    expect(AUDIT_PERMISSIONS).toEqual({
+      LOG_READ: 'audit:log:read',
+    });
+
     expect(OWNER_ONLY_DEFAULT_PERMISSIONS).toEqual([
       'agent:conversation:read',
       'agent:conversation:manage',
+      'audit:log:read',
     ]);
 
     expect(MEMBER_RESTRICTED_PERMISSIONS).toEqual([
       'master-data:driver:read',
       'transport:driver:read',
       'agent:conversation:read',
+      'audit:log:read',
     ]);
   });
 });

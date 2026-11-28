@@ -20,6 +20,7 @@ import { gatewayConfigSchema } from './config/gateway-config.schema.js';
 import { FulfillmentProxyMiddleware } from './proxy/fulfillment-proxy.middleware.js';
 import { TransportProxyMiddleware } from './proxy/transport-proxy.middleware.js';
 import { ForecastProxyMiddleware } from './proxy/forecast-proxy.middleware.js';
+import { AuditProxyMiddleware } from './proxy/audit-proxy.middleware.js';
 import { NotificationProxyMiddleware } from './proxy/notification-proxy.middleware.js';
 
 @Module({
@@ -120,6 +121,13 @@ export class AppModule implements NestModule {
       .forRoutes(
         { path: 'api/v1/forecast', method: RequestMethod.ALL },
         { path: 'api/v1/forecast/*', method: RequestMethod.ALL },
+      );
+    // Chỉ cho phép truy vấn đọc (GET) sang audit-service (BR-AUD-002)
+    consumer
+      .apply(AuditProxyMiddleware)
+      .forRoutes(
+        { path: 'api/v1/audit-logs', method: RequestMethod.GET },
+        { path: 'api/v1/audit-logs/*', method: RequestMethod.GET },
       );
     consumer
       .apply(NotificationProxyMiddleware)

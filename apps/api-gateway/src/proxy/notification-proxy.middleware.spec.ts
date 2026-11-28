@@ -56,6 +56,7 @@ describe('Notification Gateway proxy boundary', () => {
         ORDER_SERVICE_URL: 'https://order.example.test',
         FULFILLMENT_SERVICE_URL: 'https://fulfillment.example.test',
         TRANSPORT_SERVICE_URL: 'https://transport.example.test',
+        AUDIT_SERVICE_URL: 'https://audit.example.test',
         NOTIFICATION_SERVICE_URL: 'https://notification.example.test',
       }).success,
     ).toBe(true);

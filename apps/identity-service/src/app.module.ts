@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { LogixConfigModule, databaseConfigSchema } from '@logix/config';
+import { LogixConfigModule } from '@logix/config';
 import { LogixLoggerModule } from '@logix/logger';
 import { GlobalExceptionFilter } from '@logix/errors';
 import { AppController } from './app.controller.js';
@@ -12,17 +12,15 @@ import { IamModule } from './iam/iam.module.js';
 import { MailModule } from './mail/mail.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { DriverUsersModule } from './driver-users/driver-users.module.js';
-import { z } from 'zod';
+import { IdentityMessagingModule } from './messaging/identity-messaging.module.js';
+import { identityConfigSchema } from './config/identity-config.schema.js';
 import { NotificationRecipientsModule } from './notification-recipients/notification-recipients.module.js';
 
 @Module({
   imports: [
     // Configuration with Zod validation — fails fast if env vars missing
     LogixConfigModule.forRoot({
-      schema: databaseConfigSchema.extend({
-        INTERNAL_SERVICE_JWT_SECRET: z.string().min(32),
-        FRONTEND_URL: z.string().url(),
-      }),
+      schema: identityConfigSchema,
       envFilePath: ['apps/identity-service/.env', '.env'],
     }),
 
@@ -33,6 +31,7 @@ import { NotificationRecipientsModule } from './notification-recipients/notifica
 
     // Service-owned database
     DatabaseModule,
+    IdentityMessagingModule,
     MailModule,
     AuthModule,
     OrganizationsModule,

@@ -60,6 +60,8 @@ export * from "./interfaces/transport.contract.js";
 export * from "./interfaces/transport-hash.js";
 export * from "./interfaces/trip-route.contract.js";
 export * from "./interfaces/trip-dispatch.contract.js";
+export * from "./interfaces/identity-audit.contract.js";
+export * from "./interfaces/agent-audit.contract.js";
 export type {
   AuthorizeOrderDispatchRequest,
   OrderDispatchGrant,

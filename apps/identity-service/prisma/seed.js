@@ -376,6 +376,16 @@ export const SYSTEM_PERMISSIONS = [
     name: 'Quản lý hội thoại AI của tổ chức',
     description: 'Cho phép đổi tiêu đề, lưu trữ và xóa mềm các cuộc hội thoại AI thuộc tổ chức',
   },
+
+  // --- Phân hệ Nhật ký Kiểm toán (AUDIT) ---
+  {
+    code: 'audit:log:read',
+    module: 'AUDIT',
+    resource: 'log',
+    action: 'read',
+    name: 'Xem nhật ký kiểm toán',
+    description: 'Cho phép tra cứu nhật ký kiểm toán bất biến và truy vết chuỗi sự kiện theo phạm vi tổ chức ở chế độ chỉ đọc',
+  },
 ];
 
 async function main() {
