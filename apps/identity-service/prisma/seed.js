@@ -5,14 +5,22 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const SYSTEM_PERMISSIONS = [
-  { code: 'fulfillment:shipment:read', module: 'FULFILLMENT', resource: 'shipment', action: 'read',
-    name: 'Xem lô giao', description: 'Xem danh sách, chi tiết và thông tin trước xuất giao' },
-  { code: 'fulfillment:shipment:update', module: 'FULFILLMENT', resource: 'shipment', action: 'update',
-    name: 'Chuẩn bị lô giao', description: 'Ghi nhận lấy hàng và sẵn sàng giao' },
-  { code: 'fulfillment:shipment:dispatch', module: 'FULFILLMENT', resource: 'shipment', action: 'execute',
-    name: 'Xuất giao', description: 'Xác nhận xuất giao lô hàng' },
-  { code: 'fulfillment:shipment:complete', module: 'FULFILLMENT', resource: 'shipment', action: 'complete',
-    name: 'Ghi nhận kết quả giao', description: 'Ghi nhận giao thành công hoặc thất bại' },
+  {
+    code: 'fulfillment:shipment:read', module: 'FULFILLMENT', resource: 'shipment', action: 'read',
+    name: 'Xem lô giao', description: 'Xem danh sách, chi tiết và thông tin trước xuất giao'
+  },
+  {
+    code: 'fulfillment:shipment:update', module: 'FULFILLMENT', resource: 'shipment', action: 'update',
+    name: 'Chuẩn bị lô giao', description: 'Ghi nhận lấy hàng và sẵn sàng giao'
+  },
+  {
+    code: 'fulfillment:shipment:dispatch', module: 'FULFILLMENT', resource: 'shipment', action: 'execute',
+    name: 'Xuất giao', description: 'Xác nhận xuất giao lô hàng'
+  },
+  {
+    code: 'fulfillment:shipment:complete', module: 'FULFILLMENT', resource: 'shipment', action: 'complete',
+    name: 'Ghi nhận kết quả giao', description: 'Ghi nhận giao thành công hoặc thất bại'
+  },
   // --- Phân hệ Kho & Tồn kho (INVENTORY) ---
   {
     code: 'inventory:warehouse:read',
@@ -468,6 +476,116 @@ async function main() {
   });
 
   console.log(`✅ Tài khoản SUPER_ADMIN sẵn sàng: ID=${superAdminUser.id}, isSuperAdmin=${superAdminUser.isSuperAdmin}`);
+
+  // 3. Seed default organization (Tenant) & system roles so SUPER_ADMIN can log in on fresh DBs
+  const defaultTenantCode = process.env.DEFAULT_TENANT_CODE || 'LOGIX_DEFAULT';
+  const defaultTenantName = process.env.DEFAULT_TENANT_NAME || 'LogiX Logistics';
+
+  let defaultTenant = await prisma.tenant.findFirst({
+    where: { code: defaultTenantCode, deletedAt: null },
+  });
+
+  if (!defaultTenant) {
+    defaultTenant = await prisma.tenant.create({
+      data: {
+        code: defaultTenantCode,
+        name: defaultTenantName,
+        status: 'ACTIVE',
+        settings: {},
+      },
+    });
+    console.log(`🏢 Đã tạo tổ chức mặc định: ${defaultTenant.name} (${defaultTenant.code}, ID=${defaultTenant.id})`);
+  } else {
+    console.log(`🏢 Tổ chức mặc định đã tồn tại: ${defaultTenant.name} (${defaultTenant.code}, ID=${defaultTenant.id})`);
+  }
+
+  const allPermissions = await prisma.permission.findMany({
+    where: { deletedAt: null },
+    select: { id: true, code: true, action: true },
+  });
+
+  const ownerRole = await prisma.role.upsert({
+    where: { tenantId_code: { tenantId: defaultTenant.id, code: 'OWNER' } },
+    update: { name: 'Chủ sở hữu tổ chức', isSystem: true, deletedAt: null },
+    create: {
+      tenantId: defaultTenant.id,
+      code: 'OWNER',
+      name: 'Chủ sở hữu tổ chức',
+      description: 'Toàn quyền quản trị tổ chức',
+      isSystem: true,
+    },
+  });
+
+  await prisma.role.upsert({
+    where: { tenantId_code: { tenantId: defaultTenant.id, code: 'ADMIN' } },
+    update: { name: 'Quản trị viên', isSystem: true, deletedAt: null },
+    create: {
+      tenantId: defaultTenant.id,
+      code: 'ADMIN',
+      name: 'Quản trị viên',
+      description: 'Quản trị vận hành và người dùng trong tổ chức',
+      isSystem: true,
+    },
+  });
+
+  await prisma.role.upsert({
+    where: { tenantId_code: { tenantId: defaultTenant.id, code: 'MEMBER' } },
+    update: { name: 'Thành viên', isSystem: true, deletedAt: null },
+    create: {
+      tenantId: defaultTenant.id,
+      code: 'MEMBER',
+      name: 'Thành viên',
+      description: 'Thành viên vận hành cơ bản',
+      isSystem: true,
+    },
+  });
+
+  if (allPermissions.length > 0) {
+    await prisma.rolePermission.createMany({
+      data: allPermissions.map((p) => ({
+        tenantId: defaultTenant.id,
+        roleId: ownerRole.id,
+        permissionId: p.id,
+        grantedBy: superAdminUser.id,
+      })),
+      skipDuplicates: true,
+    });
+  }
+
+  await prisma.userTenant.upsert({
+    where: {
+      userId_tenantId: {
+        userId: superAdminUser.id,
+        tenantId: defaultTenant.id,
+      },
+    },
+    update: { role: 'OWNER', status: 'ACTIVE', isDefault: true, deletedAt: null },
+    create: {
+      userId: superAdminUser.id,
+      tenantId: defaultTenant.id,
+      role: 'OWNER',
+      status: 'ACTIVE',
+      isDefault: true,
+    },
+  });
+
+  await prisma.userRole.upsert({
+    where: {
+      tenantId_userId_roleId: {
+        tenantId: defaultTenant.id,
+        userId: superAdminUser.id,
+        roleId: ownerRole.id,
+      },
+    },
+    update: { deletedAt: null },
+    create: {
+      tenantId: defaultTenant.id,
+      userId: superAdminUser.id,
+      roleId: ownerRole.id,
+      grantedBy: superAdminUser.id,
+    },
+  });
+
   console.log('🎉 Hoàn thành seed dữ liệu Identity Service!');
   process.exit(0);
 }
