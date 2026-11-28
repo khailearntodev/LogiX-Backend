@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NextFunction, Request, Response } from 'express';
 import { createProxyMiddleware, type Options } from 'http-proxy-middleware';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 // Strictly read-only public audit query prefix (BR-AUD-002, NFR-AUD-001).
 const AUDIT_PUBLIC_PREFIX = '/api/v1/audit-logs';
@@ -11,8 +12,12 @@ export class AuditProxyMiddleware implements NestMiddleware {
   private readonly proxy: ReturnType<typeof createProxyMiddleware>;
 
   constructor(config: ConfigService) {
+    const target = config.getOrThrow<string>('AUDIT_SERVICE_URL');
     const options: Options = {
-      target: config.getOrThrow<string>('AUDIT_SERVICE_URL'),
+      target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       pathFilter: (path: string) =>
         path === AUDIT_PUBLIC_PREFIX ||

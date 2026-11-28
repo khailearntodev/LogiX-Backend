@@ -81,6 +81,63 @@ export function withPrismaLifecycle<TBase extends Constructor<PrismaClientLike>>
   return PrismaLifecycleService;
 }
 
+export interface PrismaPoolConfig {
+  connectionString: string;
+  max: number;
+  idleTimeoutMillis: number;
+  connectionTimeoutMillis: number;
+}
+
+export interface DatabaseConfigReader {
+  get<T = unknown>(key: string): T | undefined;
+}
+
+const DEFAULT_DB_POOL_MAX = 20;
+const DEFAULT_DB_POOL_IDLE_TIMEOUT_MS = 30_000;
+const DEFAULT_DB_POOL_CONNECTION_TIMEOUT_MS = 10_000;
+
+/**
+ * Resolves pg.Pool options for PrismaPg from validated service config.
+ * Fails fast if DATABASE_URL is absent; applies bounded defaults for pool tunables
+ * so services never silently fall back to node-postgres's 10-connection default under load.
+ */
+export function resolvePrismaPgConfig(
+  config: DatabaseConfigReader,
+): PrismaPoolConfig {
+  const connectionString = config.get<string>('DATABASE_URL');
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is required');
+  }
+
+  const max = config.get<number>('DB_POOL_MAX') ?? DEFAULT_DB_POOL_MAX;
+  const idleTimeoutMillis =
+    config.get<number>('DB_POOL_IDLE_TIMEOUT_MS') ??
+    DEFAULT_DB_POOL_IDLE_TIMEOUT_MS;
+  const connectionTimeoutMillis =
+    config.get<number>('DB_POOL_CONNECTION_TIMEOUT_MS') ??
+    DEFAULT_DB_POOL_CONNECTION_TIMEOUT_MS;
+
+  if (!Number.isSafeInteger(max) || max < 1 || max > 200) {
+    throw new Error('DB_POOL_MAX must be an integer between 1 and 200');
+  }
+  if (!Number.isSafeInteger(idleTimeoutMillis) || idleTimeoutMillis < 1000) {
+    throw new Error('DB_POOL_IDLE_TIMEOUT_MS must be an integer >= 1000');
+  }
+  if (
+    !Number.isSafeInteger(connectionTimeoutMillis) ||
+    connectionTimeoutMillis < 500
+  ) {
+    throw new Error('DB_POOL_CONNECTION_TIMEOUT_MS must be an integer >= 500');
+  }
+
+  return {
+    connectionString,
+    max,
+    idleTimeoutMillis,
+    connectionTimeoutMillis,
+  };
+}
+
 /**
  * Abstract class representing the database service contract.
  */

@@ -7,6 +7,7 @@ import {
 import type { Request, Response, NextFunction } from 'express';
 import type { IncomingMessage } from 'node:http';
 import type { Socket } from 'node:net';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 const NOTIFICATION_PREFIX = '/api/v1/notifications';
 const NOTIFICATION_WS_PATH = '/ws/notifications';
@@ -19,8 +20,12 @@ export class NotificationProxyMiddleware implements NestMiddleware {
   >;
 
   constructor(config: ConfigService) {
+    const target = config.getOrThrow<string>('NOTIFICATION_SERVICE_URL');
     this.proxy = createProxyMiddleware<Request, Response>({
-      target: config.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
+      target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       ws: true,
       pathFilter: (path: string) => this.isNotificationPath(path),

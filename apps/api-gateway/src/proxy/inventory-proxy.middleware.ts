@@ -1,16 +1,25 @@
-import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import type { Request, Response, NextFunction } from 'express';
 import { createProxyMiddleware, fixRequestBody, Options } from 'http-proxy-middleware';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 @Injectable()
 export class InventoryProxyMiddleware implements NestMiddleware {
-  private readonly proxy: ReturnType<typeof createProxyMiddleware>;
+  private readonly proxy: ReturnType<typeof createProxyMiddleware> | null;
 
-  constructor() {
-    const target = process.env.INVENTORY_SERVICE_URL || 'http://localhost:3004';
+  constructor(@Inject(ConfigService) config: ConfigService) {
+    const target = config.get<string>('INVENTORY_SERVICE_URL');
+    if (!target) {
+      this.proxy = null;
+      return;
+    }
 
     const options: Options = {
       target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       secure: false,
       pathFilter: (path: string) => path.startsWith('/api/v1/inventory'),
@@ -40,6 +49,14 @@ export class InventoryProxyMiddleware implements NestMiddleware {
   }
 
   use(req: Request, res: Response, next: NextFunction) {
+    if (!this.proxy) {
+      res.status(503).json({
+        statusCode: 503,
+        message: 'Dịch vụ tồn kho (Inventory Service) chưa được cấu hình trên hệ thống.',
+        error: 'Service Unavailable',
+      });
+      return;
+    }
     this.proxy(req, res, next);
   }
 }

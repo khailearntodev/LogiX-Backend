@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response, NextFunction } from 'express';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 @Injectable()
 export class AuthProxyMiddleware implements NestMiddleware {
@@ -11,8 +12,12 @@ export class AuthProxyMiddleware implements NestMiddleware {
   >;
 
   constructor(@Inject(ConfigService) config: ConfigService) {
+    const target = config.getOrThrow<string>('IDENTITY_SERVICE_URL');
     this.proxy = createProxyMiddleware<Request, Response>({
-      target: config.getOrThrow<string>('IDENTITY_SERVICE_URL'),
+      target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       secure: false,
       ws: true,

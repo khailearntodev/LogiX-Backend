@@ -78,6 +78,43 @@ describe('OutboxRelay', () => {
     expect(tx.markPublished).not.toHaveBeenCalled();
   });
 
+  it('stops processing the remaining batch early after a broker failure to avoid transaction timeout', async () => {
+    const records: OutboxRelayRecord[] = [
+      { id: 'event-1', attemptCount: 0, envelope: { ...envelope, eventId: 'event-1' } },
+      { id: 'event-2', attemptCount: 0, envelope: { ...envelope, eventId: 'event-2' } },
+      { id: 'event-3', attemptCount: 0, envelope: { ...envelope, eventId: 'event-3' } },
+    ];
+    const tx = {
+      markPublished: vi.fn().mockResolvedValue(undefined),
+      markFailed: vi.fn().mockResolvedValue(undefined),
+    };
+    const producer = {
+      publishRaw: vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('broker timeout')),
+    };
+    const store = {
+      withLockedBatch: vi.fn<OutboxRelayStore['withLockedBatch']>(
+        async (_size, callback) => callback(records, tx),
+      ),
+    };
+    const relay = new OutboxRelay(store, producer, options);
+
+    await relay.flush();
+
+    expect(producer.publishRaw).toHaveBeenCalledTimes(2);
+    expect(tx.markPublished).toHaveBeenCalledTimes(1);
+    expect(tx.markPublished).toHaveBeenCalledWith('event-1', expect.any(Date));
+    expect(tx.markFailed).toHaveBeenCalledTimes(1);
+    expect(tx.markFailed).toHaveBeenCalledWith(
+      'event-2',
+      1,
+      expect.any(Date),
+      'broker timeout',
+    );
+  });
+
   it('propagates database errors after publish instead of hiding them', async () => {
     const { relay, tx } = fixture();
     tx.markPublished.mockRejectedValue(new Error('commit failed'));

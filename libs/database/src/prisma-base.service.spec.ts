@@ -1,7 +1,11 @@
 import { Logger } from '@nestjs/common';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DatabaseModule } from './database.module.js';
-import { PrismaBaseService, withPrismaLifecycle } from './prisma-base.service.js';
+import {
+  PrismaBaseService,
+  resolvePrismaPgConfig,
+  withPrismaLifecycle,
+} from './prisma-base.service.js';
 
 class FakeClient {
   $connect = vi.fn<() => Promise<void>>().mockResolvedValue(undefined);
@@ -62,5 +66,51 @@ describe('DatabaseModule', () => {
       ],
       exports: [PrismaBaseService, TestPrismaService],
     });
+  });
+});
+
+describe('resolvePrismaPgConfig', () => {
+  it('resolves pool defaults and explicit overrides from validated config', () => {
+    const defaults = resolvePrismaPgConfig({
+      get: <T>(key: string) =>
+        (key === 'DATABASE_URL' ? 'postgresql://u:p@localhost:5433/db' : undefined) as T,
+    });
+    expect(defaults).toEqual({
+      connectionString: 'postgresql://u:p@localhost:5433/db',
+      max: 20,
+      idleTimeoutMillis: 30_000,
+      connectionTimeoutMillis: 10_000,
+    });
+
+    const custom = resolvePrismaPgConfig({
+      get: <T>(key: string) =>
+        ({
+          DATABASE_URL: 'postgresql://u:p@localhost:5433/db',
+          DB_POOL_MAX: 35,
+          DB_POOL_IDLE_TIMEOUT_MS: 15_000,
+          DB_POOL_CONNECTION_TIMEOUT_MS: 5_000,
+        })[key] as T,
+    });
+    expect(custom).toEqual({
+      connectionString: 'postgresql://u:p@localhost:5433/db',
+      max: 35,
+      idleTimeoutMillis: 15_000,
+      connectionTimeoutMillis: 5_000,
+    });
+  });
+
+  it('fails fast when DATABASE_URL is missing or pool bounds are invalid', () => {
+    expect(() =>
+      resolvePrismaPgConfig({ get: () => undefined }),
+    ).toThrow('DATABASE_URL is required');
+    expect(() =>
+      resolvePrismaPgConfig({
+        get: <T>(key: string) =>
+          ({
+            DATABASE_URL: 'postgresql://u:p@localhost:5433/db',
+            DB_POOL_MAX: 0,
+          })[key] as T,
+      }),
+    ).toThrow('DB_POOL_MAX');
   });
 });

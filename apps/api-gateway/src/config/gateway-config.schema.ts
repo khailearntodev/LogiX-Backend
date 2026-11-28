@@ -12,5 +12,7 @@ export const gatewayConfigSchema = z.object({
   TRANSPORT_SERVICE_URL: z.string().url(),
   AUDIT_SERVICE_URL: z.string().url(),
   NOTIFICATION_SERVICE_URL: z.string().url(),
+  INVENTORY_SERVICE_URL: z.string().url().optional(),
+  AGENT_SERVICE_URL: z.string().url().optional(),
   FORECAST_SERVICE_URL: z.string().url().optional(),
 });

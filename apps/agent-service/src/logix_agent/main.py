@@ -193,6 +193,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             batch_size=settings.outbox_batch_size,
             retry_base_ms=settings.outbox_retry_base_ms,
             retry_max_ms=settings.outbox_retry_max_ms,
+            request_timeout_ms=settings.kafka_producer_request_timeout_ms,
         )
         try:
             await outbox_relay.start()

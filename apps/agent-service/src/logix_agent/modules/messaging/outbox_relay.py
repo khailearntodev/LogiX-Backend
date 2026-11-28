@@ -77,6 +77,7 @@ class AgentOutboxRelay:
         batch_size: int = 20,
         retry_base_ms: int = 1000,
         retry_max_ms: int = 60000,
+        request_timeout_ms: int = 3000,
         producer: KafkaByteProducer | None = None,
     ) -> None:
         if not brokers.strip() or not topic.strip():
@@ -89,6 +90,7 @@ class AgentOutboxRelay:
         self._batch_size = max(1, batch_size)
         self._retry_base_ms = max(100, retry_base_ms)
         self._retry_max_ms = max(self._retry_base_ms, retry_max_ms)
+        self._request_timeout_ms = max(500, request_timeout_ms)
         self._producer: KafkaByteProducer | None = producer
         self._owns_producer = producer is None
         self._task: asyncio.Task[None] | None = None
@@ -101,6 +103,7 @@ class AgentOutboxRelay:
             self._producer = AIOKafkaProducer(
                 bootstrap_servers=self._brokers,
                 client_id=self._client_id,
+                request_timeout_ms=self._request_timeout_ms,
             )
         await self._producer.start()
         self._stop_event.clear()
@@ -165,7 +168,10 @@ class AgentOutboxRelay:
                     encoded = json.dumps(envelope, separators=(",", ":")).encode("utf-8")
                     key = str(row.aggregate_id).encode("utf-8")
                     try:
-                        await self._producer.send_and_wait(self._topic, value=encoded, key=key)
+                        await asyncio.wait_for(
+                            self._producer.send_and_wait(self._topic, value=encoded, key=key),
+                            timeout=self._request_timeout_ms / 1000.0,
+                        )
                         await session.execute(
                             update(OutboxEvent)
                             .where(OutboxEvent.id == row.id)
@@ -195,9 +201,10 @@ class AgentOutboxRelay:
                             )
                         )
                         logger.error(
-                            "AgentOutboxRelay publish failed (eventId=%s, attempt=%d): %s",
+                            "AgentOutboxRelay publish failed (eventId=%s, attempt=%d); stopping batch early: %s",
                             row.id,
                             next_attempt_count,
                             exc,
                         )
+                        break
         return published_count

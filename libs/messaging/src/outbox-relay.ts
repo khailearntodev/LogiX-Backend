@@ -115,9 +115,12 @@ export class OutboxRelay implements OnModuleInit, OnModuleDestroy {
                 attemptCount,
                 correlationId: record.envelope.correlationId,
               },
-              'Outbox publication failed; retry scheduled',
+              'Outbox publication failed; retry scheduled and batch stopped early',
             );
-            continue;
+            // Stop the current batch immediately on broker failure so subsequent locked
+            // rows do not repeat producer timeouts and exhaust the DB transaction window
+            // (Prisma P2028) before markFailed commits.
+            break;
           }
           // Never mark a database failure as a broker failure. Re-delivery after commit
           // failure is expected: consumers deduplicate using the unchanged eventId.

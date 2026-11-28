@@ -75,6 +75,7 @@ class AgentSettings(BaseSettings):
     kafka_brokers: str | None = None
     kafka_client_id: str = "agent-service"
     kafka_agent_topic: str = "logix.agent.events.v1"
+    kafka_producer_request_timeout_ms: int = 3000
     outbox_interval_ms: int = 1000
     outbox_batch_size: int = 20
     outbox_retry_base_ms: int = 1000
