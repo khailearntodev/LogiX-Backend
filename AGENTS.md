@@ -98,6 +98,21 @@ indexed by `docs/architecture/README.md`.
   migration), never `prisma db push`. New NOT NULL snapshot columns require
   empty tables or a backfill step in the migration.
 
+### Adding New RBAC Permissions (Mandatory Checklist)
+
+Whenever a task introduces one or more new permission codes, you **MUST** keep all layers synchronized in the same change:
+
+1. **Shared contract (`libs/auth/src/permission-codes.ts` + `permission-codes.spec.ts`):**
+   - Define the new permission constant(s) in `@logix/auth` and rebuild `@logix/auth`.
+   - Classify restricted or owner-only defaults explicitly (`OWNER_ONLY_DEFAULT_PERMISSIONS` if `ADMIN` and custom roles must be granted manually by `OWNER`; `MEMBER_RESTRICTED_PERMISSIONS` if `MEMBER` must not inherit read access).
+2. **Identity seed (`apps/identity-service/prisma/seed.js`):**
+   - Add the new permission entry (`code`, `module`, `resource`, `action`, `name`, `description`) to `SYSTEM_PERMISSIONS`.
+3. **Committed Prisma migration (`apps/identity-service/prisma/migrations/`):**
+   - Create an idempotent SQL migration (`ON CONFLICT ("code") DO UPDATE ...` for `identity.permissions` and `ON CONFLICT ("role_id", "permission_id") DO NOTHING` for `identity.role_permissions`) and apply it with `prisma migrate deploy` — **never** rely on `seed.js` alone and **never** run `prisma db push`.
+   - Backfill existing system roles strictly according to the role policy (`OWNER` always receives new permissions; do not auto-grant `OWNER_ONLY_DEFAULT_PERMISSIONS` to `ADMIN` or `MEMBER_RESTRICTED_PERMISSIONS` to `MEMBER`).
+4. **Frontend locale parity (cross-repo reminder):**
+   - If the new permission introduces a new `module` or `resource`, coordinate with `LogiX-Frontend` to add `iam.modules.<MODULE>` and `iam.resources.<resource>` in all `vi.json` and `en.json` locale files so the Permission Matrix never renders raw keys.
+
 ### Production Code Standards
 
 LogiX is a public repository for a B2B production platform. Every change must

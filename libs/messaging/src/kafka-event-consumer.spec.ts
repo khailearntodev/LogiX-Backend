@@ -90,6 +90,37 @@ describe("parseEventEnvelope", () => {
       ).toThrow("Invalid domain event envelope");
     },
   );
+  it.each([
+    "IdentityRolePermissionsUpdated",
+    "IdentityMemberRoleChanged",
+    "IdentitySensitiveLogin",
+    "AgentToolCalled",
+    "AgentExecutionCompleted",
+  ])(
+    "accepts v1 audit-source event %s and rejects uncoordinated v2",
+    (eventType) => {
+      const producer = eventType.startsWith("Identity")
+        ? "identity-service"
+        : "agent-service";
+      const parsed = parseEventEnvelope(
+        JSON.stringify({
+          ...envelope,
+          eventType,
+          eventVersion: 1,
+          producer,
+          actorId: "actor-1",
+        }),
+      );
+      expect(parsed.eventType).toBe(eventType);
+      expect(parsed.eventVersion).toBe(1);
+      expect(parsed.producer).toBe(producer);
+      expect(() =>
+        parseEventEnvelope(
+          JSON.stringify({ ...envelope, eventType, eventVersion: 2, producer }),
+        ),
+      ).toThrow("Invalid domain event envelope");
+    },
+  );
   it("marks handler failures retriable for KafkaJS consumer recovery", () => {
     const cause = new Error("Inventory unavailable");
     const error = new DomainEventProcessingError(cause);

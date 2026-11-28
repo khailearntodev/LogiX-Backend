@@ -137,6 +137,14 @@ export const SYSTEM_PERMISSIONS = [
     description: 'Cho phép tài xế ghi nhận đến điểm và kết quả giao theo quyền sở hữu',
   },
   {
+    code: 'transport:vehicle:read',
+    module: 'TRANSPORT',
+    resource: 'vehicle',
+    action: 'read',
+    name: 'Xem danh sách phương tiện',
+    description: 'Cho phép xem danh sách và chi tiết phương tiện vận tải của tổ chức',
+  },
+  {
     code: 'transport:vehicle:manage',
     module: 'TRANSPORT',
     resource: 'vehicle',
@@ -159,6 +167,38 @@ export const SYSTEM_PERMISSIONS = [
     action: 'manage',
     name: 'Quản lý hồ sơ tài xế',
     description: 'Cho phép tạo, cập nhật, kích hoạt và vô hiệu hóa hồ sơ tài xế',
+  },
+  {
+    code: 'master-data:customer:read',
+    module: 'MASTER_DATA',
+    resource: 'customer',
+    action: 'read',
+    name: 'Xem danh mục khách hàng',
+    description: 'Cho phép xem danh sách, chi tiết và địa chỉ giao nhận của khách hàng',
+  },
+  {
+    code: 'master-data:customer:manage',
+    module: 'MASTER_DATA',
+    resource: 'customer',
+    action: 'manage',
+    name: 'Quản lý danh mục khách hàng',
+    description: 'Cho phép tạo mới, cập nhật, kích hoạt và vô hiệu hóa khách hàng cùng địa chỉ giao hàng',
+  },
+  {
+    code: 'master-data:product:read',
+    module: 'MASTER_DATA',
+    resource: 'product',
+    action: 'read',
+    name: 'Xem danh mục sản phẩm',
+    description: 'Cho phép xem danh sách và thông số quy cách sản phẩm (SKU)',
+  },
+  {
+    code: 'master-data:product:manage',
+    module: 'MASTER_DATA',
+    resource: 'product',
+    action: 'manage',
+    name: 'Quản lý danh mục sản phẩm',
+    description: 'Cho phép tạo mới, cập nhật, kích hoạt và vô hiệu hóa sản phẩm (SKU)',
   },
 
   // --- Phân hệ Quản lý Đơn hàng (ORDER) ---
@@ -252,6 +292,40 @@ export const SYSTEM_PERMISSIONS = [
     name: 'Xóa thành viên khỏi tổ chức',
     description: 'Cho phép thu hồi quyền truy cập và gỡ bỏ thành viên khỏi tổ chức',
   },
+  {
+    code: 'iam:organization:manage',
+    module: 'IAM',
+    resource: 'organization',
+    action: 'manage',
+    name: 'Quản lý hồ sơ tổ chức',
+    description: 'Cho phép cập nhật tên, logo và hồ sơ pháp lý của tổ chức',
+  },
+  {
+    code: 'iam:ai-instructions:manage',
+    module: 'IAM',
+    resource: 'ai_instructions',
+    action: 'manage',
+    name: 'Cấu hình chỉ dẫn AI của tổ chức',
+    description: 'Cho phép cập nhật, bật/tắt và khôi phục mặc định bộ chỉ dẫn AI của tổ chức',
+  },
+
+  // --- Phân hệ Dự báo Nhu cầu (FORECAST) ---
+  {
+    code: 'forecast:read',
+    module: 'FORECAST',
+    resource: 'demand_forecast',
+    action: 'read',
+    name: 'Xem dự báo nhu cầu',
+    description: 'Cho phép xem kết quả dự báo nhu cầu SKU theo kho và cảnh báo thiếu hàng',
+  },
+  {
+    code: 'forecast:run',
+    module: 'FORECAST',
+    resource: 'demand_forecast',
+    action: 'execute',
+    name: 'Chạy dự báo nhu cầu',
+    description: 'Cho phép kích hoạt chạy mô hình dự báo nhu cầu Prophet theo kho và sản phẩm',
+  },
 
   // --- Phân hệ Báo cáo & Thống kê (REPORT) ---
   {
@@ -303,6 +377,31 @@ export const SYSTEM_PERMISSIONS = [
     action: 'read',
     name: 'Xem lịch sử gửi thông báo',
     description: 'Cho phép xem danh sách, trạng thái và thống kê các đợt gửi thông báo của tổ chức',
+  {
+    code: 'agent:conversation:read',
+    module: 'AGENT',
+    resource: 'conversation',
+    action: 'read',
+    name: 'Xem hội thoại AI của tổ chức',
+    description: 'Cho phép xem, lọc và đọc chi tiết các cuộc hội thoại AI thuộc tổ chức ở chế độ chỉ đọc',
+  },
+  {
+    code: 'agent:conversation:manage',
+    module: 'AGENT',
+    resource: 'conversation',
+    action: 'manage',
+    name: 'Quản lý hội thoại AI của tổ chức',
+    description: 'Cho phép đổi tiêu đề, lưu trữ và xóa mềm các cuộc hội thoại AI thuộc tổ chức',
+  },
+
+  // --- Phân hệ Nhật ký Kiểm toán (AUDIT) ---
+  {
+    code: 'audit:log:read',
+    module: 'AUDIT',
+    resource: 'log',
+    action: 'read',
+    name: 'Xem nhật ký kiểm toán',
+    description: 'Cho phép tra cứu nhật ký kiểm toán bất biến và truy vết chuỗi sự kiện theo phạm vi tổ chức ở chế độ chỉ đọc',
   },
 ];
 

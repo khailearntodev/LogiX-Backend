@@ -37,6 +37,7 @@ def _ctx(*permissions: str) -> ToolContext:
 def _registry(handler):  # type: ignore[no-untyped-def]
     client = ServiceClient(
         base_urls={
+            "identity": "http://identity.test",
             "inventory": "http://inventory.test",
             "master_data": "http://master.test",
             "order": "http://order.test",
@@ -70,15 +71,17 @@ def test_catalog_specs_and_names_are_valid() -> None:
     registry = _registry(lambda r: httpx.Response(200))
     specs = registry.list_for(_ctx("*").actor)
 
-    assert len(specs) == 27
+    assert len(specs) == 39
     read_tools = [s for s in specs if s.risk_level is RiskLevel.READ]
     sensitive_tools = [s for s in specs if s.is_sensitive]
-    assert len(read_tools) == 24
-    assert len(sensitive_tools) == 3
+    assert len(read_tools) == 34
+    assert len(sensitive_tools) == 5
     assert {s.name for s in sensitive_tools} == {
         "confirm_order",
         "dispatch_shipment",
         "approve_trip_route",
+        "complete_my_delivery_stop",
+        "fail_my_delivery_stop",
     }
     for s in sensitive_tools:
         assert s.preview is not None
@@ -95,6 +98,8 @@ def test_tools_are_filtered_by_permission() -> None:
         return {s.name for s in registry.list_for(_ctx(*perms).actor)}
 
     assert names() == {
+        "get_my_workspace_context",
+        "get_current_organization",
         "list_products",
         "get_product",
         "list_customers",
@@ -103,6 +108,20 @@ def test_tools_are_filtered_by_permission() -> None:
         "get_user_memories",
         "delete_user_memory",
     }
+    assert "list_organization_members" in names("iam:member:read")
+    assert "list_organization_roles" not in names("iam:member:read")
+    assert "list_organization_roles" in names("iam:role:read")
+    assert "list_vehicles" in names("transport:trip:read")
+    assert "get_vehicle" in names("transport:trip:read")
+    assert "list_drivers" not in names("transport:trip:read")
+    assert "list_drivers" in names("master-data:driver:read")
+    assert "get_driver" in names("master-data:driver:read")
+    assert "list_my_assigned_trips" in names("transport:driver:read")
+    assert "get_my_assigned_trip" in names("transport:driver:read")
+    assert "complete_my_delivery_stop" not in names("transport:driver:read")
+    assert "fail_my_delivery_stop" not in names("transport:driver:read")
+    assert "complete_my_delivery_stop" in names("transport:driver:update")
+    assert "fail_my_delivery_stop" in names("transport:driver:update")
     assert "list_inventory_balances" in names("inventory:stock:read")
     assert "list_warehouses" not in names("inventory:stock:read")
     assert "list_warehouses" in names("inventory:warehouse:read")
@@ -474,3 +493,425 @@ async def test_dispatch_shipment_preview_and_execute() -> None:
     assert body["orderVersion"] == 2
     assert body["confirmed"] is True
     assert result.model_dump(mode="json")["status"] == "DISPATCHED"
+
+
+async def test_identity_workspace_org_and_members_filter_pii() -> None:
+    member_id = str(uuid.uuid4())
+    member_user_id = str(uuid.uuid4())
+    role_id = str(uuid.uuid4())
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v1/auth/me":
+            return httpx.Response(
+                200,
+                json={
+                    "id": "u1",
+                    "displayName": "Nguyễn Điều Phối",
+                    "email": "secret@logix.vn",
+                    "activeTenant": {"id": "t1", "code": "LOGIX-HQ", "name": "LogiX HQ", "role": "ADMIN"},
+                },
+            )
+        if request.url.path == "/api/v1/auth/me/permissions":
+            return httpx.Response(
+                200,
+                json={
+                    "isSuperAdmin": False,
+                    "isOwner": False,
+                    "isAdmin": True,
+                    "roles": ["ADMIN"],
+                    "permissions": ["iam:member:read", "iam:role:read"],
+                },
+            )
+        if request.url.path == "/api/v1/auth/organizations/t1":
+            return httpx.Response(
+                200,
+                json={
+                    "id": "t1",
+                    "code": "LOGIX-HQ",
+                    "name": "LogiX HQ",
+                    "status": "ACTIVE",
+                    "role": "ADMIN",
+                    "legalProfile": {"legalName": "Công ty LogiX", "province": "TP. HCM"},
+                    "aiInstructions": {"enabled": True, "isDefault": False},
+                },
+            )
+        if request.url.path == "/api/v1/iam/members":
+            return httpx.Response(
+                200,
+                json=[
+                    {
+                        "id": member_id,
+                        "userId": member_user_id,
+                        "displayName": "Trần Tài Xế",
+                        "email": "driver-private@logix.vn",
+                        "phoneNumber": "0909123456",
+                        "status": "ACTIVE",
+                        "primaryRole": "MEMBER",
+                        "roles": [{"id": role_id, "code": "DRIVER", "name": "Tài xế", "isSystem": False}],
+                    }
+                ],
+            )
+        return httpx.Response(404)
+
+    registry = _registry(handler)
+    ws = (await registry.invoke("get_my_workspace_context", _ctx(), {})).model_dump(mode="json")
+    assert ws["tenant_code"] == "LOGIX-HQ"
+    assert ws["roles"] == ["ADMIN"]
+    assert "email" not in ws
+
+    org = (await registry.invoke("get_current_organization", _ctx(), {})).model_dump(mode="json")
+    assert org["name"] == "LogiX HQ"
+    assert org["ai_instructions_is_default"] is False
+
+    members = (
+        await registry.invoke("list_organization_members", _ctx("iam:member:read"), {})
+    ).model_dump(mode="json")
+    assert members["total"] == 1
+    assert members["items"][0]["display_name"] == "Trần Tài Xế"
+    assert "email" not in members["items"][0]
+    assert "phone_number" not in members["items"][0]
+
+
+async def test_master_data_vehicles_and_drivers_filter_pii() -> None:
+    veh_id = str(uuid.uuid4())
+    drv_id = str(uuid.uuid4())
+    drv_user_id = str(uuid.uuid4())
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/api/v1/vehicles":
+            return httpx.Response(
+                200,
+                json={
+                    "items": [
+                        {
+                            "id": veh_id,
+                            "code": "VEH-01",
+                            "licensePlate": "51C-123.45",
+                            "capacityWeight": "2500.000",
+                            "capacityVolume": "12.000000",
+                            "status": "ACTIVE",
+                        }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "total": 1,
+                },
+            )
+        if request.url.path == "/api/v1/drivers":
+            return httpx.Response(
+                200,
+                json={
+                    "items": [
+                        {
+                            "id": drv_id,
+                            "code": "DRV-01",
+                            "userId": drv_user_id,
+                            "displayName": "Lê Văn Tài",
+                            "licenseNumber": "B2-999888777",
+                            "licenseExpiry": "2029-12-31",
+                            "phone": "0909888999",
+                            "status": "ACTIVE",
+                        }
+                    ],
+                    "page": 1,
+                    "pageSize": 10,
+                    "total": 1,
+                },
+            )
+        return httpx.Response(404)
+
+    registry = _registry(handler)
+    vehicles = (await registry.invoke("list_vehicles", _ctx("transport:trip:read"), {})).model_dump(
+        mode="json"
+    )
+    assert vehicles["items"][0]["license_plate"] == "51C-123.45"
+
+    drivers = (
+        await registry.invoke("list_drivers", _ctx("master-data:driver:read"), {})
+    ).model_dump(mode="json")
+    assert drivers["items"][0]["display_name"] == "Lê Văn Tài"
+    assert "license_number" not in drivers["items"][0]
+    assert "phone" not in drivers["items"][0]
+
+
+async def test_driver_delivery_stop_complete_and_fail_confirmation_gate() -> None:
+    import json
+
+    trip_id = str(uuid.uuid4())
+    stop1_id = str(uuid.uuid4())
+    stop2_id = str(uuid.uuid4())
+    ship1_id = str(uuid.uuid4())
+    ship2_id = str(uuid.uuid4())
+    approval_uuid = str(uuid.uuid4())
+    seen: list[httpx.Request] = []
+
+    def trip_detail_payload(*, status: str = "IN_PROGRESS") -> dict[str, object]:
+        return {
+            "tripId": trip_id,
+            "tripNumber": "TR-2026-009",
+            "status": status,
+            "warehouseId": WH,
+            "version": 4,
+            "nextStopId": stop1_id,
+            "stops": [
+                {
+                    "stopId": stop1_id,
+                    "shipmentId": ship1_id,
+                    "shipmentNumber": "SH-101",
+                    "approvedSequence": 1,
+                    "status": "PENDING",
+                    "version": 2,
+                    "isNext": True,
+                    "contact": {
+                        "recipientName": "Kho Đại Lý Miền Nam",
+                        "addressLine": "123 Lê Lợi",
+                        "district": "Quận 1",
+                        "province": "TP. HCM",
+                    },
+                },
+                {
+                    "stopId": stop2_id,
+                    "shipmentId": ship2_id,
+                    "shipmentNumber": "SH-102",
+                    "approvedSequence": 2,
+                    "status": "PENDING",
+                    "version": 1,
+                    "isNext": False,
+                    "contact": {"recipientName": "Kho Bình Dương"},
+                },
+            ],
+        }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "GET" and request.url.path == f"/api/v1/driver/trips/{trip_id}":
+            return httpx.Response(200, json=trip_detail_payload())
+        if request.method == "POST" and request.url.path.endswith("/deliver"):
+            return httpx.Response(
+                200,
+                json={
+                    "requestId": approval_uuid,
+                    "tripId": trip_id,
+                    "tripStopId": stop1_id,
+                    "shipmentId": ship1_id,
+                    "status": "DELIVERED",
+                    "reason": None,
+                    "attempt": 1,
+                    "occurredAt": "2026-11-22T01:00:00.000Z",
+                    "tripVersion": 5,
+                    "stopVersion": 3,
+                },
+            )
+        if request.method == "POST" and request.url.path.endswith("/fail"):
+            return httpx.Response(
+                200,
+                json={
+                    "requestId": approval_uuid,
+                    "tripId": trip_id,
+                    "tripStopId": stop1_id,
+                    "shipmentId": ship1_id,
+                    "status": "FAILED",
+                    "reason": "Khách không có mặt tại kho",
+                    "attempt": 1,
+                    "occurredAt": "2026-11-22T01:05:00.000Z",
+                    "tripVersion": 5,
+                    "stopVersion": 3,
+                },
+            )
+        return httpx.Response(404)
+
+    registry = _registry(handler)
+    ctx = _ctx("transport:driver:read", "transport:driver:update")
+
+    # 1. Negative proof: selecting a non-next stop is rejected during preview
+    with pytest.raises(ToolError) as err_not_next:
+        await registry.preview(
+            "complete_my_delivery_stop", ctx, {"trip_id": trip_id, "stop_id": stop2_id}
+        )
+    assert err_not_next.value.code == "DELIVERY_STOP_NOT_NEXT"
+
+    # 2. Preview auto-selects the next PENDING stop and builds UniversalApprovalCard ui + binding
+    preview = await registry.preview("complete_my_delivery_stop", ctx, {"trip_id": trip_id})
+    assert preview.target_type == "driver_delivery_stop"
+    assert preview.target_id == f"{trip_id}:{stop1_id}"
+    assert preview.target_version == 4
+    assert preview.summary["ui"]["title"] == "Xác nhận giao hàng thành công"
+    assert preview.execution_binding == {
+        "tripId": trip_id,
+        "stopId": stop1_id,
+        "expectedTripVersion": 4,
+        "expectedStopVersion": 2,
+    }
+
+    # 3. Direct invoke without approval is blocked
+    with pytest.raises(ApprovalRequiredError):
+        await registry.invoke("complete_my_delivery_stop", ctx, {"trip_id": trip_id})
+
+    # 4. Invoke with approval sends expectedTripVersion, expectedStopVersion, confirmed=True
+    approval = ApprovedAction(
+        approval_id=approval_uuid,
+        target_type="driver_delivery_stop",
+        target_id=f"{trip_id}:{stop1_id}",
+        target_version=4,
+        execution_binding=preview.execution_binding,
+    )
+    approved_ctx = ToolContext(actor=ctx.actor, correlation_id="c-drv", approval=approval)
+    delivered = (
+        await registry.invoke("complete_my_delivery_stop", approved_ctx, {"trip_id": trip_id})
+    ).model_dump(mode="json")
+    assert delivered["status"] == "DELIVERED"
+    deliver_req = [r for r in seen if r.method == "POST" and r.url.path.endswith("/deliver")][0]
+    deliver_body = json.loads(deliver_req.content)
+    assert deliver_body == {
+        "requestId": approval_uuid,
+        "expectedTripVersion": 4,
+        "expectedStopVersion": 2,
+        "confirmed": True,
+    }
+
+    # 5. Fail stop preview + execute sends mandatory reason
+    fail_preview = await registry.preview(
+        "fail_my_delivery_stop",
+        ctx,
+        {"trip_id": trip_id, "reason": "Khách không có mặt tại kho"},
+    )
+    assert fail_preview.summary["ui"]["severity"] == "warning"
+    failed = (
+        await registry.invoke(
+            "fail_my_delivery_stop",
+            approved_ctx,
+            {"trip_id": trip_id, "reason": "Khách không có mặt tại kho"},
+        )
+    ).model_dump(mode="json")
+    assert failed["status"] == "FAILED"
+    fail_req = [r for r in seen if r.method == "POST" and r.url.path.endswith("/fail")][0]
+    fail_body = json.loads(fail_req.content)
+    assert fail_body["reason"] == "Khách không có mặt tại kho"
+    assert fail_body["confirmed"] is True
+
+
+async def test_super_admin_can_confirm_driver_stop_with_acting_reason_and_preview_token() -> None:
+    import json
+
+    trip_id = str(uuid.uuid4())
+    stop1_id = str(uuid.uuid4())
+    ship1_id = str(uuid.uuid4())
+    approval_uuid = str(uuid.uuid4())
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        if request.method == "GET" and request.url.path == f"/api/v1/driver/trips/{trip_id}":
+            return httpx.Response(
+                200,
+                json={
+                    "tripId": trip_id,
+                    "tripNumber": "TR-SA-001",
+                    "status": "IN_PROGRESS",
+                    "warehouseId": WH,
+                    "version": 3,
+                    "nextStopId": stop1_id,
+                    "stops": [
+                        {
+                            "stopId": stop1_id,
+                            "shipmentId": ship1_id,
+                            "shipmentNumber": "SH-201",
+                            "approvedSequence": 1,
+                            "status": "PENDING",
+                            "version": 1,
+                            "isNext": True,
+                            "contact": {"recipientName": "Kho Hoàng Anh"},
+                        }
+                    ],
+                },
+            )
+        if request.method == "POST" and request.url.path.endswith("/action-preview"):
+            return httpx.Response(
+                200,
+                json={
+                    "tripId": trip_id,
+                    "stopId": stop1_id,
+                    "action": "DELIVER",
+                    "previewToken": "signed-admin-preview-token",
+                },
+            )
+        if request.method == "POST" and request.url.path.endswith("/deliver"):
+            return httpx.Response(
+                200,
+                json={
+                    "requestId": approval_uuid,
+                    "tripId": trip_id,
+                    "tripStopId": stop1_id,
+                    "shipmentId": ship1_id,
+                    "status": "DELIVERED",
+                    "reason": None,
+                    "actingReason": "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ",
+                    "actorMode": "SUPER_ADMIN",
+                    "attempt": 1,
+                    "occurredAt": "2026-11-22T05:00:00.000Z",
+                    "tripVersion": 4,
+                    "stopVersion": 2,
+                },
+            )
+        return httpx.Response(404)
+
+    registry = _registry(handler)
+    sa_actor = Actor(
+        user_id="sa-1",
+        tenant_id="t1",
+        role="SUPER_ADMIN",
+        is_super_admin=True,
+        permissions=frozenset({"*"}),
+        access_token="sa-tok",
+    )
+    sa_ctx = ToolContext(actor=sa_actor, correlation_id="c-sa")
+
+    # 1. Negative proof: SUPER_ADMIN without acting_reason is blocked immediately in preview
+    with pytest.raises(ToolError) as err_missing:
+        await registry.preview("complete_my_delivery_stop", sa_ctx, {"trip_id": trip_id})
+    assert err_missing.value.code == "ACTING_REASON_REQUIRED"
+
+    # 2. Positive proof: SUPER_ADMIN with acting_reason calls action-preview and binds previewToken
+    preview = await registry.preview(
+        "complete_my_delivery_stop",
+        sa_ctx,
+        {
+            "trip_id": trip_id,
+            "acting_reason": "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ",
+        },
+    )
+    assert preview.execution_binding is not None
+    assert preview.execution_binding["previewToken"] == "signed-admin-preview-token"
+    assert (
+        preview.execution_binding["actingReason"]
+        == "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ"
+    )
+    assert "previewToken" not in preview.summary
+
+    # 3. Execute forwards previewToken and actingReason to transport-service
+    approval = ApprovedAction(
+        approval_id=approval_uuid,
+        target_type="driver_delivery_stop",
+        target_id=f"{trip_id}:{stop1_id}",
+        target_version=3,
+        execution_binding=preview.execution_binding,
+    )
+    approved_ctx = ToolContext(actor=sa_actor, correlation_id="c-sa-2", approval=approval)
+    receipt = (
+        await registry.invoke(
+            "complete_my_delivery_stop",
+            approved_ctx,
+            {
+                "trip_id": trip_id,
+                "acting_reason": "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ",
+            },
+        )
+    ).model_dump(mode="json")
+    assert receipt["status"] == "DELIVERED"
+    assert receipt["actor_mode"] == "SUPER_ADMIN"
+
+    deliver_req = [r for r in seen if r.method == "POST" and r.url.path.endswith("/deliver")][0]
+    deliver_body = json.loads(deliver_req.content)
+    assert deliver_body["previewToken"] == "signed-admin-preview-token"
+    assert deliver_body["actingReason"] == "Tài xế mất kết nối 4G, hỗ trợ xác nhận hộ"
+    assert deliver_body["confirmed"] is True

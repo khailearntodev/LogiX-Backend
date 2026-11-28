@@ -76,7 +76,7 @@ export class RolesController {
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
     const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
-    return this.rolesService.updateRole(tenantId, id, dto);
+    return this.rolesService.updateRole(tenantId, id, dto, user.id);
   }
 
   @Delete('roles/:id')
@@ -87,7 +87,7 @@ export class RolesController {
     @Headers('x-tenant-id') headerTenantId?: string,
   ) {
     const tenantId = await this.rolesService.resolveTenantId(user, headerTenantId);
-    return this.rolesService.deleteRole(tenantId, id);
+    return this.rolesService.deleteRole(tenantId, id, user.id);
   }
 
   @Put('roles/:id/permissions')

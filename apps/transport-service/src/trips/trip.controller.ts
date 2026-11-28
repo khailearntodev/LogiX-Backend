@@ -30,6 +30,7 @@ import {
   createTripSchema,
   eligibleShipmentsQuerySchema,
   removeShipmentsSchema,
+  resourceAvailabilityQuerySchema,
   tripListQuerySchema,
   updateTripSchema,
 } from './trip.dto.js';
@@ -51,7 +52,7 @@ export class TripController {
     private readonly memberships: TripMembershipService,
     private readonly cancellation: TripCancellationService,
     private readonly dispatches: TripDispatchService,
-  ) {}
+  ) { }
 
   @Post(':tripId/dispatch-preview')
   @HttpCode(HttpStatus.OK)
@@ -87,6 +88,16 @@ export class TripController {
       query.pageSize,
       authorization,
     );
+  }
+
+  @Get('resource-availability')
+  @RequirePermissions(TRANSPORT_PERMISSIONS.TRIP_READ)
+  resourceAvailability(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() rawQuery: Record<string, unknown>,
+  ) {
+    const query = parseDto(resourceAvailabilityQuerySchema, rawQuery);
+    return this.queries.resourceAvailability(user.tenantId, query.excludeTripId);
   }
 
   @Get()

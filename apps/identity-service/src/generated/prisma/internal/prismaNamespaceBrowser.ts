@@ -61,7 +61,8 @@ export const ModelName = {
   Session: 'Session',
   PasswordResetToken: 'PasswordResetToken',
   TenantInvitation: 'TenantInvitation',
-  ContactLead: 'ContactLead'
+  ContactLead: 'ContactLead',
+  OutboxEvent: 'OutboxEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -95,6 +96,10 @@ export const TenantScalarFieldEnum = {
   district: 'district',
   province: 'province',
   postalCode: 'postalCode',
+  aiCustomInstructions: 'aiCustomInstructions',
+  aiInstructionsEnabled: 'aiInstructionsEnabled',
+  aiInstructionsUpdatedAt: 'aiInstructionsUpdatedAt',
+  aiInstructionsUpdatedBy: 'aiInstructionsUpdatedBy',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   version: 'version',
@@ -274,6 +279,31 @@ export const ContactLeadScalarFieldEnum = {
 } as const
 
 export type ContactLeadScalarFieldEnum = (typeof ContactLeadScalarFieldEnum)[keyof typeof ContactLeadScalarFieldEnum]
+
+
+export const OutboxEventScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  eventType: 'eventType',
+  eventVersion: 'eventVersion',
+  aggregateType: 'aggregateType',
+  aggregateId: 'aggregateId',
+  aggregateVersion: 'aggregateVersion',
+  correlationId: 'correlationId',
+  causationId: 'causationId',
+  payload: 'payload',
+  occurredAt: 'occurredAt',
+  publishedAt: 'publishedAt',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  version: 'version',
+  deletedAt: 'deletedAt'
+} as const
+
+export type OutboxEventScalarFieldEnum = (typeof OutboxEventScalarFieldEnum)[keyof typeof OutboxEventScalarFieldEnum]
 
 
 export const SortOrder = {

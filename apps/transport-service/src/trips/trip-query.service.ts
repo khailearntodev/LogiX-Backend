@@ -209,6 +209,58 @@ export class TripQueryService {
     });
   }
 
+  async resourceAvailability(tenantId: string, excludeTripId?: string) {
+    const activeTrips = await this.prisma.deliveryTrip.findMany({
+      where: {
+        tenantId,
+        deletedAt: null,
+        status: { in: ['APPROVED', 'IN_PROGRESS'] },
+        ...(excludeTripId ? { id: { not: excludeTripId } } : {}),
+      },
+      select: {
+        id: true,
+        tripNumber: true,
+        status: true,
+        driverId: true,
+        vehicleId: true,
+      },
+    });
+
+    const busyDrivers: Array<{
+      driverId: string;
+      tripId: string;
+      tripNumber: string;
+      status: string;
+    }> = [];
+    const busyVehicles: Array<{
+      vehicleId: string;
+      tripId: string;
+      tripNumber: string;
+      status: string;
+    }> = [];
+
+    for (const trip of activeTrips) {
+      if (trip.driverId) {
+        busyDrivers.push({
+          driverId: trip.driverId,
+          tripId: trip.id,
+          tripNumber: trip.tripNumber,
+          status: trip.status,
+        });
+      }
+      if (trip.vehicleId) {
+        busyVehicles.push({
+          vehicleId: trip.vehicleId,
+          tripId: trip.id,
+          tripNumber: trip.tripNumber,
+          status: trip.status,
+        });
+      }
+    }
+
+    return { busyDrivers, busyVehicles };
+  }
+
   private tripListView(trip: {
     id: string;
     tenantId: string;

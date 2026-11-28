@@ -6,12 +6,74 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import crypto from 'crypto';
+import { IAM_PERMISSIONS } from '@logix/auth';
 import { PrismaService } from '../../database/prisma.service.js';
 import { CreateOrganizationDto } from '../dto/create-organization.dto.js';
 import { UpdateOrganizationDto } from '../dto/update-organization.dto.js';
 import { UpdateMemberRoleDto } from '../dto/update-member-role.dto.js';
+import { UpdateTenantAiInstructionsDto } from '../dto/update-tenant-ai-instructions.dto.js';
+import {
+  MAX_TENANT_AI_INSTRUCTIONS_LENGTH,
+  validateAndNormalizeTenantAiInstructions,
+} from '../domain/tenant-ai-instructions.policy.js';
 import { RolesService } from '../../iam/services/roles.service.js';
 import { SUPER_ADMIN_CONTEXT_ROLE } from '../../auth/auth.constants.js';
+
+export interface TenantAiInstructionsUpdaterView {
+  id: string;
+  displayName: string;
+  email: string;
+}
+
+export interface TenantAiInstructionsView {
+  tenantId: string;
+  customInstructions: string | null;
+  enabled: boolean;
+  isDefault: boolean;
+  maxLength: number;
+  version: number;
+  updatedAt: Date | null;
+  updatedBy: TenantAiInstructionsUpdaterView | null;
+}
+
+interface TenantAiInstructionsRecord {
+  id: string;
+  aiCustomInstructions?: string | null;
+  aiInstructionsEnabled?: boolean | null;
+  aiInstructionsUpdatedAt?: Date | null;
+  aiInstructionsUpdatedBy?: string | null;
+  aiInstructionsUpdatedByUser?: TenantAiInstructionsUpdaterView | null;
+  version?: bigint | number | null;
+}
+
+function toAiInstructionsView(tenant: TenantAiInstructionsRecord): TenantAiInstructionsView {
+  const customInstructions = tenant.aiCustomInstructions ?? null;
+  const enabled = tenant.aiInstructionsEnabled ?? true;
+  const rawVersion = tenant.version;
+  const version =
+    typeof rawVersion === 'bigint'
+      ? Number(rawVersion)
+      : typeof rawVersion === 'number'
+        ? rawVersion
+        : 1;
+
+  return {
+    tenantId: tenant.id,
+    customInstructions,
+    enabled,
+    isDefault: customInstructions === null,
+    maxLength: MAX_TENANT_AI_INSTRUCTIONS_LENGTH,
+    version,
+    updatedAt: tenant.aiInstructionsUpdatedAt ?? null,
+    updatedBy: tenant.aiInstructionsUpdatedByUser
+      ? {
+          id: tenant.aiInstructionsUpdatedByUser.id,
+          displayName: tenant.aiInstructionsUpdatedByUser.displayName,
+          email: tenant.aiInstructionsUpdatedByUser.email,
+        }
+      : null,
+  };
+}
 
 const LEGAL_PROFILE_FIELDS = [
   'legalName',
@@ -163,7 +225,17 @@ export class OrganizationService {
         },
       },
       include: {
-        tenant: true,
+        tenant: {
+          include: {
+            aiInstructionsUpdatedByUser: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -180,6 +252,7 @@ export class OrganizationService {
       status: tenant.status,
       settings: tenant.settings,
       legalProfile: toLegalProfileView(tenant),
+      aiInstructions: toAiInstructionsView(tenant),
       role: userTenant?.role ?? SUPER_ADMIN_CONTEXT_ROLE,
       isDefault: userTenant?.isDefault ?? false,
       createdAt: tenant.createdAt,
@@ -214,8 +287,24 @@ export class OrganizationService {
       throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
     }
 
-    if (!platformTenant && userTenant?.role !== 'OWNER' && userTenant?.role !== 'ADMIN') {
-      throw new ForbiddenException('Chỉ Quản trị viên hoặc Chủ sở hữu mới có quyền cập nhật thông tin tổ chức');
+    const hasAiInstructionChange =
+      dto.aiCustomInstructions !== undefined || dto.aiInstructionsEnabled !== undefined;
+
+    if (!platformTenant) {
+      await this.assertTenantPermission(
+        userId,
+        tenantId,
+        IAM_PERMISSIONS.ORGANIZATION_MANAGE,
+        'Bạn không có quyền cập nhật thông tin tổ chức này',
+      );
+      if (hasAiInstructionChange) {
+        await this.assertTenantPermission(
+          userId,
+          tenantId,
+          IAM_PERMISSIONS.AI_INSTRUCTIONS_MANAGE,
+          'Bạn không có quyền cấu hình chỉ dẫn AI của tổ chức này',
+        );
+      }
     }
 
     const legalChanges = pickLegalProfileChanges(dto);
@@ -230,12 +319,28 @@ export class OrganizationService {
       );
     }
 
+    const normalizedAiInstructions =
+      dto.aiCustomInstructions !== undefined
+        ? validateAndNormalizeTenantAiInstructions(dto.aiCustomInstructions)
+        : undefined;
+
     const updatedTenant = await this.prisma.tenant.update({
       where: { id: tenantId },
       data: {
         ...(dto.name !== undefined && { name: dto.name.trim() }),
         ...(dto.logoUrl !== undefined && { logoUrl: dto.logoUrl ? dto.logoUrl.trim() : null }),
         ...legalChanges,
+        ...(normalizedAiInstructions !== undefined && {
+          aiCustomInstructions: normalizedAiInstructions,
+        }),
+        ...(dto.aiInstructionsEnabled !== undefined && {
+          aiInstructionsEnabled: dto.aiInstructionsEnabled,
+        }),
+        ...(hasAiInstructionChange && {
+          aiInstructionsUpdatedAt: new Date(),
+          aiInstructionsUpdatedBy: userId,
+          version: { increment: 1 },
+        }),
       },
     });
 
@@ -245,9 +350,191 @@ export class OrganizationService {
       name: updatedTenant.name,
       logoUrl: updatedTenant.logoUrl,
       legalProfile: toLegalProfileView(updatedTenant),
+      aiInstructions: toAiInstructionsView(updatedTenant),
       role: userTenant?.role ?? SUPER_ADMIN_CONTEXT_ROLE,
       isDefault: userTenant?.isDefault ?? false,
       message: 'Cập nhật thông tin tổ chức thành công',
+    };
+  }
+
+  async getTenantAiInstructions(
+    userId: string,
+    tenantId: string,
+  ): Promise<TenantAiInstructionsView> {
+    const platformTenant = await this.getPlatformTenant(userId, tenantId);
+    const userTenant = await this.prisma.userTenant.findFirst({
+      where: {
+        userId,
+        tenantId,
+        status: 'ACTIVE',
+        deletedAt: null,
+        user: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+        tenant: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+      },
+      include: {
+        tenant: {
+          include: {
+            aiInstructionsUpdatedByUser: {
+              select: {
+                id: true,
+                displayName: true,
+                email: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const tenant = platformTenant ?? userTenant?.tenant;
+    if (!tenant || tenant.deletedAt !== null || tenant.status !== 'ACTIVE') {
+      throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
+    }
+
+    return toAiInstructionsView(tenant);
+  }
+
+  async updateTenantAiInstructions(
+    userId: string,
+    tenantId: string,
+    dto: UpdateTenantAiInstructionsDto,
+  ): Promise<TenantAiInstructionsView & { message: string }> {
+    const platformTenant = await this.getPlatformTenant(userId, tenantId);
+    const userTenant = await this.prisma.userTenant.findFirst({
+      where: {
+        userId,
+        tenantId,
+        status: 'ACTIVE',
+        deletedAt: null,
+        user: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+        tenant: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+      },
+      include: {
+        tenant: true,
+      },
+    });
+
+    const tenant = platformTenant ?? userTenant?.tenant;
+    if (!tenant || tenant.deletedAt !== null || tenant.status !== 'ACTIVE') {
+      throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
+    }
+
+    if (!platformTenant) {
+      await this.assertTenantPermission(
+        userId,
+        tenantId,
+        IAM_PERMISSIONS.AI_INSTRUCTIONS_MANAGE,
+        'Bạn không có quyền cấu hình chỉ dẫn AI của tổ chức này',
+      );
+    }
+
+    const normalizedInstructions =
+      dto.customInstructions !== undefined
+        ? validateAndNormalizeTenantAiInstructions(dto.customInstructions)
+        : tenant.aiCustomInstructions;
+    const nextEnabled =
+      dto.enabled !== undefined ? dto.enabled : (tenant.aiInstructionsEnabled ?? true);
+
+    const updatedTenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        aiCustomInstructions: normalizedInstructions,
+        aiInstructionsEnabled: nextEnabled,
+        aiInstructionsUpdatedAt: new Date(),
+        aiInstructionsUpdatedBy: userId,
+        version: { increment: 1 },
+      },
+      include: {
+        aiInstructionsUpdatedByUser: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...toAiInstructionsView(updatedTenant),
+      message: 'Cập nhật cấu hình chỉ dẫn AI của tổ chức thành công',
+    };
+  }
+
+  async resetTenantAiInstructions(
+    userId: string,
+    tenantId: string,
+  ): Promise<TenantAiInstructionsView & { message: string }> {
+    const platformTenant = await this.getPlatformTenant(userId, tenantId);
+    const userTenant = await this.prisma.userTenant.findFirst({
+      where: {
+        userId,
+        tenantId,
+        status: 'ACTIVE',
+        deletedAt: null,
+        user: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+        tenant: {
+          status: 'ACTIVE',
+          deletedAt: null,
+        },
+      },
+      include: {
+        tenant: true,
+      },
+    });
+
+    const tenant = platformTenant ?? userTenant?.tenant;
+    if (!tenant || tenant.deletedAt !== null || tenant.status !== 'ACTIVE') {
+      throw new NotFoundException('Không tìm thấy tổ chức hoặc bạn không có quyền truy cập');
+    }
+
+    if (!platformTenant) {
+      await this.assertTenantPermission(
+        userId,
+        tenantId,
+        IAM_PERMISSIONS.AI_INSTRUCTIONS_MANAGE,
+        'Bạn không có quyền khôi phục chỉ dẫn AI mặc định của tổ chức này',
+      );
+    }
+
+    const updatedTenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: {
+        aiCustomInstructions: null,
+        aiInstructionsEnabled: true,
+        aiInstructionsUpdatedAt: new Date(),
+        aiInstructionsUpdatedBy: userId,
+        version: { increment: 1 },
+      },
+      include: {
+        aiInstructionsUpdatedByUser: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return {
+      ...toAiInstructionsView(updatedTenant),
+      message: 'Đã khôi phục chỉ dẫn AI của tổ chức về mặc định hệ thống',
     };
   }
 
@@ -310,8 +597,16 @@ export class OrganizationService {
       },
     });
 
-    if (!platformTenant && !callerMembership) {
-      throw new ForbiddenException('Bạn không có quyền xem danh sách thành viên của tổ chức này');
+    if (!platformTenant) {
+      if (!callerMembership) {
+        throw new ForbiddenException('Bạn không có quyền xem danh sách thành viên của tổ chức này');
+      }
+      await this.assertTenantPermission(
+        userId,
+        tenantId,
+        IAM_PERMISSIONS.MEMBER_READ,
+        'Bạn không có quyền xem danh sách thành viên của tổ chức này',
+      );
     }
 
     const memberships = await this.prisma.userTenant.findMany({
@@ -377,8 +672,16 @@ export class OrganizationService {
       },
     });
 
-    if (!platformTenant && (!caller || (caller.role !== 'OWNER' && caller.role !== 'ADMIN'))) {
-      throw new ForbiddenException('Chỉ Chủ sở hữu hoặc Quản trị viên mới có quyền phân quyền thành viên');
+    if (!platformTenant) {
+      if (!caller) {
+        throw new ForbiddenException('Bạn không có quyền phân quyền thành viên của tổ chức này');
+      }
+      await this.assertTenantPermission(
+        callerUserId,
+        tenantId,
+        IAM_PERMISSIONS.MEMBER_ASSIGN_ROLE,
+        'Bạn không có quyền phân quyền thành viên của tổ chức này',
+      );
     }
 
     const targetMembership = await this.prisma.userTenant.findFirst({
@@ -409,14 +712,9 @@ export class OrganizationService {
       throw new ForbiddenException('Không thể thay đổi vai trò của Chủ sở hữu (OWNER)');
     }
 
-    // Nếu người thực hiện là ADMIN: không được thay đổi quyền của OWNER, không được nâng ai lên làm OWNER
-    if (!platformTenant && caller?.role === 'ADMIN') {
-      if (targetMembership.role === 'OWNER') {
-        throw new ForbiddenException('Quản trị viên không thể thay đổi vai trò của Chủ sở hữu');
-      }
-      if (dto.role === 'OWNER') {
-        throw new ForbiddenException('Chỉ Chủ sở hữu mới có quyền bổ nhiệm Chủ sở hữu khác');
-      }
+    // Chỉ OWNER hoặc SUPER_ADMIN mới được quyền bổ nhiệm OWNER khác
+    if (!platformTenant && caller?.role !== 'OWNER' && dto.role === 'OWNER') {
+      throw new ForbiddenException('Chỉ Chủ sở hữu mới có quyền bổ nhiệm Chủ sở hữu khác');
     }
 
     // Nếu hạ quyền của chính mình khi là OWNER duy nhất
@@ -477,8 +775,16 @@ export class OrganizationService {
       },
     });
 
-    if (!platformTenant && (!caller || (caller.role !== 'OWNER' && caller.role !== 'ADMIN'))) {
-      throw new ForbiddenException('Chỉ Chủ sở hữu hoặc Quản trị viên mới có quyền khai trừ thành viên');
+    if (!platformTenant) {
+      if (!caller) {
+        throw new ForbiddenException('Bạn không có quyền khai trừ thành viên của tổ chức này');
+      }
+      await this.assertTenantPermission(
+        callerUserId,
+        tenantId,
+        IAM_PERMISSIONS.MEMBER_REMOVE,
+        'Bạn không có quyền khai trừ thành viên của tổ chức này',
+      );
     }
 
     const targetMembership = await this.prisma.userTenant.findFirst({
@@ -754,6 +1060,25 @@ export class OrganizationService {
     };
   }
 
+  private async assertTenantPermission(
+    userId: string,
+    tenantId: string,
+    requiredPermission: string,
+    forbiddenMessage: string,
+  ): Promise<void> {
+    const effective = await this.rolesService.getEffectivePermissions(userId, tenantId);
+    const hasWildcard =
+      effective.isSuperAdmin === true ||
+      effective.isOwner === true ||
+      effective.permissions.includes('*');
+
+    if (hasWildcard || effective.permissions.includes(requiredPermission)) {
+      return;
+    }
+
+    throw new ForbiddenException(forbiddenMessage);
+  }
+
   private async getPlatformTenant(userId: string, tenantId: string) {
     const user = await this.prisma.user.findFirst({
       where: { id: userId, status: 'ACTIVE', deletedAt: null },
@@ -762,6 +1087,15 @@ export class OrganizationService {
     if (user?.isSuperAdmin !== true) return null;
     const tenant = await this.prisma.tenant.findFirst({
       where: { id: tenantId, status: 'ACTIVE', deletedAt: null },
+      include: {
+        aiInstructionsUpdatedByUser: {
+          select: {
+            id: true,
+            displayName: true,
+            email: true,
+          },
+        },
+      },
     });
     if (!tenant) {
       throw new NotFoundException('Không tìm thấy tổ chức đang hoạt động');

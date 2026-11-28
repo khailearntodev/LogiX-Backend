@@ -68,6 +68,17 @@ class AgentSettings(BaseSettings):
 
     # ── Prompt policy ────────────────────────────────────────────
     prompt_policy_version: str = "v1"
+    planner_tenant_instructions_max_chars: int = 2000
+    planner_tenant_instructions_cache_ttl_seconds: int = 60
+
+    # ── Kafka & Outbox Relay (Audit Events) ──────────────────────
+    kafka_brokers: str | None = None
+    kafka_client_id: str = "agent-service"
+    kafka_agent_topic: str = "logix.agent.events.v1"
+    outbox_interval_ms: int = 1000
+    outbox_batch_size: int = 20
+    outbox_retry_base_ms: int = 1000
+    outbox_retry_max_ms: int = 60000
 
     model_config = SettingsConfigDict(
         env_file=(_ENV_FILE, ".env"),

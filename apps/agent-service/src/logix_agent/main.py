@@ -22,6 +22,11 @@ from logix_agent.modules.confirmations.service import (
     InMemoryConfirmationStore,
     SqlAlchemyConfirmationStore,
 )
+from logix_agent.modules.conversations.admin_service import (
+    InMemoryConversationAdminService,
+    SqlAlchemyConversationAdminService,
+)
+from logix_agent.modules.conversations.router import router as conversations_router
 from logix_agent.modules.conversations.service import (
     InMemoryThreadStore,
     SqlAlchemyThreadStore,
@@ -32,6 +37,7 @@ from logix_agent.modules.executions.service import (
     InMemoryExecutionRecorder,
     SqlAlchemyExecutionRecorder,
 )
+from logix_agent.modules.messaging.outbox_relay import AgentOutboxRelay
 from logix_agent.modules.planner.checkpointer import open_checkpointer
 from logix_agent.modules.planner.store import open_store
 from logix_agent.modules.provider_configs.router import router as provider_config_router
@@ -92,6 +98,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.provider_config_repository = None
     app.state.provider_config_service = None
     app.state.model_config_resolver = None
+    app.state.conversation_admin_service = None
     try:
         session_factory = get_session_factory()
         async with session_factory() as session:
@@ -142,9 +149,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     thread_store: ThreadStore
     if use_database:
         thread_store = SqlAlchemyThreadStore(session_factory)
+        app.state.conversation_admin_service = SqlAlchemyConversationAdminService(session_factory)
         logger.info("Using SqlAlchemyThreadStore with PostgreSQL persistence.")
     else:
-        thread_store = InMemoryThreadStore()
+        mem_thread_store = InMemoryThreadStore()
+        thread_store = mem_thread_store
+        app.state.conversation_admin_service = InMemoryConversationAdminService(mem_thread_store)
 
     try:
         if app.state.provider_config_repository is not None:
@@ -172,14 +182,35 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception:
         logger.exception("Model gateway / agent runtime initialization failed")
 
+    outbox_relay: AgentOutboxRelay | None = None
+    if use_database and session_factory is not None and settings.kafka_brokers:
+        outbox_relay = AgentOutboxRelay(
+            session_factory,
+            brokers=settings.kafka_brokers,
+            client_id=settings.kafka_client_id,
+            topic=settings.kafka_agent_topic,
+            interval_ms=settings.outbox_interval_ms,
+            batch_size=settings.outbox_batch_size,
+            retry_base_ms=settings.outbox_retry_base_ms,
+            retry_max_ms=settings.outbox_retry_max_ms,
+        )
+        try:
+            await outbox_relay.start()
+        except Exception as exc:
+            logger.warning("AgentOutboxRelay failed to start (%s); audit relay disabled for this boot.", exc)
+            outbox_relay = None
+
     yield
 
+    if outbox_relay is not None:
+        await outbox_relay.stop()
     app.state.agui_runtime = None
     app.state.tool_registry = None
     app.state.confirmation_service = None
     app.state.provider_config_repository = None
     app.state.provider_config_service = None
     app.state.model_config_resolver = None
+    app.state.conversation_admin_service = None
     await service_client.aclose()
     await store_stack.aclose()
     await checkpointer_stack.aclose()
@@ -199,6 +230,7 @@ app = FastAPI(
 )
 app.include_router(agui_router)
 app.include_router(provider_config_router)
+app.include_router(conversations_router)
 
 
 @app.exception_handler(StarletteHTTPException)

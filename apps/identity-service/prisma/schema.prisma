@@ -28,18 +28,25 @@ model Tenant {
   province    String? @db.VarChar(100)
   postalCode  String? @map("postal_code") @db.VarChar(20)
 
+  /// Optional tenant-scoped custom instructions for the LogiX Planner AI Agent.
+  aiCustomInstructions    String?   @map("ai_custom_instructions") @db.Text
+  aiInstructionsEnabled   Boolean   @default(true) @map("ai_instructions_enabled")
+  aiInstructionsUpdatedAt DateTime? @map("ai_instructions_updated_at") @db.Timestamptz(6)
+  aiInstructionsUpdatedBy String?   @map("ai_instructions_updated_by") @db.Uuid
+
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   version   BigInt    @default(1)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
 
-  userTenants         UserTenant[]
-  roles               Role[]
-  rolePermissions     RolePermission[]
-  userRoles           UserRole[]
-  sessions            Session[]
-  passwordResetTokens PasswordResetToken[]
-  invitations         TenantInvitation[]
+  userTenants                 UserTenant[]
+  roles                       Role[]
+  rolePermissions             RolePermission[]
+  userRoles                   UserRole[]
+  sessions                    Session[]
+  passwordResetTokens         PasswordResetToken[]
+  invitations                 TenantInvitation[]
+  aiInstructionsUpdatedByUser User?                @relation("TenantAiInstructionsUpdatedBy", fields: [aiInstructionsUpdatedBy], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt(sort: Desc)], map: "ix_tenants_status_created")
   @@map("tenants")
@@ -47,28 +54,29 @@ model Tenant {
 }
 
 model User {
-  id                     String               @id @default(uuid()) @db.Uuid
-  email                  String               @unique(map: "ux_users_email") @db.VarChar(320)
-  passwordHash           String               @map("password_hash") @db.Text
-  displayName            String               @map("display_name") @db.VarChar(200)
-  phoneNumber            String?              @map("phone_number") @db.VarChar(50)
-  avatarUrl              String?              @map("avatar_url") @db.Text
-  status                 String               @db.VarChar(20)
-  isSuperAdmin           Boolean              @default(false) @map("is_super_admin")
-  tokenVersion           BigInt               @default(1) @map("token_version")
-  lastLoginAt            DateTime?            @map("last_login_at") @db.Timestamptz(6)
-  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  version                BigInt               @default(1)
-  deletedAt              DateTime?            @map("deleted_at") @db.Timestamptz(6)
-  userTenants            UserTenant[]
-  userRoles              UserRole[]
-  sessions               Session[]
-  passwordResetTokens    PasswordResetToken[]
-  rolePermissionsGranted RolePermission[]     @relation("RolePermissionGrantedBy")
-  userRolesGranted       UserRole[]           @relation("UserRoleGrantedBy")
-  invitationsSent        TenantInvitation[]   @relation("InvitationInvitedBy")
-  contactLeadsHandled    ContactLead[]        @relation("ContactLeadContactedBy")
+  id                           String               @id @default(uuid()) @db.Uuid
+  email                        String               @unique(map: "ux_users_email") @db.VarChar(320)
+  passwordHash                 String               @map("password_hash") @db.Text
+  displayName                  String               @map("display_name") @db.VarChar(200)
+  phoneNumber                  String?              @map("phone_number") @db.VarChar(50)
+  avatarUrl                    String?              @map("avatar_url") @db.Text
+  status                       String               @db.VarChar(20)
+  isSuperAdmin                 Boolean              @default(false) @map("is_super_admin")
+  tokenVersion                 BigInt               @default(1) @map("token_version")
+  lastLoginAt                  DateTime?            @map("last_login_at") @db.Timestamptz(6)
+  createdAt                    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                    DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version                      BigInt               @default(1)
+  deletedAt                    DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  userTenants                  UserTenant[]
+  userRoles                    UserRole[]
+  sessions                     Session[]
+  passwordResetTokens          PasswordResetToken[]
+  rolePermissionsGranted       RolePermission[]     @relation("RolePermissionGrantedBy")
+  userRolesGranted             UserRole[]           @relation("UserRoleGrantedBy")
+  invitationsSent              TenantInvitation[]   @relation("InvitationInvitedBy")
+  contactLeadsHandled          ContactLead[]        @relation("ContactLeadContactedBy")
+  tenantsAiInstructionsUpdated Tenant[]             @relation("TenantAiInstructionsUpdatedBy")
 
   @@index([status, createdAt(sort: Desc)], map: "ix_users_status")
   @@map("users")
@@ -262,5 +270,31 @@ model ContactLead {
   @@index([status, createdAt(sort: Desc)], map: "ix_contact_leads_status_created")
   @@index([email], map: "ix_contact_leads_email")
   @@map("contact_leads")
+  @@schema("identity")
+}
+
+model OutboxEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  eventType        String    @map("event_type") @db.VarChar(100)
+  eventVersion     Int       @map("event_version")
+  aggregateType    String    @map("aggregate_type") @db.VarChar(100)
+  aggregateId      String    @map("aggregate_id") @db.Uuid
+  aggregateVersion BigInt    @map("aggregate_version")
+  correlationId    String    @map("correlation_id") @db.Uuid
+  causationId      String?   @map("causation_id") @db.Uuid
+  payload          Json      @db.JsonB
+  occurredAt       DateTime  @map("occurred_at") @db.Timestamptz(6)
+  publishedAt      DateTime? @map("published_at") @db.Timestamptz(6)
+  attemptCount     Int       @default(0) @map("attempt_count")
+  nextAttemptAt    DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  lastError        String?   @map("last_error") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  version          BigInt    @default(1)
+  deletedAt        DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@index([tenantId, aggregateType, aggregateId, aggregateVersion], map: "ix_outbox_aggregate")
+  @@map("outbox_events")
   @@schema("identity")
 }
