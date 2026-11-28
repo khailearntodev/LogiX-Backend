@@ -377,6 +377,7 @@ export const SYSTEM_PERMISSIONS = [
     action: 'read',
     name: 'Xem lịch sử gửi thông báo',
     description: 'Cho phép xem danh sách, trạng thái và thống kê các đợt gửi thông báo của tổ chức',
+  },
   {
     code: 'agent:conversation:read',
     module: 'AGENT',
