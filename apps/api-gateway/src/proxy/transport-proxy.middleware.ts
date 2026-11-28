@@ -2,6 +2,7 @@ import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response, NextFunction } from 'express';
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 const TRIPS_PREFIX = '/api/v1/trips';
 const DRIVER_TRIPS_PREFIX = '/api/v1/driver/trips';
@@ -14,8 +15,12 @@ export class TransportProxyMiddleware implements NestMiddleware {
   >;
 
   constructor(@Inject(ConfigService) config: ConfigService) {
+    const target = config.getOrThrow<string>('TRANSPORT_SERVICE_URL');
     this.proxy = createProxyMiddleware<Request, Response>({
-      target: config.getOrThrow<string>('TRANSPORT_SERVICE_URL'),
+      target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       ws: false,
       pathFilter: (path: string) =>

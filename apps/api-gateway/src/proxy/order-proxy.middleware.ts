@@ -2,6 +2,7 @@ import { Injectable, NestMiddleware } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Request, Response, NextFunction } from 'express';
 import { createProxyMiddleware, fixRequestBody, Options } from 'http-proxy-middleware';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 // Only public order routes are forwarded; order-service internal endpoints
 // (/api/v1/internal/*) are intentionally never exposed through the gateway.
@@ -12,8 +13,12 @@ export class OrderProxyMiddleware implements NestMiddleware {
   private readonly proxy: ReturnType<typeof createProxyMiddleware>;
 
   constructor(config: ConfigService) {
+    const target = config.getOrThrow<string>('ORDER_SERVICE_URL');
     const options: Options = {
-      target: config.getOrThrow<string>('ORDER_SERVICE_URL'),
+      target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       pathFilter: (path: string) =>
         path === ORDER_PUBLIC_PREFIX || path.startsWith(`${ORDER_PUBLIC_PREFIX}/`),

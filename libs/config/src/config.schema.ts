@@ -29,6 +29,12 @@ export const baseConfigSchema = z.object({
 export const databaseConfigSchema = z.object({
   /** PostgreSQL connection URL. */
   DATABASE_URL: z.string().url().startsWith('postgres'),
+  /** Maximum number of PostgreSQL connections in this service's pg.Pool. */
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(200).default(20),
+  /** Idle connection timeout (ms) before closing unused pool clients. */
+  DB_POOL_IDLE_TIMEOUT_MS: z.coerce.number().int().min(1000).default(30000),
+  /** Maximum time (ms) to wait for a free connection from the pool. */
+  DB_POOL_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(500).default(10000),
 });
 
 /**
@@ -49,6 +55,18 @@ export const kafkaConfigSchema = z.object({
 
   /** Consumer group ID for this service. */
   KAFKA_GROUP_ID: z.string().min(1).optional(),
+
+  /** TCP connection timeout (ms) to Kafka brokers. */
+  KAFKA_CONNECTION_TIMEOUT_MS: z.coerce.number().int().min(500).max(30000).default(3000),
+
+  /** Per-request broker timeout (ms) for shared Kafka client (must exceed consumer Fetch maxWait). */
+  KAFKA_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(5000).max(60000).default(25000),
+
+  /** Producer internal retry budget; durable outbox table owns long-term retries. */
+  KAFKA_PRODUCER_MAX_RETRIES: z.coerce.number().int().min(0).max(10).default(1),
+
+  /** Producer send ack timeout (ms). */
+  KAFKA_PRODUCER_SEND_TIMEOUT_MS: z.coerce.number().int().min(500).max(30000).default(3000),
 });
 
 export const outboxConfigSchema = z.object({

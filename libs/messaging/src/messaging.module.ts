@@ -45,14 +45,21 @@ export class MessagingModule {
           throw new Error('KAFKA_BROKERS must contain at least one broker');
         }
         const clientId = config.getOrThrow<string>('KAFKA_CLIENT_ID');
+        const connectionTimeout = config.get<number>('KAFKA_CONNECTION_TIMEOUT_MS') ?? 3000;
+        // Keep shared client requestTimeout >= consumer JoinGroup/Fetch wait (default 25s);
+        // producer send budget is enforced per-call in KafkaProducerService.
+        const requestTimeout = config.get<number>('KAFKA_REQUEST_TIMEOUT_MS') ?? 25000;
 
         return new Kafka({
           clientId,
           brokers,
           logLevel: logLevel.WARN,
+          connectionTimeout,
+          requestTimeout,
           retry: {
-            initialRetryTime: 300,
-            retries: 5,
+            initialRetryTime: 200,
+            maxRetryTime: 1000,
+            retries: 3,
           },
         });
       },
@@ -64,8 +71,12 @@ export class MessagingModule {
     if (enableProducer) {
       providers.push({
         provide: KafkaProducerService,
-        inject: [Kafka],
-        useFactory: (kafka: Kafka) => new KafkaProducerService(kafka),
+        inject: [Kafka, ConfigService],
+        useFactory: (kafka: Kafka, config: ConfigService) =>
+          new KafkaProducerService(kafka, {
+            maxRetries: config.get<number>('KAFKA_PRODUCER_MAX_RETRIES') ?? 1,
+            sendTimeoutMs: config.get<number>('KAFKA_PRODUCER_SEND_TIMEOUT_MS') ?? 3000,
+          }),
       });
       exports.push(KafkaProducerService);
     }

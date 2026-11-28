@@ -54,4 +54,35 @@ describe('service configuration validation', () => {
       expect(databaseConfigSchema.safeParse({ DATABASE_URL: url }).success).toBe(false);
     },
   );
+
+  it('applies safe DB pool and Kafka producer budget defaults while rejecting invalid overrides', () => {
+    const db = databaseConfigSchema.parse({
+      DATABASE_URL: 'postgresql://user:pass@localhost:5433/logix',
+    });
+    expect(db.DB_POOL_MAX).toBe(20);
+    expect(db.DB_POOL_IDLE_TIMEOUT_MS).toBe(30000);
+    expect(db.DB_POOL_CONNECTION_TIMEOUT_MS).toBe(10000);
+    expect(
+      databaseConfigSchema.safeParse({
+        DATABASE_URL: 'postgresql://user:pass@localhost:5433/logix',
+        DB_POOL_MAX: '0',
+      }).success,
+    ).toBe(false);
+
+    const kafka = kafkaConfigSchema.parse({
+      KAFKA_BROKERS: 'localhost:9092',
+      KAFKA_CLIENT_ID: 'qa-config',
+    });
+    expect(kafka.KAFKA_CONNECTION_TIMEOUT_MS).toBe(3000);
+    expect(kafka.KAFKA_REQUEST_TIMEOUT_MS).toBe(25000);
+    expect(kafka.KAFKA_PRODUCER_MAX_RETRIES).toBe(1);
+    expect(kafka.KAFKA_PRODUCER_SEND_TIMEOUT_MS).toBe(3000);
+    expect(
+      kafkaConfigSchema.safeParse({
+        KAFKA_BROKERS: 'localhost:9092',
+        KAFKA_CLIENT_ID: 'qa-config',
+        KAFKA_PRODUCER_SEND_TIMEOUT_MS: '100',
+      }).success,
+    ).toBe(false);
+  });
 });

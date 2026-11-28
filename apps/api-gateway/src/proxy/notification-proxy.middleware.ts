@@ -5,6 +5,7 @@ import {
   fixRequestBody,
 } from 'http-proxy-middleware';
 import type { Request, Response, NextFunction } from 'express';
+import { DEFAULT_PROXY_TIMEOUT_MS, resolveProxyAgent } from './proxy-agent.js';
 
 const NOTIFICATION_PREFIX = '/api/v1/notifications';
 
@@ -16,8 +17,12 @@ export class NotificationProxyMiddleware implements NestMiddleware {
   >;
 
   constructor(config: ConfigService) {
+    const target = config.getOrThrow<string>('NOTIFICATION_SERVICE_URL');
     this.proxy = createProxyMiddleware<Request, Response>({
-      target: config.getOrThrow<string>('NOTIFICATION_SERVICE_URL'),
+      target,
+      agent: resolveProxyAgent(target),
+      timeout: DEFAULT_PROXY_TIMEOUT_MS,
+      proxyTimeout: DEFAULT_PROXY_TIMEOUT_MS,
       changeOrigin: true,
       ws: true,
       pathFilter: (path: string) =>

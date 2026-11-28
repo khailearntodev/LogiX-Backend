@@ -16,13 +16,35 @@ import type { DomainEventMap, DomainEventType } from './interfaces/domain-event.
  * @see docs/architecture/event-architecture.md §4 (Event ownership)
  * @see docs/architecture/event-architecture.md §6 (Ordering and versioning)
  */
+export interface KafkaProducerBudgetOptions {
+  /** Max internal KafkaJS producer retries (default: 1; outbox owns durable retries). */
+  maxRetries?: number;
+  /** Per-send timeout in milliseconds (default: 3000). */
+  sendTimeoutMs?: number;
+}
+
+const DEFAULT_PRODUCER_MAX_RETRIES = 1;
+const DEFAULT_PRODUCER_SEND_TIMEOUT_MS = 3000;
+
 @Injectable()
 export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(KafkaProducerService.name);
-  private producer: Producer;
+  private readonly producer: Producer;
+  private readonly sendTimeoutMs: number;
 
-  constructor(private readonly kafka: Kafka) {
-    this.producer = this.kafka.producer();
+  constructor(
+    private readonly kafka: Kafka,
+    options: KafkaProducerBudgetOptions = {},
+  ) {
+    const maxRetries = options.maxRetries ?? DEFAULT_PRODUCER_MAX_RETRIES;
+    this.sendTimeoutMs = options.sendTimeoutMs ?? DEFAULT_PRODUCER_SEND_TIMEOUT_MS;
+    this.producer = this.kafka.producer({
+      retry: {
+        initialRetryTime: 200,
+        maxRetryTime: 1000,
+        retries: maxRetries,
+      },
+    });
   }
 
   async onModuleInit(): Promise<void> {
@@ -33,6 +55,31 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy(): Promise<void> {
     await this.producer.disconnect();
     this.logger.log('Kafka producer disconnected');
+  }
+
+  private async sendWithBudget(record: ProducerRecord): Promise<void> {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
+      timer = setTimeout(() => {
+        reject(
+          new Error(
+            `Kafka producer send timed out after ${this.sendTimeoutMs}ms (topic=${record.topic})`,
+          ),
+        );
+      }, this.sendTimeoutMs);
+    });
+
+    try {
+      await Promise.race([
+        this.producer.send({
+          ...record,
+          timeout: this.sendTimeoutMs,
+        }),
+        timeoutPromise,
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 
   /**
@@ -83,7 +130,7 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
       ],
     };
 
-    await this.producer.send(record);
+    await this.sendWithBudget(record);
 
     this.logger.log({
       msg: 'Domain event published',
@@ -118,6 +165,6 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
       ],
     };
 
-    await this.producer.send(record);
+    await this.sendWithBudget(record);
   }
 }

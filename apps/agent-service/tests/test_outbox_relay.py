@@ -225,3 +225,52 @@ async def test_agent_outbox_relay_schedules_retry_on_broker_failure() -> None:
 
     assert published == 0
     assert len(session.executed) == 1
+
+
+@pytest.mark.asyncio
+async def test_agent_outbox_relay_stops_batch_early_on_broker_failure() -> None:
+    rows = [
+        OutboxEvent(
+            id=uuid4(),
+            tenant_id=uuid4(),
+            event_type="AgentToolCalled",
+            event_version=1,
+            aggregate_type="ToolCall",
+            aggregate_id=uuid4(),
+            aggregate_version=idx + 1,
+            correlation_id=uuid4(),
+            causation_id=None,
+            payload={"toolName": "list_orders", "outcome": "SUCCESS"},
+            occurred_at=datetime.now(UTC),
+            attempt_count=0,
+        )
+        for idx in range(3)
+    ]
+    session = _FakeSession(rows)
+
+    class _FailSecondProducer(_FakeProducer):
+        def __init__(self) -> None:
+            super().__init__(should_fail=False)
+            self.calls = 0
+
+        async def send_and_wait(self, topic: str, value: bytes, key: bytes | None = None) -> None:
+            self.calls += 1
+            if self.calls >= 2:
+                raise RuntimeError("Kafka broker timeout")
+            await super().send_and_wait(topic, value, key)
+
+    producer = _FailSecondProducer()
+    relay = AgentOutboxRelay(
+        lambda: session,  # type: ignore[arg-type]
+        brokers="127.0.0.1:9092",
+        client_id="agent-service",
+        topic="logix.agent.events.v1",
+        request_timeout_ms=1000,
+        producer=producer,
+    )
+
+    published = await relay.process_batch()
+
+    assert published == 1
+    assert producer.calls == 2
+    assert len(session.executed) == 2
