@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   AGENT_MODEL_CONFIG_PERMISSIONS,
   MASTER_DATA_DRIVER_PERMISSIONS,
+  NOTIFICATION_BROADCAST_PERMISSIONS,
   TRANSPORT_PERMISSIONS,
 } from './permission-codes.js';
 
@@ -25,6 +26,10 @@ describe('shared transport permission codes', () => {
     expect(AGENT_MODEL_CONFIG_PERMISSIONS).toEqual({
       READ: 'agent:model-config:read',
       MANAGE: 'agent:model-config:manage',
+    });
+    expect(NOTIFICATION_BROADCAST_PERMISSIONS).toEqual({
+      SEND: 'notification:broadcast:send',
+      READ: 'notification:broadcast:read',
     });
   });
 });

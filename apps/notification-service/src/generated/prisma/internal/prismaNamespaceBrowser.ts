@@ -54,7 +54,9 @@ export const ModelName = {
   Notification: 'Notification',
   NotificationRecipient: 'NotificationRecipient',
   NotificationDelivery: 'NotificationDelivery',
-  InboxEvent: 'InboxEvent'
+  InboxEvent: 'InboxEvent',
+  NotificationBroadcast: 'NotificationBroadcast',
+  OutboxEvent: 'OutboxEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -150,6 +152,56 @@ export const InboxEventScalarFieldEnum = {
 } as const
 
 export type InboxEventScalarFieldEnum = (typeof InboxEventScalarFieldEnum)[keyof typeof InboxEventScalarFieldEnum]
+
+
+export const NotificationBroadcastScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  notificationId: 'notificationId',
+  createdBy: 'createdBy',
+  idempotencyKey: 'idempotencyKey',
+  payloadHash: 'payloadHash',
+  audience: 'audience',
+  status: 'status',
+  requestedCount: 'requestedCount',
+  resolvedCount: 'resolvedCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  completedAt: 'completedAt',
+  lastError: 'lastError',
+  version: 'version',
+  deletedAt: 'deletedAt'
+} as const
+
+export type NotificationBroadcastScalarFieldEnum = (typeof NotificationBroadcastScalarFieldEnum)[keyof typeof NotificationBroadcastScalarFieldEnum]
+
+
+export const OutboxEventScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  topic: 'topic',
+  aggregateType: 'aggregateType',
+  aggregateId: 'aggregateId',
+  aggregateVersion: 'aggregateVersion',
+  eventType: 'eventType',
+  eventVersion: 'eventVersion',
+  correlationId: 'correlationId',
+  causationId: 'causationId',
+  payload: 'payload',
+  occurredAt: 'occurredAt',
+  publishedAt: 'publishedAt',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lockedBy: 'lockedBy',
+  lockedUntil: 'lockedUntil',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  version: 'version',
+  deletedAt: 'deletedAt'
+} as const
+
+export type OutboxEventScalarFieldEnum = (typeof OutboxEventScalarFieldEnum)[keyof typeof OutboxEventScalarFieldEnum]
 
 
 export const SortOrder = {

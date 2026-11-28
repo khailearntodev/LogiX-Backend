@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { KafkaEventConsumer, MessagingModule } from '@logix/messaging';
+import { KafkaEventConsumer } from '@logix/messaging';
 import { Kafka } from 'kafkajs';
 import { DeliveriesModule } from '../deliveries/deliveries.module.js';
 import { IntegrationsModule } from '../integrations/integrations.module.js';
@@ -14,7 +14,6 @@ import { NotificationProcessor } from './notification-processor.js';
  */
 @Module({
   imports: [
-    MessagingModule.forRoot({ enableProducer: false }),
     DeliveriesModule,
     IntegrationsModule,
     NotificationsModule,

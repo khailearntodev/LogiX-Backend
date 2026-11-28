@@ -23,6 +23,9 @@ const topics = [
   required('KAFKA_INVENTORY_TOPIC'),
   required('KAFKA_FULFILLMENT_TOPIC'),
   ...(config['KAFKA_TRANSPORT_TOPIC']?.trim() ? [config['KAFKA_TRANSPORT_TOPIC'].trim()] : []),
+  ...(config['KAFKA_NOTIFICATION_BROADCAST_TOPIC']?.trim()
+    ? [config['KAFKA_NOTIFICATION_BROADCAST_TOPIC'].trim()]
+    : []),
 ];
 if (new Set(topics).size !== topics.length) throw new Error('Domain topics must be distinct');
 const numPartitions = positiveInteger('KAFKA_TOPIC_PARTITIONS');

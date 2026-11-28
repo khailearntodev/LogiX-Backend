@@ -5,6 +5,8 @@ import type {
 } from '../notifications/notification.constants.js';
 
 export type NotificationAudience =
+  | { kind: 'ALL' }
+  | { kind: 'ROLES'; roleIds: string[] }
   | { kind: 'USERS'; userIds: string[] }
   | { kind: 'PERMISSION'; code: string };
 

@@ -400,7 +400,9 @@ export const ModelName = {
   Notification: 'Notification',
   NotificationRecipient: 'NotificationRecipient',
   NotificationDelivery: 'NotificationDelivery',
-  InboxEvent: 'InboxEvent'
+  InboxEvent: 'InboxEvent',
+  NotificationBroadcast: 'NotificationBroadcast',
+  OutboxEvent: 'OutboxEvent'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -416,7 +418,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "notification" | "notificationRecipient" | "notificationDelivery" | "inboxEvent"
+    modelProps: "notification" | "notificationRecipient" | "notificationDelivery" | "inboxEvent" | "notificationBroadcast" | "outboxEvent"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -716,6 +718,154 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    NotificationBroadcast: {
+      payload: Prisma.$NotificationBroadcastPayload<ExtArgs>
+      fields: Prisma.NotificationBroadcastFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.NotificationBroadcastFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.NotificationBroadcastFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>
+        }
+        findFirst: {
+          args: Prisma.NotificationBroadcastFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.NotificationBroadcastFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>
+        }
+        findMany: {
+          args: Prisma.NotificationBroadcastFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>[]
+        }
+        create: {
+          args: Prisma.NotificationBroadcastCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>
+        }
+        createMany: {
+          args: Prisma.NotificationBroadcastCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.NotificationBroadcastCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>[]
+        }
+        delete: {
+          args: Prisma.NotificationBroadcastDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>
+        }
+        update: {
+          args: Prisma.NotificationBroadcastUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>
+        }
+        deleteMany: {
+          args: Prisma.NotificationBroadcastDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.NotificationBroadcastUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.NotificationBroadcastUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>[]
+        }
+        upsert: {
+          args: Prisma.NotificationBroadcastUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$NotificationBroadcastPayload>
+        }
+        aggregate: {
+          args: Prisma.NotificationBroadcastAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateNotificationBroadcast>
+        }
+        groupBy: {
+          args: Prisma.NotificationBroadcastGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationBroadcastGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.NotificationBroadcastCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.NotificationBroadcastCountAggregateOutputType> | number
+        }
+      }
+    }
+    OutboxEvent: {
+      payload: Prisma.$OutboxEventPayload<ExtArgs>
+      fields: Prisma.OutboxEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.OutboxEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.OutboxEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+        }
+        findFirst: {
+          args: Prisma.OutboxEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.OutboxEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+        }
+        findMany: {
+          args: Prisma.OutboxEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>[]
+        }
+        create: {
+          args: Prisma.OutboxEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+        }
+        createMany: {
+          args: Prisma.OutboxEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.OutboxEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>[]
+        }
+        delete: {
+          args: Prisma.OutboxEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+        }
+        update: {
+          args: Prisma.OutboxEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.OutboxEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.OutboxEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.OutboxEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.OutboxEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OutboxEventPayload>
+        }
+        aggregate: {
+          args: Prisma.OutboxEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOutboxEvent>
+        }
+        groupBy: {
+          args: Prisma.OutboxEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OutboxEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.OutboxEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.OutboxEventCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -832,6 +982,56 @@ export const InboxEventScalarFieldEnum = {
 } as const
 
 export type InboxEventScalarFieldEnum = (typeof InboxEventScalarFieldEnum)[keyof typeof InboxEventScalarFieldEnum]
+
+
+export const NotificationBroadcastScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  notificationId: 'notificationId',
+  createdBy: 'createdBy',
+  idempotencyKey: 'idempotencyKey',
+  payloadHash: 'payloadHash',
+  audience: 'audience',
+  status: 'status',
+  requestedCount: 'requestedCount',
+  resolvedCount: 'resolvedCount',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  completedAt: 'completedAt',
+  lastError: 'lastError',
+  version: 'version',
+  deletedAt: 'deletedAt'
+} as const
+
+export type NotificationBroadcastScalarFieldEnum = (typeof NotificationBroadcastScalarFieldEnum)[keyof typeof NotificationBroadcastScalarFieldEnum]
+
+
+export const OutboxEventScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  topic: 'topic',
+  aggregateType: 'aggregateType',
+  aggregateId: 'aggregateId',
+  aggregateVersion: 'aggregateVersion',
+  eventType: 'eventType',
+  eventVersion: 'eventVersion',
+  correlationId: 'correlationId',
+  causationId: 'causationId',
+  payload: 'payload',
+  occurredAt: 'occurredAt',
+  publishedAt: 'publishedAt',
+  attemptCount: 'attemptCount',
+  nextAttemptAt: 'nextAttemptAt',
+  lockedBy: 'lockedBy',
+  lockedUntil: 'lockedUntil',
+  lastError: 'lastError',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  version: 'version',
+  deletedAt: 'deletedAt'
+} as const
+
+export type OutboxEventScalarFieldEnum = (typeof OutboxEventScalarFieldEnum)[keyof typeof OutboxEventScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -1118,6 +1318,8 @@ export type GlobalOmitConfig = {
   notificationRecipient?: Prisma.NotificationRecipientOmit
   notificationDelivery?: Prisma.NotificationDeliveryOmit
   inboxEvent?: Prisma.InboxEventOmit
+  notificationBroadcast?: Prisma.NotificationBroadcastOmit
+  outboxEvent?: Prisma.OutboxEventOmit
 }
 
 /* Types for Logging */

@@ -21,6 +21,8 @@ describe('Notification Gateway proxy boundary', () => {
     ['/api/v1/notifications', true],
     ['/api/v1/notifications/unread-count', true],
     ['/api/v1/notifications/123/read', true],
+    ['/api/v1/notifications/admin/broadcasts', true],
+    ['/api/v1/notifications/admin/broadcasts/123', true],
     ['/ws/notifications', true],
     ['/ws/notifications/?EIO=4&transport=polling', true],
     ['/api/v1/notifications-other', false],

@@ -301,6 +301,7 @@ export type NotificationWhereInput = {
   deletedAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   expiresAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   recipients?: Prisma.NotificationRecipientListRelationFilter
+  broadcast?: Prisma.XOR<Prisma.NotificationBroadcastNullableScalarRelationFilter, Prisma.NotificationBroadcastWhereInput> | null
 }
 
 export type NotificationOrderByWithRelationInput = {
@@ -321,6 +322,7 @@ export type NotificationOrderByWithRelationInput = {
   deletedAt?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrderInput | Prisma.SortOrder
   recipients?: Prisma.NotificationRecipientOrderByRelationAggregateInput
+  broadcast?: Prisma.NotificationBroadcastOrderByWithRelationInput
 }
 
 export type NotificationWhereUniqueInput = Prisma.AtLeast<{
@@ -344,6 +346,7 @@ export type NotificationWhereUniqueInput = Prisma.AtLeast<{
   deletedAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   expiresAt?: Prisma.DateTimeNullableFilter<"Notification"> | Date | string | null
   recipients?: Prisma.NotificationRecipientListRelationFilter
+  broadcast?: Prisma.XOR<Prisma.NotificationBroadcastNullableScalarRelationFilter, Prisma.NotificationBroadcastWhereInput> | null
 }, "id">
 
 export type NotificationOrderByWithAggregationInput = {
@@ -410,6 +413,7 @@ export type NotificationCreateInput = {
   deletedAt?: Date | string | null
   expiresAt?: Date | string | null
   recipients?: Prisma.NotificationRecipientCreateNestedManyWithoutNotificationInput
+  broadcast?: Prisma.NotificationBroadcastCreateNestedOneWithoutNotificationInput
 }
 
 export type NotificationUncheckedCreateInput = {
@@ -430,6 +434,7 @@ export type NotificationUncheckedCreateInput = {
   deletedAt?: Date | string | null
   expiresAt?: Date | string | null
   recipients?: Prisma.NotificationRecipientUncheckedCreateNestedManyWithoutNotificationInput
+  broadcast?: Prisma.NotificationBroadcastUncheckedCreateNestedOneWithoutNotificationInput
 }
 
 export type NotificationUpdateInput = {
@@ -450,6 +455,7 @@ export type NotificationUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   recipients?: Prisma.NotificationRecipientUpdateManyWithoutNotificationNestedInput
+  broadcast?: Prisma.NotificationBroadcastUpdateOneWithoutNotificationNestedInput
 }
 
 export type NotificationUncheckedUpdateInput = {
@@ -470,6 +476,7 @@ export type NotificationUncheckedUpdateInput = {
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   recipients?: Prisma.NotificationRecipientUncheckedUpdateManyWithoutNotificationNestedInput
+  broadcast?: Prisma.NotificationBroadcastUncheckedUpdateOneWithoutNotificationNestedInput
 }
 
 export type NotificationCreateManyInput = {
@@ -635,6 +642,20 @@ export type NotificationUpdateOneRequiredWithoutRecipientsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.NotificationUpdateToOneWithWhereWithoutRecipientsInput, Prisma.NotificationUpdateWithoutRecipientsInput>, Prisma.NotificationUncheckedUpdateWithoutRecipientsInput>
 }
 
+export type NotificationCreateNestedOneWithoutBroadcastInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutBroadcastInput, Prisma.NotificationUncheckedCreateWithoutBroadcastInput>
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutBroadcastInput
+  connect?: Prisma.NotificationWhereUniqueInput
+}
+
+export type NotificationUpdateOneRequiredWithoutBroadcastNestedInput = {
+  create?: Prisma.XOR<Prisma.NotificationCreateWithoutBroadcastInput, Prisma.NotificationUncheckedCreateWithoutBroadcastInput>
+  connectOrCreate?: Prisma.NotificationCreateOrConnectWithoutBroadcastInput
+  upsert?: Prisma.NotificationUpsertWithoutBroadcastInput
+  connect?: Prisma.NotificationWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.NotificationUpdateToOneWithWhereWithoutBroadcastInput, Prisma.NotificationUpdateWithoutBroadcastInput>, Prisma.NotificationUncheckedUpdateWithoutBroadcastInput>
+}
+
 export type NotificationCreateWithoutRecipientsInput = {
   id?: string
   tenantId: string
@@ -652,6 +673,7 @@ export type NotificationCreateWithoutRecipientsInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   expiresAt?: Date | string | null
+  broadcast?: Prisma.NotificationBroadcastCreateNestedOneWithoutNotificationInput
 }
 
 export type NotificationUncheckedCreateWithoutRecipientsInput = {
@@ -671,6 +693,7 @@ export type NotificationUncheckedCreateWithoutRecipientsInput = {
   version?: bigint | number
   deletedAt?: Date | string | null
   expiresAt?: Date | string | null
+  broadcast?: Prisma.NotificationBroadcastUncheckedCreateNestedOneWithoutNotificationInput
 }
 
 export type NotificationCreateOrConnectWithoutRecipientsInput = {
@@ -706,6 +729,7 @@ export type NotificationUpdateWithoutRecipientsInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  broadcast?: Prisma.NotificationBroadcastUpdateOneWithoutNotificationNestedInput
 }
 
 export type NotificationUncheckedUpdateWithoutRecipientsInput = {
@@ -725,6 +749,103 @@ export type NotificationUncheckedUpdateWithoutRecipientsInput = {
   version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
   deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  broadcast?: Prisma.NotificationBroadcastUncheckedUpdateOneWithoutNotificationNestedInput
+}
+
+export type NotificationCreateWithoutBroadcastInput = {
+  id?: string
+  tenantId: string
+  type: string
+  title: string
+  body: string
+  severity: string
+  entityType?: string | null
+  entityId?: string | null
+  sourceEventId?: string | null
+  deduplicationKey?: string | null
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  expiresAt?: Date | string | null
+  recipients?: Prisma.NotificationRecipientCreateNestedManyWithoutNotificationInput
+}
+
+export type NotificationUncheckedCreateWithoutBroadcastInput = {
+  id?: string
+  tenantId: string
+  type: string
+  title: string
+  body: string
+  severity: string
+  entityType?: string | null
+  entityId?: string | null
+  sourceEventId?: string | null
+  deduplicationKey?: string | null
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  version?: bigint | number
+  deletedAt?: Date | string | null
+  expiresAt?: Date | string | null
+  recipients?: Prisma.NotificationRecipientUncheckedCreateNestedManyWithoutNotificationInput
+}
+
+export type NotificationCreateOrConnectWithoutBroadcastInput = {
+  where: Prisma.NotificationWhereUniqueInput
+  create: Prisma.XOR<Prisma.NotificationCreateWithoutBroadcastInput, Prisma.NotificationUncheckedCreateWithoutBroadcastInput>
+}
+
+export type NotificationUpsertWithoutBroadcastInput = {
+  update: Prisma.XOR<Prisma.NotificationUpdateWithoutBroadcastInput, Prisma.NotificationUncheckedUpdateWithoutBroadcastInput>
+  create: Prisma.XOR<Prisma.NotificationCreateWithoutBroadcastInput, Prisma.NotificationUncheckedCreateWithoutBroadcastInput>
+  where?: Prisma.NotificationWhereInput
+}
+
+export type NotificationUpdateToOneWithWhereWithoutBroadcastInput = {
+  where?: Prisma.NotificationWhereInput
+  data: Prisma.XOR<Prisma.NotificationUpdateWithoutBroadcastInput, Prisma.NotificationUncheckedUpdateWithoutBroadcastInput>
+}
+
+export type NotificationUpdateWithoutBroadcastInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  body?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.StringFieldUpdateOperationsInput | string
+  entityType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deduplicationKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  recipients?: Prisma.NotificationRecipientUpdateManyWithoutNotificationNestedInput
+}
+
+export type NotificationUncheckedUpdateWithoutBroadcastInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  tenantId?: Prisma.StringFieldUpdateOperationsInput | string
+  type?: Prisma.StringFieldUpdateOperationsInput | string
+  title?: Prisma.StringFieldUpdateOperationsInput | string
+  body?: Prisma.StringFieldUpdateOperationsInput | string
+  severity?: Prisma.StringFieldUpdateOperationsInput | string
+  entityType?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  entityId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  sourceEventId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  deduplicationKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  version?: Prisma.BigIntFieldUpdateOperationsInput | bigint | number
+  deletedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  expiresAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  recipients?: Prisma.NotificationRecipientUncheckedUpdateManyWithoutNotificationNestedInput
 }
 
 
@@ -776,6 +897,7 @@ export type NotificationSelect<ExtArgs extends runtime.Types.Extensions.Internal
   deletedAt?: boolean
   expiresAt?: boolean
   recipients?: boolean | Prisma.Notification$recipientsArgs<ExtArgs>
+  broadcast?: boolean | Prisma.Notification$broadcastArgs<ExtArgs>
   _count?: boolean | Prisma.NotificationCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["notification"]>
 
@@ -839,6 +961,7 @@ export type NotificationSelectScalar = {
 export type NotificationOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "tenantId" | "type" | "title" | "body" | "severity" | "entityType" | "entityId" | "sourceEventId" | "deduplicationKey" | "data" | "createdAt" | "updatedAt" | "version" | "deletedAt" | "expiresAt", ExtArgs["result"]["notification"]>
 export type NotificationInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   recipients?: boolean | Prisma.Notification$recipientsArgs<ExtArgs>
+  broadcast?: boolean | Prisma.Notification$broadcastArgs<ExtArgs>
   _count?: boolean | Prisma.NotificationCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type NotificationIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -848,6 +971,7 @@ export type $NotificationPayload<ExtArgs extends runtime.Types.Extensions.Intern
   name: "Notification"
   objects: {
     recipients: Prisma.$NotificationRecipientPayload<ExtArgs>[]
+    broadcast: Prisma.$NotificationBroadcastPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1261,6 +1385,7 @@ readonly fields: NotificationFieldRefs;
 export interface Prisma__NotificationClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   recipients<T extends Prisma.Notification$recipientsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Notification$recipientsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$NotificationRecipientPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  broadcast<T extends Prisma.Notification$broadcastArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Notification$broadcastArgs<ExtArgs>>): Prisma.Prisma__NotificationBroadcastClient<runtime.Types.Result.GetResult<Prisma.$NotificationBroadcastPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1720,6 +1845,25 @@ export type Notification$recipientsArgs<ExtArgs extends runtime.Types.Extensions
   take?: number
   skip?: number
   distinct?: Prisma.NotificationRecipientScalarFieldEnum | Prisma.NotificationRecipientScalarFieldEnum[]
+}
+
+/**
+ * Notification.broadcast
+ */
+export type Notification$broadcastArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the NotificationBroadcast
+   */
+  select?: Prisma.NotificationBroadcastSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the NotificationBroadcast
+   */
+  omit?: Prisma.NotificationBroadcastOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.NotificationBroadcastInclude<ExtArgs> | null
+  where?: Prisma.NotificationBroadcastWhereInput
 }
 
 /**

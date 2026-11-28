@@ -20,6 +20,11 @@ export const AGENT_MODEL_CONFIG_PERMISSIONS = {
   MANAGE: 'agent:model-config:manage',
 } as const;
 
+export const NOTIFICATION_BROADCAST_PERMISSIONS = {
+  SEND: 'notification:broadcast:send',
+  READ: 'notification:broadcast:read',
+} as const;
+
 export const MEMBER_RESTRICTED_PERMISSIONS = [
   MASTER_DATA_DRIVER_PERMISSIONS.READ,
   TRANSPORT_PERMISSIONS.DRIVER_READ,

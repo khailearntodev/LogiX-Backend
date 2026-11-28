@@ -29,6 +29,17 @@ describe('notificationConfigSchema', () => {
         DELIVERY_RETRY_MAX_MS: 60000,
         DELIVERY_RECLAIM_INTERVAL_MS: 15000,
         DELIVERY_TX_TIMEOUT_MS: 5000,
+        KAFKA_NOTIFICATION_BROADCAST_TOPIC: 'notification.broadcast.requested.v1',
+        OUTBOX_RELAY_ENABLED: true,
+        OUTBOX_INTERVAL_MS: 500,
+        OUTBOX_BATCH_SIZE: 50,
+        OUTBOX_LEASE_MS: 15000,
+        OUTBOX_PUBLISH_TIMEOUT_MS: 5000,
+        OUTBOX_RETRY_BASE_MS: 1000,
+        OUTBOX_RETRY_MAX_MS: 60000,
+        OUTBOX_TX_TIMEOUT_MS: 5000,
+        MAX_BROADCAST_RECIPIENTS: 5000,
+        BROADCAST_FANOUT_BATCH_SIZE: 500,
       });
     }
   });

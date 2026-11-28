@@ -6,12 +6,10 @@ import { PrismaService } from '../database/prisma.service.js';
 import { InAppDeliveryWorker } from '../deliveries/in-app-delivery.worker.js';
 import {
   NOTIFICATION_CONSUMER_NAME,
-  NOTIFICATION_DELIVERY_STATUSES,
   NOTIFICATION_INBOX_OUTCOMES,
-  NOTIFICATION_RECIPIENT_TYPES,
   type NotificationInboxOutcome,
 } from '../notifications/notification.constants.js';
-import { NOTIFICATION_CHANNELS } from '../notifications/notification.types.js';
+import { NotificationWriterService } from '../notifications/notification-writer.service.js';
 import { IdentityRecipientClient } from '../integrations/identity-recipient.client.js';
 import type { DomainEventEnvelope } from '@logix/messaging';
 import type { NotificationDraft } from './notification-draft.js';
@@ -39,11 +37,16 @@ type PersistResult =
 export class NotificationProcessor {
   private readonly logger = new Logger(NotificationProcessor.name);
 
+  private readonly writer: NotificationWriterService;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly recipients: IdentityRecipientClient,
     @Optional() private readonly deliveryWorker?: InAppDeliveryWorker,
-  ) {}
+    @Optional() writer?: NotificationWriterService,
+  ) {
+    this.writer = writer ?? new NotificationWriterService();
+  }
 
   async handle(event: DomainEventEnvelope): Promise<NotificationProcessResult> {
     let draft: NotificationDraft | null;
@@ -133,44 +136,25 @@ export class NotificationProcessor {
           return { outcome: NOTIFICATION_INBOX_OUTCOMES.NO_RECIPIENTS };
         }
 
-        const notificationId = randomUUID();
-        const created = await tx.notification.create({
-          data: {
-            id: notificationId,
-            tenantId: event.tenantId,
-            type: draft.type,
-            title: draft.title,
-            body: draft.body,
-            severity: draft.severity,
-            entityType: draft.entityType,
-            entityId: draft.entityId,
-            sourceEventId: event.eventId,
-            deduplicationKey: draft.deduplicationKey,
-            data: {
-              ...draft.data,
-              ...(draft.link ? { link: draft.link } : {}),
-            } as Prisma.InputJsonValue,
-          },
-          select: { id: true, createdAt: true },
+        const created = await this.writer.createNotification(tx, {
+          tenantId: event.tenantId,
+          type: draft.type,
+          title: draft.title,
+          body: draft.body,
+          severity: draft.severity,
+          entityType: draft.entityType,
+          entityId: draft.entityId,
+          sourceEventId: event.eventId,
+          deduplicationKey: draft.deduplicationKey,
+          link: draft.link,
+          data: draft.data,
         });
 
-        const recipients = recipientUserIds.map((recipientId) => ({
-          id: randomUUID(),
+        await this.writer.attachInAppRecipientsBatch(tx, {
           tenantId: event.tenantId,
           notificationId: created.id,
-          recipientType: NOTIFICATION_RECIPIENT_TYPES.USER,
-          recipientId,
-        }));
-        await tx.notificationRecipient.createMany({ data: recipients });
-        await tx.notificationDelivery.createMany({
-          data: recipients.map((recipient) => ({
-            id: randomUUID(),
-            notificationRecipientId: recipient.id,
-            channel: NOTIFICATION_CHANNELS.IN_APP,
-            status: NOTIFICATION_DELIVERY_STATUSES.PENDING,
-            attemptCount: 0,
-            nextAttemptAt: created.createdAt,
-          })),
+          recipientUserIds,
+          availableAt: created.createdAt,
         });
         await tx.inboxEvent.create({
           data: this.inboxData(event, NOTIFICATION_INBOX_OUTCOMES.APPLIED),

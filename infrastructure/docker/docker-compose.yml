@@ -155,6 +155,7 @@ services:
         ${KAFKA_INVENTORY_TOPIC:?Set KAFKA_INVENTORY_TOPIC}
         ${KAFKA_FULFILLMENT_TOPIC:?Set KAFKA_FULFILLMENT_TOPIC}
         ${KAFKA_TRANSPORT_TOPIC:?Set KAFKA_TRANSPORT_TOPIC}
+        ${KAFKA_NOTIFICATION_BROADCAST_TOPIC:-notification.broadcast.requested.v1}
       PARTITIONS: ${KAFKA_TOPIC_PARTITIONS:-6}
       REPLICATION: ${KAFKA_TOPIC_REPLICATION_FACTOR:-1}
     command:
@@ -335,6 +336,8 @@ services:
       IDENTITY_REQUEST_TIMEOUT_MS: "5000"
       KAFKA_CLIENT_ID: notification-service
       KAFKA_GROUP_ID: logix-notification-service
+      KAFKA_NOTIFICATION_BROADCAST_TOPIC: ${KAFKA_NOTIFICATION_BROADCAST_TOPIC:-notification.broadcast.requested.v1}
+      WS_CORS_ORIGINS: ${FRONTEND_URL:-http://localhost:3009}
     networks: [logix]
 
   audit-service:

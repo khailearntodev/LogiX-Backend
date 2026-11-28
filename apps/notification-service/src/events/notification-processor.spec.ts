@@ -191,7 +191,12 @@ describe('NotificationProcessor', () => {
           createdAt,
         })),
       },
-      notificationRecipient: { createMany: vi.fn().mockResolvedValue({ count: 2 }) },
+      notificationRecipient: {
+        createMany: vi.fn().mockResolvedValue({ count: 2 }),
+        findMany: vi
+          .fn()
+          .mockResolvedValue([{ id: 'rec-a' }, { id: 'rec-b' }]),
+      },
       notificationDelivery: { createMany: vi.fn().mockResolvedValue({ count: 2 }) },
     };
 
@@ -228,6 +233,7 @@ describe('NotificationProcessor', () => {
           nextAttemptAt: createdAt,
         }),
       ],
+      skipDuplicates: true,
     });
     const insertedDeliveries = tx.notificationDelivery.createMany.mock.calls[0][0].data;
     expect(

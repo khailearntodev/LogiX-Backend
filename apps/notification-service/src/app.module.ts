@@ -3,6 +3,8 @@ import { APP_FILTER } from '@nestjs/core';
 import { LogixConfigModule } from '@logix/config';
 import { LogixLoggerModule } from '@logix/logger';
 import { GlobalExceptionFilter } from '@logix/errors';
+import { MessagingModule } from '@logix/messaging';
+import { BroadcastsModule } from './broadcasts/broadcasts.module.js';
 import { DeliveriesModule } from './deliveries/deliveries.module.js';
 import { EventsModule } from './events/events.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
@@ -25,6 +27,8 @@ import { DatabaseModule } from './database/database.module.js';
 
     // Service-owned database
     DatabaseModule,
+    MessagingModule.forRoot({ enableProducer: true }),
+    BroadcastsModule,
     DeliveriesModule,
     EventsModule,
     NotificationsModule,
